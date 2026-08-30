@@ -8,6 +8,7 @@ import { LandingPage } from './features/landing/LandingPage'
 import { MissionBriefPage } from './features/mission/MissionBriefPage'
 import { CreateProjectPage } from './features/projects/CreateProjectPage'
 import { ProjectWorkspacePage } from './features/journey/ProjectWorkspacePage'
+import { PrivacyPage, TermsPage } from './features/legal/LegalPages'
 
 export default function App() {
   return (
@@ -17,6 +18,8 @@ export default function App() {
         <Route path="/" element={<LandingPage />} />
         <Route path="/mission" element={<MissionBriefPage />} />
         <Route path="/auth" element={<AuthGatePage />} />
+        <Route path="/privacy" element={<PrivacyPage />} />
+        <Route path="/terms" element={<TermsPage />} />
         <Route
           path="/dashboard"
           element={

@@ -79,6 +79,10 @@ export function AppShell({ children }: PropsWithChildren) {
       <main id="main-content">{children}</main>
       <footer className="site-footer">
         <span>CODESIGN v1.0</span>
+        <nav aria-label="Legal">
+          <Link to="/privacy">PRIVACY</Link>
+          <Link to="/terms">TERMS</Link>
+        </nav>
         <span>PROCESS, NOT A SCORE.</span>
       </footer>
     </div>

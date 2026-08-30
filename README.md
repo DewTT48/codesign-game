@@ -3,6 +3,8 @@
 CODESIGN is a retro arcade-style learning workspace that guides a learner from an
 idea to a solidified product definition, a Codex-ready PRD, and a tested web app.
 
+Live application: https://dewtt48.github.io/codesign-game/
+
 ## Local development
 
 1. Copy `.env.example` to `.env.local` and add the Supabase project URL and
