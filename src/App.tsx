@@ -9,11 +9,13 @@ import { MissionBriefPage } from './features/mission/MissionBriefPage'
 import { CreateProjectPage } from './features/projects/CreateProjectPage'
 import { ProjectWorkspacePage } from './features/journey/ProjectWorkspacePage'
 import { PrivacyPage, TermsPage } from './features/legal/LegalPages'
+import { ScrollToTop } from './components/navigation/ScrollToTop'
 
 export default function App() {
   return (
     <AppShell>
       <PostAuthRedirect />
+      <ScrollToTop />
       <Routes>
         <Route path="/" element={<LandingPage />} />
         <Route path="/mission" element={<MissionBriefPage />} />

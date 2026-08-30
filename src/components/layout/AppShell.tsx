@@ -1,30 +1,74 @@
-import { Palette, Volume2 } from 'lucide-react'
-import { type PropsWithChildren, useEffect, useState } from 'react'
+import { Palette, Volume2, VolumeX } from 'lucide-react'
+import { type PropsWithChildren, useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useLanguage } from '../../features/i18n/LanguageContext'
 
-type ThemeName = 'classic' | 'forest' | 'sunset'
+type ThemeName = 'classic' | 'forest' | 'dusk'
 
 const themes: Array<{ name: ThemeName; label: string; color: string }> = [
   { name: 'classic', label: 'Block blue', color: '#1674ad' },
   { name: 'forest', label: 'Forest quest', color: '#89c64f' },
-  { name: 'sunset', label: 'Sunset arcade', color: '#ff5c8a' },
+  { name: 'dusk', label: 'Dusk arcade', color: '#68a9ba' },
 ]
 
 export function AppShell({ children }: PropsWithChildren) {
   const { language, setLanguage, isThai } = useLanguage()
+  const audioRef = useRef<HTMLAudioElement>(null)
   const [theme, setTheme] = useState<ThemeName>(() => {
     const saved = window.localStorage.getItem('codesign-theme')
+    if (saved === 'sunset') return 'dusk'
     return themes.some((item) => item.name === saved)
       ? (saved as ThemeName)
       : 'classic'
   })
+  const [musicEnabled, setMusicEnabled] = useState(
+    () => window.localStorage.getItem('codesign-music') === 'on',
+  )
   const [pickerOpen, setPickerOpen] = useState(false)
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme
     window.localStorage.setItem('codesign-theme', theme)
   }, [theme])
+
+  useEffect(() => {
+    window.localStorage.setItem('codesign-music', musicEnabled ? 'on' : 'off')
+    const audio = audioRef.current
+    if (!audio) return
+
+    audio.volume = 0.14
+    if (!musicEnabled) {
+      audio.pause()
+      return
+    }
+
+    const resume = () => {
+      if (document.visibilityState === 'visible') void audio.play().catch(() => undefined)
+    }
+    const handleVisibility = () => {
+      if (document.visibilityState === 'hidden') audio.pause()
+      else resume()
+    }
+
+    resume()
+    document.addEventListener('pointerdown', resume, { once: true })
+    document.addEventListener('keydown', resume, { once: true })
+    document.addEventListener('visibilitychange', handleVisibility)
+    return () => {
+      document.removeEventListener('pointerdown', resume)
+      document.removeEventListener('keydown', resume)
+      document.removeEventListener('visibilitychange', handleVisibility)
+    }
+  }, [musicEnabled])
+
+  const toggleMusic = () => {
+    const next = !musicEnabled
+    setMusicEnabled(next)
+    if (next && audioRef.current) {
+      audioRef.current.volume = 0.14
+      void audioRef.current.play().catch(() => undefined)
+    }
+  }
 
   return (
     <div className="app-shell">
@@ -43,9 +87,16 @@ export function AppShell({ children }: PropsWithChildren) {
             <button type="button" aria-pressed={language === 'th'} onClick={() => setLanguage('th')}>TH</button>
             <button type="button" aria-pressed={language === 'en'} onClick={() => setLanguage('en')}>EN</button>
           </div>
-          <span className="sound-status" title="Sound effects are off">
-            <Volume2 aria-hidden="true" size={16} /> SOUND OFF
-          </span>
+          <button
+            className="sound-status"
+            type="button"
+            aria-pressed={musicEnabled}
+            title={isThai ? 'เปิดหรือปิดเพลงประกอบ 8-bit' : 'Turn 8-bit background music on or off'}
+            onClick={toggleMusic}
+          >
+            {musicEnabled ? <Volume2 aria-hidden="true" size={16} /> : <VolumeX aria-hidden="true" size={16} />}
+            MUSIC {musicEnabled ? 'ON' : 'OFF'}
+          </button>
           <div className="theme-picker">
             <button
               className="icon-button"
@@ -82,6 +133,9 @@ export function AppShell({ children }: PropsWithChildren) {
           </div>
         </div>
       </header>
+      <audio ref={audioRef} loop preload="none">
+        <source src={`${import.meta.env.BASE_URL}audio/curious-theme.ogg`} type="audio/ogg" />
+      </audio>
       <main id="main-content">{children}</main>
       <footer className="site-footer">
         <span>CODESIGN v1.0</span>
@@ -89,7 +143,7 @@ export function AppShell({ children }: PropsWithChildren) {
           <Link to="/privacy">PRIVACY</Link>
           <Link to="/terms">TERMS</Link>
         </nav>
-        <span>PROCESS, NOT A SCORE.</span>
+        <span>PROCESS, NOT A SCORE. · MUSIC: EMANRESU / CC0</span>
       </footer>
     </div>
   )
