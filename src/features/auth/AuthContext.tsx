@@ -15,6 +15,7 @@ type AuthContextValue = {
   loading: boolean
   session: Session | null
   user: User | null
+  signInWithEmail: (email: string, returnTo?: string) => Promise<void>
   signInWithGoogle: (returnTo?: string) => Promise<void>
   signOut: () => Promise<void>
 }
@@ -57,6 +58,19 @@ export function AuthProvider({ children }: PropsWithChildren) {
       loading,
       session,
       user: session?.user ?? null,
+      async signInWithEmail(email, returnTo = '/dashboard') {
+        if (!supabase) throw new Error('Supabase is not configured.')
+        window.sessionStorage.setItem('codesign-auth-return-to', returnTo)
+        const emailRedirectTo = `${window.location.origin}${window.location.pathname}`
+        const { error } = await supabase.auth.signInWithOtp({
+          email: email.trim(),
+          options: {
+            emailRedirectTo,
+            shouldCreateUser: true,
+          },
+        })
+        if (error) throw error
+      },
       async signInWithGoogle(returnTo = '/dashboard') {
         if (!supabase) throw new Error('Supabase is not configured.')
         window.sessionStorage.setItem('codesign-auth-return-to', returnTo)

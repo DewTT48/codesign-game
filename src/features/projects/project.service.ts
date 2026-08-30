@@ -52,3 +52,36 @@ export async function createGuidedProject(
   if (error) throw error
   return data
 }
+
+export async function archiveProject(projectId: string): Promise<ProjectRow> {
+  const client = requireSupabase()
+  const { data, error } = await client
+    .from('projects')
+    .update({ status: 'archived' })
+    .eq('id', projectId)
+    .select('*')
+    .single()
+
+  if (error) throw error
+  return data
+}
+
+export async function restoreProject(project: ProjectRow): Promise<ProjectRow> {
+  const client = requireSupabase()
+  const status = project.current_phase === 'COMPLETE' ? 'completed' : 'in_progress'
+  const { data, error } = await client
+    .from('projects')
+    .update({ status })
+    .eq('id', project.id)
+    .select('*')
+    .single()
+
+  if (error) throw error
+  return data
+}
+
+export async function deleteProject(projectId: string): Promise<void> {
+  const client = requireSupabase()
+  const { error } = await client.from('projects').delete().eq('id', projectId)
+  if (error) throw error
+}
