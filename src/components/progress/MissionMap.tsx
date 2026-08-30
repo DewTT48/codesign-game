@@ -1,4 +1,5 @@
 import { LockKeyhole } from 'lucide-react'
+import { useLanguage } from '../../features/i18n/LanguageContext'
 import { missions } from './missions'
 
 type MissionMapProps = {
@@ -7,6 +8,7 @@ type MissionMapProps = {
 }
 
 export function MissionMap({ activeMission = 'C', compact }: MissionMapProps) {
+  const { isThai } = useLanguage()
   return (
     <section
       className={`mission-map ${compact ? 'mission-map--compact' : ''}`}
@@ -34,7 +36,7 @@ export function MissionMap({ activeMission = 'C', compact }: MissionMapProps) {
                 <span className="sr-only">{mission.key} — </span>
                 {mission.name}
               </span>
-              {active ? <span className="mission-you">YOU ARE HERE</span> : null}
+              {active ? <span className="mission-you">{isThai ? 'คุณอยู่ที่นี่' : 'YOU ARE HERE'}</span> : null}
             </li>
           )
         })}

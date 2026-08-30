@@ -171,6 +171,29 @@ a {
   gap: 18px;
 }
 
+.language-switch {
+  display: inline-flex;
+  border: 2px solid var(--line);
+  background: var(--deep-2);
+}
+
+.language-switch button {
+  min-width: 42px;
+  min-height: 38px;
+  padding: 7px 9px;
+  color: var(--muted);
+  background: transparent;
+  border: 0;
+  font-family: var(--font-display);
+  font-size: 7px;
+  cursor: pointer;
+}
+
+.language-switch button[aria-pressed='true'] {
+  color: var(--ink);
+  background: var(--accent);
+}
+
 .sound-status {
   gap: 8px;
   color: var(--muted);
@@ -1459,20 +1482,20 @@ main {
   box-shadow: 6px 6px 0 #8e124e;
 }
 
-.help-panel > div {
+.help-panel__header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 18px;
 }
 
-.help-panel > div > span,
+.help-panel__header > span,
 .help-panel small {
   font-family: var(--font-display);
   font-size: 7px;
 }
 
-.help-panel button {
+.help-panel__header button {
   width: 44px;
   height: 44px;
   display: grid;
@@ -1494,6 +1517,75 @@ main {
   display: block;
   margin-top: 18px;
   color: #725366;
+}
+
+.prompt-kit {
+  margin-top: 18px;
+}
+
+.help-panel .prompt-kit__goal {
+  margin: 0 0 14px;
+  color: #4d2940;
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.prompt-kit pre {
+  max-height: 440px;
+  margin: 0;
+  padding: 18px;
+  overflow: auto;
+  white-space: pre-wrap;
+  color: var(--white);
+  background: var(--ink);
+  border: 3px solid #263f52;
+  font-family: 'Chakra Petch', system-ui, sans-serif;
+  font-size: 15px;
+  line-height: 1.65;
+}
+
+.prompt-copy {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  margin-top: 12px;
+  padding: 10px 14px;
+  color: var(--white);
+  background: var(--magenta);
+  border: 3px solid var(--ink);
+  box-shadow: 4px 4px 0 #8e124e;
+  font-family: var(--font-display);
+  font-size: 7px;
+  cursor: pointer;
+}
+
+.prompt-kit section {
+  margin-top: 20px;
+  padding: 16px 18px;
+  background: #e8f5ff;
+  border-left: 6px solid var(--deep-3);
+}
+
+.prompt-kit section > strong {
+  font-family: var(--font-display);
+  font-size: 7px;
+}
+
+.prompt-kit ul {
+  margin: 12px 0 0;
+  padding-left: 20px;
+}
+
+.prompt-kit li {
+  margin-top: 7px;
+  line-height: 1.5;
+}
+
+.help-panel .prompt-kit__bring-back p {
+  margin: 10px 0 0;
+  font-size: 16px;
+  font-weight: 600;
 }
 
 .phase-section {
@@ -1549,7 +1641,11 @@ main {
   display: block;
 }
 
-.form-field > span {
+.form-field__control {
+  display: block;
+}
+
+.form-field__control > span {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -1566,7 +1662,7 @@ main {
   font-style: normal;
 }
 
-.form-field > small {
+.form-field__control > small {
   display: block;
   margin-top: 8px;
   color: var(--muted);
@@ -1589,6 +1685,49 @@ main {
 .form-field input:focus {
   outline: 4px solid var(--accent);
   outline-offset: 3px;
+}
+
+.form-field__question,
+.list-editor__question,
+.reorder-list__question {
+  margin: 9px 0 0;
+  color: var(--white);
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.field-guide {
+  margin-top: 10px;
+  color: var(--muted);
+  border-left: 3px solid var(--line);
+}
+
+.field-guide summary {
+  width: fit-content;
+  padding: 5px 9px;
+  color: var(--white);
+  background: var(--deep-3);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.field-guide p {
+  margin: 8px 10px 0;
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.field-guide p strong {
+  display: block;
+  color: var(--accent);
+  font-family: var(--font-display);
+  font-size: 6px;
+}
+
+.field-guide__avoid {
+  color: #ffd4e5;
 }
 
 .chat-mission-card {

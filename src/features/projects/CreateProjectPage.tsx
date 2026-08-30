@@ -3,20 +3,23 @@ import { ArrowLeft, ArrowRight, Check } from 'lucide-react'
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { ArcadeButton } from '../../components/ui/ArcadeButton'
+import { useLanguage } from '../i18n/LanguageContext'
 import { createProjectSchema, type CreateProjectInput } from './project.schemas'
 import { createGuidedProject } from './project.service'
 
 const readinessOptions: Array<{
   value: CreateProjectInput['contentReadiness']
   label: string
-  description: string
+  th: string
+  en: string
 }> = [
-  { value: 'ready', label: 'I HAVE IT READY', description: 'มีเนื้อหา 21 วันพร้อมแล้ว' },
-  { value: 'some', label: 'I HAVE SOME', description: 'มีบางส่วนและจะทำต่อระหว่างทาง' },
-  { value: 'idea', label: 'I ONLY HAVE AN IDEA', description: 'เริ่มจากไอเดียก็เพียงพอ' },
+  { value: 'ready', label: 'I HAVE IT READY', th: 'มีเนื้อหา 21 วันพร้อมแล้ว', en: 'All 21 days of content are ready' },
+  { value: 'some', label: 'I HAVE SOME', th: 'มีบางส่วนและจะทำต่อระหว่างทาง', en: 'Some content exists; more will be created' },
+  { value: 'idea', label: 'I ONLY HAVE AN IDEA', th: 'เริ่มจากไอเดียก็เพียงพอ', en: 'A starting idea is enough' },
 ]
 
 export function CreateProjectPage() {
+  const { isThai } = useLanguage()
   const [topic, setTopic] = useState('')
   const [contentReadiness, setContentReadiness] =
     useState<CreateProjectInput['contentReadiness']>('idea')
@@ -35,7 +38,7 @@ export function CreateProjectPage() {
     event.preventDefault()
     const result = createProjectSchema.safeParse({ topic, contentReadiness })
     if (!result.success) {
-      setValidationError(result.error.issues[0]?.message ?? 'ตรวจสอบข้อมูลอีกครั้ง')
+      setValidationError(result.error.issues[0]?.message ?? (isThai ? 'ตรวจสอบข้อมูลอีกครั้ง' : 'Please check the information again.'))
       return
     }
     setValidationError(null)
@@ -79,7 +82,7 @@ export function CreateProjectPage() {
 
         <fieldset className="readiness-fieldset">
           <legend>HOW READY IS YOUR CONTENT RIGHT NOW?</legend>
-          <p>คำตอบนี้ใช้บันทึกจุดเริ่มต้นเท่านั้น ไม่มีตัวเลือกที่ผิด</p>
+          <p>{isThai ? 'คำตอบนี้ใช้บันทึกจุดเริ่มต้นเท่านั้น ไม่มีตัวเลือกที่ผิด' : 'This only records your starting point. There is no wrong answer.'}</p>
           <div className="readiness-options">
             {readinessOptions.map((option) => (
               <label className="readiness-option" key={option.value}>
@@ -95,7 +98,7 @@ export function CreateProjectPage() {
                 </span>
                 <span>
                   <strong>{option.label}</strong>
-                  <small>{option.description}</small>
+                  <small>{isThai ? option.th : option.en}</small>
                 </span>
               </label>
             ))}
@@ -104,7 +107,7 @@ export function CreateProjectPage() {
 
         {createProject.isError ? (
           <div className="form-error" role="alert">
-            สร้าง Project ไม่สำเร็จ ข้อมูลของคุณยังไม่ถูกบันทึก กรุณาลองใหม่
+            {isThai ? 'สร้าง Project ไม่สำเร็จ ข้อมูลของคุณยังไม่ถูกบันทึก กรุณาลองใหม่' : 'Could not create the project. Nothing was saved; please try again.'}
           </div>
         ) : null}
 

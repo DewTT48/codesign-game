@@ -1,6 +1,7 @@
 import { Palette, Volume2 } from 'lucide-react'
 import { type PropsWithChildren, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { useLanguage } from '../../features/i18n/LanguageContext'
 
 type ThemeName = 'classic' | 'forest' | 'sunset'
 
@@ -11,6 +12,7 @@ const themes: Array<{ name: ThemeName; label: string; color: string }> = [
 ]
 
 export function AppShell({ children }: PropsWithChildren) {
+  const { language, setLanguage, isThai } = useLanguage()
   const [theme, setTheme] = useState<ThemeName>(() => {
     const saved = window.localStorage.getItem('codesign-theme')
     return themes.some((item) => item.name === saved)
@@ -27,7 +29,7 @@ export function AppShell({ children }: PropsWithChildren) {
   return (
     <div className="app-shell">
       <a className="skip-link" href="#main-content">
-        ข้ามไปยังเนื้อหาหลัก
+        {isThai ? 'ข้ามไปยังเนื้อหาหลัก' : 'Skip to main content'}
       </a>
       <header className="topbar">
         <Link className="brand" to="/" aria-label="CODESIGN home">
@@ -37,6 +39,10 @@ export function AppShell({ children }: PropsWithChildren) {
           <span className="brand-word">CODESIGN</span>
         </Link>
         <div className="topbar-actions">
+          <div className="language-switch" role="group" aria-label={isThai ? 'เลือกภาษา' : 'Choose language'}>
+            <button type="button" aria-pressed={language === 'th'} onClick={() => setLanguage('th')}>TH</button>
+            <button type="button" aria-pressed={language === 'en'} onClick={() => setLanguage('en')}>EN</button>
+          </div>
           <span className="sound-status" title="Sound effects are off">
             <Volume2 aria-hidden="true" size={16} /> SOUND OFF
           </span>
@@ -44,14 +50,14 @@ export function AppShell({ children }: PropsWithChildren) {
             <button
               className="icon-button"
               type="button"
-              aria-label="เลือกชุดสี"
+              aria-label={isThai ? 'เลือกชุดสี' : 'Choose color theme'}
               aria-expanded={pickerOpen}
               onClick={() => setPickerOpen((current) => !current)}
             >
               <Palette aria-hidden="true" size={19} />
             </button>
             {pickerOpen ? (
-              <div className="theme-menu" role="menu" aria-label="ชุดสี">
+              <div className="theme-menu" role="menu" aria-label={isThai ? 'ชุดสี' : 'Color themes'}>
                 {themes.map((item) => (
                   <button
                     key={item.name}

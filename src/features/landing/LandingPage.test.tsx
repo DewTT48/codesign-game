@@ -1,14 +1,17 @@
 import { render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { describe, expect, it } from 'vitest'
+import { LanguageProvider } from '../i18n/LanguageContext'
 import { LandingPage } from './LandingPage'
 
 describe('LandingPage', () => {
   it('presents the guided build as the primary launch experience', () => {
     render(
-      <MemoryRouter>
-        <LandingPage />
-      </MemoryRouter>,
+      <LanguageProvider>
+        <MemoryRouter>
+          <LandingPage />
+        </MemoryRouter>
+      </LanguageProvider>,
     )
 
     expect(

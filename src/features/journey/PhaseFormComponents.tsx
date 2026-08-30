@@ -1,4 +1,6 @@
 import type { PropsWithChildren, ReactNode } from 'react'
+import { useLanguage } from '../i18n/LanguageContext'
+import { getFieldGuide, type FieldGuide } from './guidanceContent'
 
 export function PhaseSection({
   step,
@@ -23,17 +25,36 @@ export function PhaseSection({
 export function FormField({
   label,
   hint,
+  guideKey,
   required,
   children,
-}: PropsWithChildren<{ label: string; hint?: string; required?: boolean }>) {
+}: PropsWithChildren<{ label: string; hint?: string; guideKey?: string; required?: boolean }>) {
+  const { language, isThai } = useLanguage()
+  const guide = getFieldGuide(language, guideKey)
+
   return (
-    <label className="form-field">
-      <span>
-        {label} {required ? <em>REQUIRED</em> : null}
-      </span>
-      {hint ? <small>{hint}</small> : null}
-      {children}
-    </label>
+    <div className="form-field">
+      <label className="form-field__control">
+        <span>
+          {label} {required ? <em>REQUIRED</em> : null}
+        </span>
+        {guide ? <p className="form-field__question">{guide.question}</p> : null}
+        {hint ? <small>{hint}</small> : null}
+        {children}
+      </label>
+      {guide ? <FieldGuideDetails guide={guide} label={isThai ? 'วิธีตอบและตัวอย่าง' : 'How to answer'} isThai={isThai} /> : null}
+    </div>
+  )
+}
+
+export function FieldGuideDetails({ guide, label, isThai }: { guide: FieldGuide; label: string; isThai: boolean }) {
+  return (
+    <details className="field-guide">
+      <summary>{label}</summary>
+      {guide.why ? <p><strong>{isThai ? 'ทำไมจึงสำคัญ' : 'Why it matters'}</strong>{guide.why}</p> : null}
+      <p><strong>{isThai ? 'ตัวอย่าง' : 'Example'}</strong>{guide.example}</p>
+      {guide.avoid ? <p className="field-guide__avoid"><strong>{isThai ? 'ควรหลีกเลี่ยง' : 'Avoid'}</strong>{guide.avoid}</p> : null}
+    </details>
   )
 }
 

@@ -3,9 +3,11 @@ import { ArrowRight, LogOut, Plus } from 'lucide-react'
 import { SolidificationMeter } from '../../components/progress/SolidificationMeter'
 import { ArcadeButton } from '../../components/ui/ArcadeButton'
 import { useAuth } from '../auth/AuthContext'
+import { useLanguage } from '../i18n/LanguageContext'
 import { listProjects } from '../projects/project.service'
 
 export function DashboardPage() {
+  const { isThai } = useLanguage()
   const auth = useAuth()
   const projects = useQuery({ queryKey: ['projects'], queryFn: listProjects })
 
@@ -31,7 +33,7 @@ export function DashboardPage() {
       {projects.isError ? (
         <div className="dashboard-state dashboard-state--error" role="alert">
           <strong>CONNECTION LOST</strong>
-          <p>โหลด Project ไม่สำเร็จ กรุณาลองใหม่อีกครั้ง</p>
+          <p>{isThai ? 'โหลด Project ไม่สำเร็จ กรุณาลองใหม่อีกครั้ง' : 'Could not load projects. Please try again.'}</p>
           <button type="button" onClick={() => void projects.refetch()}>
             RETRY
           </button>
@@ -45,7 +47,7 @@ export function DashboardPage() {
           </div>
           <span className="panel-kicker">NO ACTIVE QUEST</span>
           <h2 id="empty-title">CREATE YOUR FIRST GUIDED BUILD</h2>
-          <p>เริ่มจากหัวข้อหนึ่งเรื่อง แล้วใช้ CODESIGN เปลี่ยนไอเดียให้พร้อมสร้าง</p>
+          <p>{isThai ? 'เริ่มจากหัวข้อหนึ่งเรื่อง แล้วใช้ CODESIGN เปลี่ยนไอเดียให้พร้อมสร้าง' : 'Start with one topic and use CODESIGN to turn it into something buildable.'}</p>
           <ArcadeButton to="/projects/new">
             NEW GUIDED PROJECT <ArrowRight aria-hidden="true" size={19} />
           </ArcadeButton>

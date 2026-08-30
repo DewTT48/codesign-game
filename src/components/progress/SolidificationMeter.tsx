@@ -14,6 +14,7 @@ type SolidificationMeterProps = {
 export function SolidificationMeter({
   current = 'IDEA',
 }: SolidificationMeterProps) {
+  const { isThai } = useLanguage()
   const currentIndex = stages.indexOf(current)
 
   return (
@@ -49,8 +50,9 @@ export function SolidificationMeter({
         ))}
       </ol>
       <p className="meter-note">
-        Progress แสดงว่างานนิยาม Product ถูกบันทึกและ Lock แล้ว ไม่ใช่คะแนนความถูกต้อง
+        {isThai ? 'Progress แสดงว่างานนิยาม Product ถูกบันทึกและ Lock แล้ว ไม่ใช่คะแนนความถูกต้อง' : 'Progress shows which product decisions are captured and locked. It is not a correctness score.'}
       </p>
     </section>
   )
 }
+import { useLanguage } from '../../features/i18n/LanguageContext'

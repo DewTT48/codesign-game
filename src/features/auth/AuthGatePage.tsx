@@ -2,9 +2,11 @@ import { ArrowLeft, LockKeyhole } from 'lucide-react'
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ArcadeButton } from '../../components/ui/ArcadeButton'
+import { useLanguage } from '../i18n/LanguageContext'
 import { useAuth } from './AuthContext'
 
 export function AuthGatePage() {
+  const { isThai } = useLanguage()
   const auth = useAuth()
   const [error, setError] = useState<string | null>(null)
   const [starting, setStarting] = useState(false)
@@ -15,7 +17,7 @@ export function AuthGatePage() {
     try {
       await auth.signInWithGoogle('/dashboard')
     } catch {
-      setError('เริ่ม Google Sign-in ไม่สำเร็จ กรุณาลองใหม่')
+      setError(isThai ? 'เริ่ม Google Sign-in ไม่สำเร็จ กรุณาลองใหม่' : 'Could not start Google sign-in. Please try again.')
       setStarting(false)
     }
   }
@@ -32,8 +34,7 @@ export function AuthGatePage() {
         <span className="chapter-code">AUTH GATE</span>
         <h1 id="auth-title">SAVE YOUR MISSION</h1>
         <p>
-          ตั้งแต่ C — Context เป็นต้นไป การคิด การตัดสินใจ PRD และ Journal
-          ของคุณจะถูกบันทึกอย่างเป็นส่วนตัว
+          {isThai ? 'ตั้งแต่ C — Context เป็นต้นไป การคิด การตัดสินใจ PRD และ Journal ของคุณจะถูกบันทึกอย่างเป็นส่วนตัว' : 'From C — Context onward, your thinking, decisions, PRD, and Journal are saved privately.'}
         </p>
         <ArcadeButton
           disabled={!auth.configured || starting}

@@ -13,10 +13,12 @@ import { FeedbackPhase } from './phases/FeedbackPhase'
 import { NextPhase } from './phases/NextPhase'
 import { CompletionPage } from './CompletionPage'
 import { ProjectPlaceholderPage } from '../projects/ProjectPlaceholderPage'
+import { useLanguage } from '../i18n/LanguageContext'
 
 const supportedPhases = new Set<PhaseCode>(['C', 'O', 'D', 'E', 'S', 'PRD', 'I', 'G', 'N'])
 
 export function ProjectWorkspacePage() {
+  const { isThai } = useLanguage()
   const { projectId, phase } = useParams()
   const project = useQuery({
     queryKey: ['project', projectId],
@@ -36,7 +38,7 @@ export function ProjectWorkspacePage() {
         <Link className="back-link" to="/dashboard"><ArrowLeft size={18} /> DASHBOARD</Link>
         <section className="dashboard-state dashboard-state--error" role="alert">
           <strong>PROJECT NOT AVAILABLE</strong>
-          <p>Project นี้ไม่มีอยู่ หรือบัญชีของคุณไม่มีสิทธิ์เข้าถึง</p>
+          <p>{isThai ? 'Project นี้ไม่มีอยู่ หรือบัญชีของคุณไม่มีสิทธิ์เข้าถึง' : 'This project does not exist or your account cannot access it.'}</p>
         </section>
       </div>
     )

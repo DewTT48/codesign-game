@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ArcadeButton } from '../../../components/ui/ArcadeButton'
 import type { ProjectRow } from '../../../lib/supabase/database.types'
+import { useLanguage } from '../../i18n/LanguageContext'
 import {
   getPhaseEntries,
   getPrdSource,
@@ -16,6 +17,7 @@ import type { SaveState } from '../usePhaseDraft'
 import { assemblePrd } from './assemblePrd'
 
 export function PrdPhase({ project }: { project: ProjectRow }) {
+  const { isThai } = useLanguage()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const editorRef = useRef<HTMLTextAreaElement>(null)
@@ -134,16 +136,13 @@ export function PrdPhase({ project }: { project: ProjectRow }) {
       project={project}
       phase="PRD"
       phaseName="PRODUCT REQUIREMENTS"
-      headline="MAKE EVERY DECISION VISIBLE."
-      principle="PRD นี้ประกอบจากข้อมูลที่คุณตัดสินใจและล็อกไว้ ไม่มี AI เติม Product rule ที่ขาดหาย"
-      hint="อ่านแบบผู้พัฒนา: ทุกหัวข้อบอกสิ่งที่ต้องสร้างได้หรือยัง? ถ้าข้อความใดเปลี่ยนพฤติกรรมของ Product ให้แก้ให้ชัดก่อน Lock"
-      chatMove="ช่วย review PRD นี้เพื่อหาความคลุมเครือเท่านั้น อย่าเพิ่ม Feature หรือ Product rule ใหม่ และระบุจุดที่ต้องให้มนุษย์ตัดสินใจ"
+      chatContext={{ markdown }}
       saveState={saveState}
     >
       <PhaseSection
         step="01"
         title="PRODUCT DEFINITION: SOLID"
-        description="ตรวจว่าการตัดสินใจจาก C/O/D/E/S ถูกนำมาประกอบครบก่อนส่งต่อให้ Codex"
+        description={isThai ? 'ตรวจว่าการตัดสินใจจาก C/O/D/E/S ถูกนำมาประกอบครบก่อนส่งต่อให้ Codex' : 'Confirm that decisions from C/O/D/E/S are present before handing the PRD to Codex.'}
       >
         <div className="prd-checklist" aria-label="Product definition checklist">
           {[
@@ -162,7 +161,7 @@ export function PrdPhase({ project }: { project: ProjectRow }) {
       <PhaseSection
         step="02"
         title="REVIEW & EDIT"
-        description="แก้ข้อความได้โดยตรง ระบบจะ autosave เป็น PRD draft จนกว่าคุณจะ Lock"
+        description={isThai ? 'แก้ข้อความได้โดยตรง ระบบจะ Autosave เป็น PRD draft จนกว่าคุณจะ Lock' : 'Edit directly. The PRD remains an autosaved draft until you lock it.'}
       >
         <div className="prd-toolbar">
           <button type="button" onClick={() => void copyMarkdown()}><Clipboard size={17} /> COPY PRD</button>
@@ -183,7 +182,7 @@ export function PrdPhase({ project }: { project: ProjectRow }) {
 
       <ReviewGate
         title="PRD GATE"
-        question="มีอะไรใน Specification นี้ที่ AI เติมเข้ามาเอง โดยที่คุณไม่เคยตัดสินใจหรือไม่?"
+        question={isThai ? 'มีอะไรใน Specification นี้ที่ AI เติมเข้ามาเอง โดยที่คุณไม่เคยตัดสินใจหรือไม่?' : 'Did AI add anything to this specification that you never decided?'}
         actions={(
           <>
             <ArcadeButton
@@ -204,7 +203,7 @@ export function PrdPhase({ project }: { project: ProjectRow }) {
           </>
         )}
       >
-        <p>เมื่อกด NO — READY ระบบจะสร้าง locked snapshot และเลื่อนไปขั้น I — IMPLEMENT</p>
+        <p>{isThai ? 'เมื่อกด NO — READY ระบบจะสร้าง Locked snapshot และเลื่อนไปขั้น I — IMPLEMENT' : 'NO — READY creates a locked snapshot and moves to I — IMPLEMENT.'}</p>
         {completion.isError ? <p className="field-error" role="alert">Lock PRD ไม่สำเร็จ ข้อมูลยังคงเป็น Draft</p> : null}
       </ReviewGate>
     </JourneyLayout>
