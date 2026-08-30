@@ -6,9 +6,9 @@ import { useLanguage } from '../../features/i18n/LanguageContext'
 type ThemeName = 'classic' | 'deep-sea' | 'violet-vault'
 
 const themes: Array<{ name: ThemeName; label: string; color: string }> = [
-  { name: 'classic', label: 'Block blue', color: '#1674ad' },
-  { name: 'deep-sea', label: 'Deep Sea Arcade', color: '#ff9f43' },
-  { name: 'violet-vault', label: 'Violet Vault', color: '#61daf2' },
+  { name: 'classic', label: 'Block Blue', color: '#1674ad' },
+  { name: 'deep-sea', label: 'Deep Sea Arcade', color: '#2f7d88' },
+  { name: 'violet-vault', label: 'Violet Vault', color: '#704b91' },
 ]
 
 export function AppShell({ children }: PropsWithChildren) {
