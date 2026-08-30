@@ -145,7 +145,11 @@ export function AppShell({ children }: PropsWithChildren) {
           <Link to="/privacy">PRIVACY</Link>
           <Link to="/terms">TERMS</Link>
         </nav>
-        <span>PROCESS, NOT A SCORE. · MUSIC: EMANRESU / CC0</span>
+        <span className="site-footer__meta">
+          <span>PROCESS, NOT A SCORE.</span>
+          <span className="site-footer__separator" aria-hidden="true"> · </span>
+          <span>MUSIC: EMANRESU / CC0</span>
+        </span>
       </footer>
     </div>
   )

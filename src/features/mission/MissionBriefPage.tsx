@@ -48,7 +48,11 @@ export function MissionBriefPage() {
         <section className="brief-main arcade-panel" aria-labelledby="brief-title">
           <div className="panel-kicker">PRIMARY OBJECTIVE</div>
           <h2 id="brief-title">
-            {isThai ? 'สร้าง ' : 'Turn '}<span>21 DAYS OF ______</span>{isThai ? ' ให้กลายเป็น Product จริง' : ' into a real product'}
+            {isThai ? (
+              <>สร้าง <span>21 DAYS OF ______</span><br />ให้กลายเป็น Product จริง</>
+            ) : (
+              <>Turn <span>21 DAYS OF ______</span> into a real product</>
+            )}
           </h2>
           <p>
             {isThai ? 'คุณจะใช้ Chat เพื่อช่วยคิด ใช้ CODESIGN เพื่อบันทึกและ Lock การตัดสินใจ แล้วส่ง PRD ที่ชัดเจนให้ Codex สร้างเว็บแอป' : 'Use Chat to think, CODESIGN to capture and lock decisions, and Codex to build from a clear PRD.'}

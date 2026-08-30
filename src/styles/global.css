@@ -2783,9 +2783,16 @@ main {
     gap: 24px;
   }
 
-  .site-footer > span:last-child {
+  .site-footer__meta {
     max-width: 320px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
     line-height: 1.8;
+  }
+
+  .site-footer__separator {
+    display: none;
   }
 
   .sound-status {
