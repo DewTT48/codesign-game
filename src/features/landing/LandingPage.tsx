@@ -14,8 +14,8 @@ export function LandingPage() {
             <span className="status-light" aria-hidden="true" /> NEW MISSION AVAILABLE
           </div>
           <h1 id="hero-title">
-            TURN UNCERTAINTY
-            <span>INTO DECISIONS.</span>
+            TURN <span className="hero-word">UNCERTAINTY</span>
+            <span className="hero-title-accent">INTO DECISIONS.</span>
           </h1>
           <p className="hero-lead">
             {isThai ? 'เรียนรู้วิธีเปลี่ยนไอเดียที่ยังไม่ชัด ให้กลายเป็น Product Definition ที่พร้อมส่งต่อให้ Codex สร้างจริง' : 'Learn to turn an unclear idea into a Product Definition that Codex can build.'}
