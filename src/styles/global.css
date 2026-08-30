@@ -743,11 +743,17 @@ main {
   font-size: 9px;
 }
 
-.solid-meter__bar {
+.solid-meter__stages {
   display: grid;
-  grid-template-columns: repeat(6, 1fr);
+  grid-template-columns: repeat(6, minmax(0, 1fr));
   gap: 5px;
   margin-top: 26px;
+}
+
+.solid-meter__stage {
+  min-width: 0;
+  display: grid;
+  gap: 10px;
 }
 
 .solid-meter__block {
@@ -761,16 +767,7 @@ main {
   border-color: var(--white);
 }
 
-.solid-meter__labels {
-  display: grid;
-  grid-template-columns: repeat(6, 1fr);
-  gap: 5px;
-  margin: 10px 0 0;
-  padding: 0;
-  list-style: none;
-}
-
-.solid-meter__labels li {
+.solid-meter__label {
   min-width: 0;
   overflow: visible;
   color: #748b9d;
@@ -781,7 +778,7 @@ main {
   text-overflow: ellipsis;
 }
 
-.solid-meter__labels .is-current {
+.solid-meter__stage.is-current .solid-meter__label {
   color: var(--white);
 }
 
@@ -2667,7 +2664,7 @@ main {
   font-size: 10px;
 }
 
-.solid-meter__labels li {
+.solid-meter__label {
   min-width: 0;
   width: auto;
   justify-self: stretch;
@@ -2700,7 +2697,7 @@ main {
   .hero-grid,
   .brief-layout,
   .dashboard-preview {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .hero-grid {
@@ -2728,10 +2725,6 @@ main {
   }
 
   .mission-node:nth-child(5) .mission-connector {
-    display: none;
-  }
-
-  .solid-meter__labels {
     display: none;
   }
 
@@ -2776,9 +2769,23 @@ main {
   }
 
   .site-footer {
-    flex-direction: column;
-    gap: 14px;
+    min-height: auto;
+    display: grid;
+    grid-template-columns: 1fr;
+    justify-items: center;
+    gap: 16px;
+    padding: 28px 20px calc(32px + env(safe-area-inset-bottom));
     text-align: center;
+  }
+
+  .site-footer nav {
+    justify-content: center;
+    gap: 24px;
+  }
+
+  .site-footer > span:last-child {
+    max-width: 320px;
+    line-height: 1.8;
   }
 
   .sound-status {
@@ -2801,7 +2808,7 @@ main {
   }
 
   .hero-copy h1 {
-    font-size: clamp(25px, 9vw, 40px);
+    font-size: clamp(25px, 8.2vw, 40px);
     line-height: 1.4;
   }
 
@@ -2838,6 +2845,27 @@ main {
   .solid-meter,
   .arcade-panel {
     padding: 22px 18px;
+  }
+
+  .solid-meter__stages {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 18px 10px;
+    margin-top: 24px;
+  }
+
+  .solid-meter__stage {
+    gap: 8px;
+  }
+
+  .solid-meter__label {
+    min-height: 2.8em;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    font-size: 9px;
+    line-height: 1.4;
+    letter-spacing: -0.04em;
+    white-space: normal;
   }
 
   .mission-track {
@@ -2910,11 +2938,6 @@ main {
 
   .option-card > header,
   .stance-buttons {
-    align-items: flex-start;
-    flex-direction: column;
-  }
-
-  .site-footer {
     align-items: flex-start;
     flex-direction: column;
   }

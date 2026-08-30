@@ -26,7 +26,7 @@ export function SolidificationMeter({
         <strong>{current}</strong>
       </div>
       <div
-        className="solid-meter__bar"
+        className="solid-meter__stages"
         role="progressbar"
         aria-valuemin={0}
         aria-valuemax={stages.length - 1}
@@ -34,21 +34,24 @@ export function SolidificationMeter({
         aria-label={`Product definition stage: ${current}`}
       >
         {stages.map((stage, index) => (
-          <span
+          <div
             key={stage}
-            className={`solid-meter__block ${
-              index <= currentIndex ? 'is-filled' : ''
+            className={`solid-meter__stage ${
+              index === currentIndex ? 'is-current' : ''
             }`}
-          />
+          >
+            <span
+              className={`solid-meter__block ${
+                index <= currentIndex ? 'is-filled' : ''
+              }`}
+              aria-hidden="true"
+            />
+            <span className="solid-meter__label" aria-hidden="true">
+              {stage}
+            </span>
+          </div>
         ))}
       </div>
-      <ol className="solid-meter__labels" aria-hidden="true">
-        {stages.map((stage, index) => (
-          <li className={index === currentIndex ? 'is-current' : ''} key={stage}>
-            {stage}
-          </li>
-        ))}
-      </ol>
       <p className="meter-note">
         {isThai ? 'Progress นี้แสดงขั้นของการนิยาม Product ที่บันทึกและยืนยันแล้ว ไม่ได้ใช้วัดความถูกต้อง' : 'Progress shows which product decisions are captured and locked. It is not a correctness score.'}
       </p>
