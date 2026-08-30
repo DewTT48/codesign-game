@@ -22,26 +22,28 @@
   text-rendering: optimizeLegibility;
 }
 
-:root[data-theme='forest'] {
-  --deep: #102b2a;
-  --deep-2: #071b1b;
-  --deep-3: #17413c;
-  --line: #37645d;
-  --panel: #143732;
-  --accent: #89c64f;
-  --accent-dark: #416d25;
-  --positive: #ffd166;
+:root[data-theme='deep-sea'] {
+  --deep: #123743;
+  --deep-2: #0b2630;
+  --deep-3: #244d57;
+  --line: #64bfd0;
+  --panel: #123743;
+  --accent: #ff9f43;
+  --accent-dark: #d8317f;
+  --positive: #91d14f;
+  --magenta: #d8317f;
 }
 
-:root[data-theme='dusk'] {
-  --deep: #20243a;
-  --deep-2: #171a2b;
-  --deep-3: #313751;
-  --line: #59647e;
-  --panel: #292d46;
-  --accent: #68a9ba;
-  --accent-dark: #3f7482;
-  --positive: #d6a95b;
+:root[data-theme='violet-vault'] {
+  --deep: #352052;
+  --deep-2: #24133a;
+  --deep-3: #51376a;
+  --line: #61daf2;
+  --panel: #352052;
+  --accent: #61daf2;
+  --accent-dark: #ff5b82;
+  --positive: #ffd166;
+  --magenta: #ff5b82;
 }
 
 * {

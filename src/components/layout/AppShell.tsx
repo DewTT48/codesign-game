@@ -3,12 +3,12 @@ import { type PropsWithChildren, useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useLanguage } from '../../features/i18n/LanguageContext'
 
-type ThemeName = 'classic' | 'forest' | 'dusk'
+type ThemeName = 'classic' | 'deep-sea' | 'violet-vault'
 
 const themes: Array<{ name: ThemeName; label: string; color: string }> = [
   { name: 'classic', label: 'Block blue', color: '#1674ad' },
-  { name: 'forest', label: 'Forest quest', color: '#89c64f' },
-  { name: 'dusk', label: 'Dusk arcade', color: '#68a9ba' },
+  { name: 'deep-sea', label: 'Deep Sea Arcade', color: '#ff9f43' },
+  { name: 'violet-vault', label: 'Violet Vault', color: '#61daf2' },
 ]
 
 export function AppShell({ children }: PropsWithChildren) {
@@ -16,7 +16,8 @@ export function AppShell({ children }: PropsWithChildren) {
   const audioRef = useRef<HTMLAudioElement>(null)
   const [theme, setTheme] = useState<ThemeName>(() => {
     const saved = window.localStorage.getItem('codesign-theme')
-    if (saved === 'sunset') return 'dusk'
+    if (saved === 'forest') return 'deep-sea'
+    if (saved === 'sunset' || saved === 'dusk') return 'violet-vault'
     return themes.some((item) => item.name === saved)
       ? (saved as ThemeName)
       : 'classic'
