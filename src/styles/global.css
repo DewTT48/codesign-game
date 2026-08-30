@@ -3460,6 +3460,19 @@ main {
 }
 
 @media (max-width: 900px) {
+  .topbar {
+    min-height: 104px;
+    display: grid;
+    grid-template-columns: auto 1fr;
+    row-gap: 10px;
+    padding-inline: clamp(16px, 4vw, 40px);
+  }
+
+  .topbar-actions {
+    gap: 10px;
+    justify-self: end;
+  }
+
   .hero-grid,
   .brief-layout,
   .dashboard-preview {
@@ -3476,8 +3489,13 @@ main {
   }
 
   .creator-credit {
-    max-width: 42vw;
+    position: static;
+    grid-column: 1 / -1;
+    grid-row: 2;
+    max-width: 100%;
+    justify-self: center;
     font-size: 12px;
+    transform: none;
   }
 
   .quest-card {
