@@ -1,6 +1,7 @@
 :root {
   color-scheme: dark;
-  font-family: 'Chakra Petch', system-ui, sans-serif;
+  --font-body: 'Chakra Petch', system-ui, sans-serif;
+  font-family: var(--font-body);
   --font-display: 'Press Start 2P', monospace;
   --deep: #0b5792;
   --deep-2: #063761;
@@ -648,6 +649,8 @@ main {
 
 .mission-map,
 .solid-meter {
+  min-width: 0;
+  container-type: inline-size;
   padding: 26px;
 }
 
@@ -732,6 +735,7 @@ main {
 
 .solid-meter__header {
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-between;
   gap: 16px;
   align-items: center;
@@ -771,7 +775,8 @@ main {
   min-width: 0;
   overflow: visible;
   color: #748b9d;
-  font-family: var(--font-display);
+  font-family: var(--font-body);
+  font-weight: 700;
   font-size: 5px;
   line-height: 1.4;
   text-align: center;
@@ -1248,6 +1253,7 @@ main {
 
 .project-card__meta {
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-between;
   gap: 16px;
   color: var(--muted);
@@ -1276,7 +1282,7 @@ main {
 .readiness-fieldset legend {
   color: var(--accent);
   font-family: var(--font-display);
-  font-size: clamp(11px, 2vw, 16px);
+  font-size: clamp(13px, 2vw, 16px);
 }
 
 .topic-field input {
@@ -1495,6 +1501,10 @@ main {
   display: grid;
   grid-template-columns: 1.3fr 0.7fr;
   gap: 20px;
+}
+
+.journey-status-grid > * {
+  min-width: 0;
 }
 
 .journey-status-grid .mission-map--compact {
@@ -1737,6 +1747,9 @@ main {
   background: var(--white);
   border: 3px solid var(--ink);
   box-shadow: 4px 4px 0 #557188;
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.55;
   resize: vertical;
 }
 
@@ -2393,6 +2406,8 @@ main {
   color: var(--ink);
   background: var(--white);
   border: 2px solid var(--ink);
+  font-family: var(--font-body);
+  font-size: 16px;
 }
 
 .list-editor li button,
@@ -2493,6 +2508,8 @@ main {
   color: var(--ink);
   background: var(--white);
   border: 2px solid var(--ink);
+  font-family: var(--font-body);
+  font-size: 16px;
 }
 
 .reorder-controls {
@@ -2633,7 +2650,7 @@ main {
 .add-list-item,
 .reorder-list li > span,
 .screen-spec-card > header {
-  font-size: 10px;
+  font-size: 12px;
 }
 
 .eyebrow,
@@ -2648,20 +2665,25 @@ main {
 .phase-section > header > span,
 .list-editor h3,
 .reorder-list h3 {
-  font-size: 12px;
+  font-size: 13px;
 }
 
 .arcade-button,
 .legal-document h2 {
-  font-size: 12px;
+  font-size: 13px;
 }
 
 .form-field em {
-  font-size: 9px;
+  font-size: 12px;
 }
 
 .mission-you {
-  font-size: 10px;
+  font-size: 12px;
+}
+
+.pixel-flag,
+.pixel-character {
+  font-size: 12px;
 }
 
 .solid-meter__label {
@@ -2669,10 +2691,17 @@ main {
   width: auto;
   justify-self: stretch;
   overflow: visible;
-  font-size: clamp(7px, 0.52vw, 8px);
-  letter-spacing: -0.06em;
+  min-height: 2.8em;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0;
+  line-height: 1.35;
   text-align: center;
-  white-space: nowrap;
+  white-space: normal;
   text-overflow: clip;
 }
 
@@ -2689,8 +2718,52 @@ main {
   min-height: 64px;
   align-items: center;
   padding-block: 20px;
-  font-size: 10px;
+  font-size: 12px;
   line-height: 1.6;
+}
+
+/* Long Thai guidance and form copy uses the body face at a comfortable
+   reading size. Pixel type remains reserved for short arcade labels. */
+.guidance-actions button,
+.form-field__control > span,
+.phase-next-row p {
+  font-family: var(--font-body);
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+.form-field__control > span {
+  flex-wrap: wrap;
+}
+
+.form-field__control > small,
+.choice-card small {
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.form-field__question,
+.list-editor__question,
+.reorder-list__question,
+.choice-card strong {
+  font-size: 16px;
+}
+
+.phase-next-row p {
+  margin: 0;
+}
+
+.field-guide p strong {
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+@container (max-width: 560px) {
+  .solid-meter__stages {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 18px 10px;
+  }
 }
 
 @media (max-width: 900px) {
@@ -2733,10 +2806,21 @@ main {
   }
 
   .journey-status-grid,
+  .form-grid--two,
   .scope-columns,
   .specify-columns,
   .completion-artifacts {
     grid-template-columns: 1fr;
+  }
+
+  .site-footer {
+    display: grid;
+    grid-template-columns: auto auto;
+  }
+
+  .site-footer__meta {
+    grid-column: 1 / -1;
+    justify-self: center;
   }
 }
 
@@ -2869,10 +2953,26 @@ main {
     display: flex;
     align-items: flex-start;
     justify-content: center;
-    font-size: 9px;
+    font-family: var(--font-body);
+    font-size: 12px;
+    font-weight: 700;
     line-height: 1.4;
-    letter-spacing: -0.04em;
+    letter-spacing: 0;
     white-space: normal;
+  }
+
+  .phase-section > header {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .guidance-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .guidance-actions button {
+    width: 100%;
   }
 
   .mission-track {
