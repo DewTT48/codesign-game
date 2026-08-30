@@ -50,7 +50,7 @@ export function SolidificationMeter({
         ))}
       </ol>
       <p className="meter-note">
-        {isThai ? 'Progress แสดงว่างานนิยาม Product ถูกบันทึกและ Lock แล้ว ไม่ใช่คะแนนความถูกต้อง' : 'Progress shows which product decisions are captured and locked. It is not a correctness score.'}
+        {isThai ? 'Progress นี้แสดงขั้นของการนิยาม Product ที่บันทึกและยืนยันแล้ว ไม่ได้ใช้วัดความถูกต้อง' : 'Progress shows which product decisions are captured and locked. It is not a correctness score.'}
       </p>
     </section>
   )

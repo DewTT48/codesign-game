@@ -66,6 +66,28 @@ body {
   background-size: 32px 32px;
 }
 
+:lang(th) body {
+  line-break: auto;
+  word-break: normal;
+  overflow-wrap: break-word;
+}
+
+:lang(th) :is(p, li, small, label, legend, blockquote, h1, h2, h3) {
+  text-wrap: pretty;
+}
+
+@supports (word-break: auto-phrase) {
+  :lang(th) :is(p, li, small, label, legend, blockquote, h1, h2, h3) {
+    word-break: auto-phrase;
+  }
+}
+
+h1,
+h2,
+h3 {
+  text-wrap: balance;
+}
+
 button,
 a {
   -webkit-tap-highlight-color: transparent;
@@ -159,6 +181,19 @@ a {
   font-family: var(--font-display);
   font-size: clamp(14px, 2vw, 19px);
   letter-spacing: 0.08em;
+}
+
+.creator-credit {
+  position: absolute;
+  left: 50%;
+  max-width: min(44vw, 640px);
+  color: var(--muted);
+  font-size: clamp(12px, 1vw, 15px);
+  font-weight: 600;
+  line-height: 1.4;
+  text-align: center;
+  white-space: nowrap;
+  transform: translateX(-50%);
 }
 
 .topbar-actions,
@@ -2533,6 +2568,113 @@ main {
   margin-top: 28px;
 }
 
+/* Press Start 2P is intentionally compact, so pixel labels need a larger
+   minimum than ordinary body copy to remain readable on large screens. */
+.language-switch button,
+.sound-status,
+.text-action,
+.quest-card__topline,
+.quest-card__rule,
+.screen-label,
+.quest-card__rule span,
+.back-link,
+.mission-badge,
+.time-card > span,
+.launch-row > div > span,
+.auth-status,
+.secondary-action,
+.dashboard-state--error button,
+.project-card__meta,
+.form-actions > span,
+.save-indicator,
+.guidance-actions button,
+.help-panel__header > span,
+.help-panel small,
+.prompt-copy,
+.prompt-kit section > strong,
+.form-field__control > span,
+.field-guide p strong,
+.chat-mission-card span,
+.chat-mission-card strong,
+.phase-next-row p,
+.review-gate > span,
+.review-gate dt,
+.prd-checklist span,
+.prd-toolbar button,
+.prd-toolbar span,
+.implementation-steps li span,
+.test-checklist label,
+.completion-hero > span,
+.completion-artifacts article > span,
+.completion-actions > span,
+.completion-artifacts a,
+.completion-artifacts button,
+.journal-preview button,
+.completion-status,
+.option-card > header,
+.favorite-summary small,
+.stance-buttons button,
+.simple-choice,
+.list-editor li > span,
+.add-list-item,
+.reorder-list li > span,
+.screen-spec-card > header {
+  font-size: 10px;
+}
+
+.eyebrow,
+.section-label,
+.panel-kicker,
+.solid-meter__header strong,
+.chapter-code,
+.role-callout strong,
+.route-loading,
+.dashboard-state,
+.readiness-option strong,
+.phase-section > header > span,
+.list-editor h3,
+.reorder-list h3 {
+  font-size: 12px;
+}
+
+.arcade-button,
+.legal-document h2 {
+  font-size: 12px;
+}
+
+.form-field em {
+  font-size: 9px;
+}
+
+.mission-you {
+  font-size: 10px;
+}
+
+.solid-meter__labels li {
+  overflow: visible;
+  font-size: clamp(7px, 0.55vw, 8px);
+  letter-spacing: -0.04em;
+  white-space: nowrap;
+  text-overflow: clip;
+}
+
+.mission-name {
+  font-size: 14px;
+}
+
+.meter-note {
+  font-size: 16px;
+  line-height: 1.65;
+}
+
+.site-footer {
+  min-height: 64px;
+  align-items: center;
+  padding-block: 20px;
+  font-size: 10px;
+  line-height: 1.6;
+}
+
 @media (max-width: 900px) {
   .hero-grid,
   .brief-layout,
@@ -2543,6 +2685,15 @@ main {
   .hero-grid {
     min-height: auto;
     padding-top: 58px;
+  }
+
+  .brand-word {
+    display: none;
+  }
+
+  .creator-credit {
+    max-width: 42vw;
+    font-size: 12px;
   }
 
   .quest-card {
@@ -2577,7 +2728,10 @@ main {
 
 @media (max-width: 600px) {
   .topbar {
-    min-height: 64px;
+    min-height: 104px;
+    display: grid;
+    grid-template-columns: auto 1fr;
+    row-gap: 10px;
     padding-inline: 16px;
   }
 
@@ -2587,6 +2741,23 @@ main {
 
   .topbar-actions {
     gap: 8px;
+    justify-self: end;
+  }
+
+  .creator-credit {
+    position: static;
+    grid-column: 1 / -1;
+    grid-row: 2;
+    max-width: 100%;
+    justify-self: center;
+    font-size: 12px;
+    transform: none;
+  }
+
+  .site-footer {
+    flex-direction: column;
+    gap: 14px;
+    text-align: center;
   }
 
   .sound-status {

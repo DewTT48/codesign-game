@@ -82,6 +82,7 @@ export function AppShell({ children }: PropsWithChildren) {
           </span>
           <span className="brand-word">CODESIGN</span>
         </Link>
+        <span className="creator-credit">เกมโดย ธีรภาพ ตระการผล - HR ข้างบ้าน</span>
         <div className="topbar-actions">
           <div className="language-switch" role="group" aria-label={isThai ? 'เลือกภาษา' : 'Choose language'}>
             <button type="button" aria-pressed={language === 'th'} onClick={() => setLanguage('th')}>TH</button>
