@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Archive, ArrowRight, LogOut, Plus, RotateCcw, Trash2, X } from 'lucide-react'
+import { Archive, ArrowRight, LogOut, Plus, RotateCcw, ShieldCheck, Trash2, X } from 'lucide-react'
 import { useState } from 'react'
 import { SolidificationMeter } from '../../components/progress/SolidificationMeter'
 import { ArcadeButton } from '../../components/ui/ArcadeButton'
@@ -7,12 +7,19 @@ import type { ProjectRow } from '../../lib/supabase/database.types'
 import { useAuth } from '../auth/AuthContext'
 import { useLanguage } from '../i18n/LanguageContext'
 import { archiveProject, deleteProject, listProjects, restoreProject } from '../projects/project.service'
+import { isCurrentUserAdmin } from '../admin/admin.service'
 
 export function DashboardPage() {
   const { isThai } = useLanguage()
   const auth = useAuth()
   const queryClient = useQueryClient()
   const projects = useQuery({ queryKey: ['projects'], queryFn: listProjects })
+  const adminAccess = useQuery({
+    queryKey: ['admin-access'],
+    queryFn: isCurrentUserAdmin,
+    staleTime: 60_000,
+    retry: false,
+  })
   const [deleteTarget, setDeleteTarget] = useState<ProjectRow | null>(null)
   const [deleteConfirmation, setDeleteConfirmation] = useState('')
 
@@ -46,9 +53,16 @@ export function DashboardPage() {
           <h1>WELCOME BACK</h1>
           <p>{auth.user?.email}</p>
         </div>
-        <button className="secondary-action" type="button" onClick={() => void auth.signOut()}>
-          <LogOut aria-hidden="true" size={18} /> SIGN OUT
-        </button>
+        <div className="dashboard-heading__actions">
+          {adminAccess.data ? (
+            <ArcadeButton to="/admin" variant="secondary">
+              <ShieldCheck aria-hidden="true" size={18} /> ADMIN
+            </ArcadeButton>
+          ) : null}
+          <button className="secondary-action" type="button" onClick={() => void auth.signOut()}>
+            <LogOut aria-hidden="true" size={18} /> SIGN OUT
+          </button>
+        </div>
       </header>
 
       {projects.isLoading ? (

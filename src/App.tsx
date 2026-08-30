@@ -10,6 +10,8 @@ import { CreateProjectPage } from './features/projects/CreateProjectPage'
 import { ProjectWorkspacePage } from './features/journey/ProjectWorkspacePage'
 import { PrivacyPage, TermsPage } from './features/legal/LegalPages'
 import { ScrollToTop } from './components/navigation/ScrollToTop'
+import { AdminPage } from './features/admin/AdminPage'
+import { AdminRoute } from './features/admin/AdminRoute'
 
 export default function App() {
   return (
@@ -27,6 +29,16 @@ export default function App() {
           element={
             <ProtectedRoute>
               <DashboardPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin"
+          element={
+            <ProtectedRoute>
+              <AdminRoute>
+                <AdminPage />
+              </AdminRoute>
             </ProtectedRoute>
           }
         />

@@ -19,6 +19,10 @@ vi.mock('../auth/AuthContext', () => ({
 
 vi.mock('../projects/project.service', () => serviceMocks)
 
+vi.mock('../admin/admin.service', () => ({
+  isCurrentUserAdmin: vi.fn().mockResolvedValue(false),
+}))
+
 const baseProject: ProjectRow = {
   id: 'active-project',
   owner_id: 'owner-1',

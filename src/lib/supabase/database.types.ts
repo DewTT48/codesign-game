@@ -63,6 +63,37 @@ export type FeedbackEntryRow = {
   created_at: string
 }
 
+export type AdminPhaseCount = {
+  phase: ProjectRow['current_phase']
+  count: number
+}
+
+export type AdminOverview = {
+  total_users: number
+  total_missions: number
+  active_missions: number
+  completed_missions: number
+  archived_missions: number
+  users_7d: number
+  users_30d: number
+  missions_7d: number
+  missions_30d: number
+  phase_counts: AdminPhaseCount[]
+  generated_at: string
+}
+
+export type AdminUserRow = {
+  user_id: string
+  email: string | null
+  display_name: string | null
+  joined_at: string
+  total_missions: number
+  active_missions: number
+  completed_missions: number
+  archived_missions: number
+  last_activity_at: string
+}
+
 export type DecisionRow = {
   id: string
   project_id: string
@@ -227,6 +258,22 @@ export type Database = {
           target_decision: Json
         }
         Returns: ProjectRow
+      }
+      current_user_is_admin: {
+        Args: Record<string, never>
+        Returns: boolean
+      }
+      get_admin_overview: {
+        Args: Record<string, never>
+        Returns: AdminOverview
+      }
+      get_admin_users: {
+        Args: {
+          search_text?: string | null
+          page_limit?: number
+          page_offset?: number
+        }
+        Returns: AdminUserRow[]
       }
     }
     Enums: Record<string, never>
