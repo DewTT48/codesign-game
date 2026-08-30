@@ -7,6 +7,7 @@ import { SolidificationMeter } from '../../components/progress/SolidificationMet
 import type { ProjectRow } from '../../lib/supabase/database.types'
 import { getJourneyExportData } from './journey.service'
 import { assembleJournal } from './journal/assembleJournal'
+import { useLanguage } from '../i18n/LanguageContext'
 
 const downloadText = (content: string, filename: string) => {
   const file = new Blob([content], { type: 'text/markdown;charset=utf-8' })
@@ -19,6 +20,7 @@ const downloadText = (content: string, filename: string) => {
 }
 
 export function CompletionPage({ project }: { project: ProjectRow }) {
+  const { isThai } = useLanguage()
   const [status, setStatus] = useState('')
   const [showJournal, setShowJournal] = useState(false)
   const exportData = useQuery({ queryKey: ['journey-export', project.id], queryFn: () => getJourneyExportData(project.id) })
@@ -45,16 +47,16 @@ export function CompletionPage({ project }: { project: ProjectRow }) {
         <Trophy size={48} aria-hidden="true" />
         <span>GUIDED BUILD COMPLETE</span>
         <h1>YOU STARTED WITH AN IDEA.</h1>
-        <p>ตอนนี้คุณมี Product, PRD และบันทึกการตัดสินใจที่อธิบายได้ว่า Product นี้เกิดขึ้นอย่างไร</p>
+        <p>{isThai ? 'ตอนนี้คุณมี Product, PRD และบันทึกการตัดสินใจที่อธิบายได้ว่า Product นี้เกิดขึ้นอย่างไร' : 'You now have a product, a PRD, and a decision trail that explains how this product came to be.'}</p>
       </header>
 
       <MissionMap activeMission="N" compact />
       <SolidificationMeter current="BUILD READY" />
 
       <section className="completion-artifacts" aria-label="Completed artifacts">
-        <article><ExternalLink size={28} /><span>A PRODUCT</span><h2>{project.title}</h2><p>Working build ที่ผ่านการทดสอบรอบแรก</p>{exportData.data.build ? <a href={exportData.data.build.app_url} target="_blank" rel="noreferrer">VIEW MY APP <ExternalLink size={16} /></a> : null}</article>
-        <article><FileText size={28} /><span>A PRD</span><h2>BUILD DEFINITION</h2><p>สิ่งที่ Product ควรทำและไม่ควรทำ</p><div><button type="button" disabled={!prd} onClick={() => void copy(prd, 'PRD')}><Clipboard size={16} /> COPY</button><button type="button" disabled={!prd} onClick={() => downloadText(prd, `${slug}-prd.md`)}><Download size={16} /> DOWNLOAD</button></div></article>
-        <article><FileText size={28} /><span>A CODESIGN JOURNAL</span><h2>DECISION TRAIL</h2><p>เส้นทางจาก Context ถึง Next Iteration</p><div><button type="button" onClick={() => setShowJournal((current) => !current)}><FileText size={16} /> {showJournal ? 'HIDE' : 'VIEW'}</button><button type="button" onClick={() => downloadText(journal, `${slug}-journal.md`)}><Download size={16} /> DOWNLOAD</button></div></article>
+        <article><ExternalLink size={28} /><span>A PRODUCT</span><h2>{project.title}</h2><p>{isThai ? 'Working build ที่ผ่านการทดสอบรอบแรก' : 'A working build that has completed its first test.'}</p>{exportData.data.build ? <a href={exportData.data.build.app_url} target="_blank" rel="noreferrer">VIEW MY APP <ExternalLink size={16} /></a> : null}</article>
+        <article><FileText size={28} /><span>A PRD</span><h2>BUILD DEFINITION</h2><p>{isThai ? 'สิ่งที่ Product ควรทำและไม่ควรทำ' : 'What the product should and should not do.'}</p><div><button type="button" disabled={!prd} onClick={() => void copy(prd, 'PRD')}><Clipboard size={16} /> COPY</button><button type="button" disabled={!prd} onClick={() => downloadText(prd, `${slug}-prd.md`)}><Download size={16} /> DOWNLOAD</button></div></article>
+        <article><FileText size={28} /><span>A CODESIGN JOURNAL</span><h2>DECISION TRAIL</h2><p>{isThai ? 'เส้นทางจาก Context ถึง Next Iteration' : 'Your path from Context to Next Iteration.'}</p><div><button type="button" onClick={() => setShowJournal((current) => !current)}><FileText size={16} /> {showJournal ? 'HIDE' : 'VIEW'}</button><button type="button" onClick={() => downloadText(journal, `${slug}-journal.md`)}><Download size={16} /> DOWNLOAD</button></div></article>
       </section>
 
       {showJournal ? <section className="journal-preview"><div><h2>CODESIGN JOURNAL</h2><button type="button" onClick={() => window.print()}><Printer size={16} /> PRINT / PDF</button></div><pre>{journal}</pre></section> : null}
@@ -65,4 +67,3 @@ export function CompletionPage({ project }: { project: ProjectRow }) {
     </div>
   )
 }
-

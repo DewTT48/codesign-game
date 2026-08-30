@@ -2,8 +2,10 @@ import { ArrowLeft } from 'lucide-react'
 import { Link, useParams } from 'react-router-dom'
 import { MissionMap } from '../../components/progress/MissionMap'
 import { SolidificationMeter } from '../../components/progress/SolidificationMeter'
+import { useLanguage } from '../i18n/LanguageContext'
 
 export function ProjectPlaceholderPage() {
+  const { isThai } = useLanguage()
   const { projectId } = useParams()
   return (
     <div className="content-page project-placeholder-page">
@@ -22,7 +24,7 @@ export function ProjectPlaceholderPage() {
         <section className="arcade-panel">
           <span className="panel-kicker">NEXT MILESTONE</span>
           <h2>DON&apos;T DESIGN YET.</h2>
-          <p>Context capture, review และ lock gate จะถูกสร้างใน Milestone 3</p>
+          <p>{isThai ? 'Context capture, review และ lock gate จะถูกสร้างใน Milestone 3' : 'Context capture, review, and the lock gate will be built in Milestone 3.'}</p>
           <small>PROJECT ID — {projectId}</small>
         </section>
         <SolidificationMeter />
