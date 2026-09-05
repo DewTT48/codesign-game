@@ -87,7 +87,7 @@ export function ReviewGate({
   actions,
 }: PropsWithChildren<{
   title: string
-  question: string
+  question: ReactNode
   actions: ReactNode
 }>) {
   return (
