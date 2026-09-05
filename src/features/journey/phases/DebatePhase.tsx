@@ -16,10 +16,10 @@ const initialDebate = { assumptions: [blankAssumption(), blankAssumption()] as u
 const debateGuide = {
   th: {
     title: 'ขั้นนี้ไม่ได้ให้ AI เลือกแทนคุณ',
-    intro: 'AI มีหน้าที่เปิดเผยมุมที่ Direction อาจมองข้าม ส่วนคุณมีหน้าที่ตัดสินใจว่าจะยอมรับความเสี่ยงนั้น หรือปรับ Direction ก่อนสร้างจริง',
+    intro: <>AI มีหน้าที่เปิดเผยมุมที่ Direction อาจมองข้าม ส่วนคุณมีหน้าที่ตัดสินใจว่าจะยอมรับความเสี่ยงนั้น หรือปรับ Direction <span className="keep-together">ก่อนสร้างจริง</span></>,
     steps: [
-      ['01 · ให้ AI ท้าทาย', 'ใช้ Prompt Kit เพื่อหา 3–5 สมมติฐาน แล้วอ่าน Evidence, Failure mode และ Impact เพื่อเข้าใจความเสี่ยง'],
-      ['02 · เลือกเพียง 2 ข้อ', 'นำเฉพาะ ASSUMPTION ที่เป็น ASSUMED หรือ UNKNOWN และสำคัญต่อ Direction มากที่สุดมากรอก ไม่ต้องคัดลอกบทวิเคราะห์ทั้งหมด'],
+      ['01 · ให้ AI ท้าทาย', 'ใช้ Prompt Kit เพื่อหา 3–5 สมมติฐาน แล้วอ่าน Evidence, Failure\u00a0mode และ Impact เพื่อเข้าใจความเสี่ยง'],
+      ['02 · เลือกเพียง 2 ข้อ', 'เลือกเฉพาะ ASSUMPTION สถานะ ASSUMED หรือ UNKNOWN จำนวน 2 ข้อที่สำคัญต่อ Direction มากที่สุด แล้วนำมากรอกโดยไม่ต้องคัดลอกบทวิเคราะห์ทั้งหมด'],
       ['03 · คุณเป็นคนตัดสินใจ', 'เลือก Agree หรือ Challenge พร้อมเขียนเหตุผลด้วยคำของคุณเอง แล้วสรุปว่า Direction เดิมยังอยู่หรือต้องเปลี่ยน'],
     ],
     statusTitle: 'อ่าน STATUS จาก Chat อย่างไร',
@@ -30,15 +30,15 @@ const debateGuide = {
     ],
     mappingTitle: 'จากคำตอบ Chat → ช่องที่ต้องกรอก',
     mapping: [
-      ['ASSUMPTION', 'คัดลอกเฉพาะประโยคสมมติฐานลงใน DIRECTION ASSUMES THAT…'],
+      ['ASSUMPTION', 'คัดลอกเฉพาะประโยคสมมติฐานลงใน DIRECTION\u00a0ASSUMES\u00a0THAT…'],
       ['EVIDENCE / FAILURE MODE / IMPACT', 'ใช้ประกอบการคิด ไม่ต้องคัดลอกทั้งหมด'],
-      ['QUESTION FOR OWNER', 'ตอบคำถามนี้ แล้วเลือก WE AGREE หรือ WE CHALLENGE'],
+      ['QUESTION FOR OWNER', 'ตอบคำถามนี้ แล้วเลือก WE\u00a0AGREE หรือ WE\u00a0CHALLENGE'],
       ['OWNER REASON / WHAT SHOULD CHANGE', 'บันทึกเหตุผลของคุณ และสิ่งที่ต้องเปลี่ยนเมื่อ Challenge'],
     ],
-    agree: 'ยอมรับเป็น Working assumption เพื่อสร้างและทดสอบต่อ ไม่ได้แปลว่าเป็นข้อเท็จจริง',
+    agree: 'ยอมรับเป็น Working\u00a0assumption เพื่อสร้างและทดสอบต่อ ไม่ได้แปลว่าเป็นข้อเท็จจริง',
     challenge: 'เห็นว่าเสี่ยงหรือไม่เหมาะเป็นฐานของ Product จึงต้องบันทึกเหตุผลและสิ่งที่จะเปลี่ยน',
     exampleTitle: 'ตัวอย่างสั้น ๆ',
-    example: 'Chat: “ผู้ใช้พร้อมกลับมาทุกวันโดยไม่ต้องมีสิ่งเตือน” → นำประโยคนี้มากรอก → เลือก Challenge → เหตุผล: ผู้ใช้เหนื่อยและเคยเลิกใช้ Habit app → เปลี่ยน: ไม่ใช้ Daily streak เป็นแกนหลัก',
+    example: 'Chat: “ผู้ใช้พร้อมกลับมาทุกวันโดยไม่ต้องมีสิ่งเตือน” → นำประโยคนี้มากรอก → เลือก Challenge → เหตุผล: ผู้ใช้เหนื่อยและเคยเลิกใช้ Habit\u00a0app → เปลี่ยน: ไม่ใช้ Daily\u00a0streak เป็นแกนหลัก',
   },
   en: {
     title: 'AI does not make the decision in this step',

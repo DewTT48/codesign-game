@@ -75,14 +75,18 @@ body {
   overflow-wrap: break-word;
 }
 
-:lang(th) :is(p, li, small, label, legend, blockquote) {
+:lang(th) :is(p, li, small, label, legend, blockquote, dt, dd, summary, button) {
   text-wrap: pretty;
 }
 
 @supports (word-break: auto-phrase) {
-  :lang(th) :is(p, li, small, label, legend, blockquote) {
+  :lang(th) {
     word-break: auto-phrase;
   }
+}
+
+.keep-together {
+  white-space: nowrap;
 }
 
 h1,
@@ -2975,7 +2979,7 @@ main {
 }
 
 .debate-guide > header p {
-  max-width: 980px;
+  max-width: none;
   margin: 14px 0 0;
   color: var(--muted);
   font-size: 19px;
