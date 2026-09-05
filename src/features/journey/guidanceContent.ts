@@ -102,16 +102,83 @@ export function getFieldGuide(language: AppLanguage, key?: string) {
   return key ? fieldGuides[key]?.[language] : undefined
 }
 
-const text = (value: unknown, fallback = '—') => {
-  if (typeof value === 'string' && value.trim()) return value.trim()
+const cleanText = (value: string) => value.replace(/\\n/g, '\n').trim()
+
+const promptLabel = (key: string) => key
+  .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
+  .replace(/[_-]+/g, ' ')
+  .toUpperCase()
+
+const formatPromptObject = (value: Record<string, unknown>) => Object.entries(value)
+  .map(([key, item]) => {
+    const formatted = text(item, '')
+    return formatted ? `${promptLabel(key)}: ${formatted}` : ''
+  })
+  .filter(Boolean)
+  .join('\n')
+
+const text = (value: unknown, fallback = '—'): string => {
+  if (typeof value === 'string' && value.trim()) return cleanText(value)
   if (typeof value === 'number' || typeof value === 'boolean') return String(value)
   if (Array.isArray(value) && value.length) {
-    return value.map((item) => typeof item === 'string' ? item : JSON.stringify(item)).join('\n- ')
+    const items = value
+      .map((item, index) => {
+        if (typeof item === 'string') {
+          const formatted = cleanText(item)
+          return formatted ? `${index + 1}. ${formatted}` : ''
+        }
+        if (item && typeof item === 'object') {
+          const formatted = formatPromptObject(item as Record<string, unknown>)
+          return formatted ? `ITEM ${String(index + 1).padStart(2, '0')}\n${formatted}` : ''
+        }
+        return item === null || item === undefined ? '' : `${index + 1}. ${String(item)}`
+      })
+      .filter(Boolean)
+    return items.length ? items.join('\n\n') : fallback
   }
+  if (value && typeof value === 'object') return formatPromptObject(value as Record<string, unknown>) || fallback
   return fallback
 }
 
 const sourceValue = (source: PrdSource, phase: keyof PrdSource, key: string) => text(source[phase]?.[key])
+
+type PromptOption = {
+  name?: unknown
+  coreIdea?: unknown
+  like?: unknown
+  tradeoff?: unknown
+}
+
+const formatOption = (option: PromptOption, index: number, isFavorite: boolean) => [
+  `OPTION ${String(index + 1).padStart(2, '0')}${isFavorite ? ' — CURRENT FAVORITE' : ''}`,
+  `OPTION NAME: ${text(option.name)}`,
+  `CORE IDEA: ${text(option.coreIdea)}`,
+  `WHAT WE LIKE: ${text(option.like)}`,
+  `TRADE-OFF: ${text(option.tradeoff)}`,
+].join('\n')
+
+const formatOptionsForPrompt = (source: PrdSource) => {
+  const value = source.O?.options
+  if (!Array.isArray(value) || value.length === 0) {
+    return { favorite: '—', alternatives: '—' }
+  }
+
+  const options = value
+    .filter((item) => Boolean(item) && typeof item === 'object' && !Array.isArray(item))
+    .map((item) => item as PromptOption)
+  const storedFavorite = Number(source.O?.favorite)
+  const favoriteIndex = Number.isInteger(storedFavorite) && storedFavorite >= 0 && storedFavorite < options.length
+    ? storedFavorite
+    : 0
+
+  return {
+    favorite: formatOption(options[favoriteIndex] ?? {}, favoriteIndex, true),
+    alternatives: options
+      .map((option, index) => index === favoriteIndex ? '' : formatOption(option, index, false))
+      .filter(Boolean)
+      .join('\n\n') || '—',
+  }
+}
 
 export function getPhaseGuide(
   language: AppLanguage,
@@ -130,6 +197,7 @@ export function getPhaseGuide(
   const direction = sourceValue(source, 'E', 'direction')
   const mustHaves = sourceValue(source, 'E', 'mustHaves')
   const nonGoals = sourceValue(source, 'E', 'nonGoals')
+  const debateOptions = formatOptionsForPrompt(source)
 
   const guides: Record<string, Localized<PhaseGuide>> = {
     C: {
@@ -178,7 +246,7 @@ export function getPhaseGuide(
         principle: 'แยกสิ่งที่รู้จริงออกจากสิ่งที่ AI และทีมกำลังคาด ก่อนยอมรับ Direction',
         hint: 'มองหา Assumption เกี่ยวกับ Behavior, Motivation, เวลา อุปกรณ์ และความเต็มใจกลับมาใช้ซ้ำ',
         chatGoal: 'เปิดเผย Assumptions และ Failure modes ของ Direction ที่กำลังชอบ',
-        prompt: `ช่วยทำหน้าที่เป็น Product challenger สำหรับ “21 DAYS OF ${topic}”\n\nLOCKED CONTEXT\nWHO: ${who}\nGOAL: ${goal}\nCONTEXT: ${context}\nCONSTRAINTS: ${constraints}\n\nOPTIONS ที่กำลังพิจารณา:\n${sourceValue(source, 'O', 'options')}\n\nอย่าเสนอ Feature ใหม่ ให้ระบุสมมติฐานเกี่ยวกับ User behavior, Motivation, Context และการกลับมาใช้ซ้ำ แยกเป็น KNOWN / ASSUMED / UNKNOWN พร้อมอธิบายว่า Product จะล้มเหลวอย่างไรถ้าแต่ละสมมติฐานไม่จริง แล้วถามผมว่าต้องการ Agree หรือ Challenge ข้อใด`,
+        prompt: `ROLE\nทำหน้าที่เป็น Product Challenger สำหรับ “21 DAYS OF ${topic}”\n\nOBJECTIVE\nท้าทายสมมติฐานของ Current Favorite โดยเทียบกับ Locked Context ก่อนที่ผมจะยืนยัน Direction\n\nLOCKED CONTEXT\nWHO: ${who}\nGOAL: ${goal}\nCONTEXT: ${context}\nCONSTRAINTS: ${constraints}\n\nCURRENT FAVORITE — วิเคราะห์เป็นหลัก\n${debateOptions.favorite}\n\nALTERNATIVES — ใช้เปรียบเทียบเท่านั้น\n${debateOptions.alternatives}\n\nTASK\n1. ระบุสมมติฐานสำคัญ 3–5 ข้อเกี่ยวกับ User behavior, Motivation, Context, เวลา อุปกรณ์ และการกลับมาใช้ซ้ำ\n2. แยกแต่ละข้อเป็น KNOWN / ASSUMED / UNKNOWN\n3. อธิบาย Failure mode หากสมมติฐานนั้นไม่จริง\n4. จัดลำดับตาม Impact และ Evidence gap\n5. ตรวจว่าตัวเลือกอื่นลดความเสี่ยงนั้นได้หรือไม่ โดยไม่เลือก Direction แทนผม\n\nOUTPUT FORMAT\nสำหรับแต่ละข้อให้ใช้:\nASSUMPTION:\nSTATUS: KNOWN / ASSUMED / UNKNOWN\nEVIDENCE:\nFAILURE MODE:\nIMPACT: HIGH / MEDIUM / LOW\nQUESTION FOR OWNER:\n\nCONVERSATION RULES\n- ห้ามเสนอ Feature ใหม่\n- อย่าตัดสินใจ Agree หรือ Challenge แทนผม\n- หลังสรุป ให้ถามผมทีละหนึ่งข้อ โดยเริ่มจาก Assumption ที่ Impact สูงและมีหลักฐานน้อยที่สุด`,
         followUps: ['ข้อใดมีผลต่อ Product มากที่สุดแต่มีหลักฐานน้อยที่สุด?', 'ใครอาจไม่ใช้ Product ตามที่เราคาด?', 'Direction นี้จะล้มเหลวในบริบทใด?'],
         bringBack: 'เลือกอย่างน้อย 2 Assumptions ระบุ Agree/Challenge เหตุผล สิ่งที่ควรเปลี่ยน และสรุปว่า Direction เปลี่ยนหรือไม่',
       },
@@ -187,7 +255,7 @@ export function getPhaseGuide(
         principle: 'Separate what is known from what AI and the team are assuming before accepting a direction.',
         hint: 'Look for assumptions about behavior, motivation, time, device, and willingness to return.',
         chatGoal: 'Expose assumptions and failure modes in the current favorite direction.',
-        prompt: `Act as a product challenger for “21 DAYS OF ${topic}”.\n\nLOCKED CONTEXT\nWHO: ${who}\nGOAL: ${goal}\nCONTEXT: ${context}\nCONSTRAINTS: ${constraints}\n\nOPTIONS UNDER CONSIDERATION:\n${sourceValue(source, 'O', 'options')}\n\nDo not add features. Identify assumptions about user behavior, motivation, context, and repeat use. Separate KNOWN / ASSUMED / UNKNOWN, explain how the product could fail if each assumption is false, then ask which assumptions I agree with or challenge.`,
+        prompt: `ROLE\nAct as a Product Challenger for “21 DAYS OF ${topic}”.\n\nOBJECTIVE\nChallenge the assumptions behind the Current Favorite against the Locked Context before I confirm the direction.\n\nLOCKED CONTEXT\nWHO: ${who}\nGOAL: ${goal}\nCONTEXT: ${context}\nCONSTRAINTS: ${constraints}\n\nCURRENT FAVORITE — analyze this primarily\n${debateOptions.favorite}\n\nALTERNATIVES — use for comparison only\n${debateOptions.alternatives}\n\nTASK\n1. Identify 3–5 important assumptions about user behavior, motivation, context, time, device, and repeat use.\n2. Classify each as KNOWN / ASSUMED / UNKNOWN.\n3. Explain the failure mode if the assumption is false.\n4. Prioritize by impact and evidence gap.\n5. Check whether an alternative reduces that risk without choosing a direction for me.\n\nOUTPUT FORMAT\nFor each item use:\nASSUMPTION:\nSTATUS: KNOWN / ASSUMED / UNKNOWN\nEVIDENCE:\nFAILURE MODE:\nIMPACT: HIGH / MEDIUM / LOW\nQUESTION FOR OWNER:\n\nCONVERSATION RULES\n- Do not propose new features.\n- Do not decide Agree or Challenge for me.\n- After the summary, ask me one question at a time, starting with the highest-impact assumption with the weakest evidence.`,
         followUps: ['Which high-impact assumption has the weakest evidence?', 'Who may not behave as expected?', 'In what context would this direction fail?'],
         bringBack: 'Capture at least two assumptions, your agree/challenge stance, reasons, changes, and whether the direction changed.',
       },
