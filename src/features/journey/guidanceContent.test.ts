@@ -63,6 +63,8 @@ describe('guided content', () => {
     expect(guide.prompt).toContain('OPTION 02 — CURRENT FAVORITE')
     expect(guide.prompt).toContain('OPTION NAME: 21 Career Experiments')
     expect(guide.prompt).toContain('ALTERNATIVES — ใช้เปรียบเทียบเท่านั้น')
+    expect(guide.prompt).toContain('เลือก 2 ข้อที่เป็น ASSUMED หรือ UNKNOWN')
+    expect(guide.prompt).toContain('DEBATE HANDOFF')
     expect(guide.prompt).toContain('ฝึกมองหาโอกาส\nแล้วลงมือทำหนึ่งอย่าง')
     expect(guide.prompt).not.toContain('{"name"')
     expect(guide.prompt).not.toContain('\\n')

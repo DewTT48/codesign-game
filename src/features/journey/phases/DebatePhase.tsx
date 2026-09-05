@@ -13,28 +13,109 @@ type Assumption = { text: string; stance: '' | 'agree' | 'challenge'; why: strin
 const blankAssumption = (): Assumption => ({ text: '', stance: '', why: '', change: '' })
 const initialDebate = { assumptions: [blankAssumption(), blankAssumption()] as unknown as Json, directionResult: '', whatChanged: '' }
 
+const debateGuide = {
+  th: {
+    title: 'ขั้นนี้ไม่ได้ให้ AI เลือกแทนคุณ',
+    intro: 'AI มีหน้าที่เปิดเผยมุมที่ Direction อาจมองข้าม ส่วนคุณมีหน้าที่ตัดสินใจว่าจะยอมรับความเสี่ยงนั้น หรือปรับ Direction ก่อนสร้างจริง',
+    steps: [
+      ['01 · ให้ AI ท้าทาย', 'ใช้ Prompt Kit เพื่อหา 3–5 สมมติฐาน แล้วอ่าน Evidence, Failure mode และ Impact เพื่อเข้าใจความเสี่ยง'],
+      ['02 · เลือกเพียง 2 ข้อ', 'นำเฉพาะ ASSUMPTION ที่เป็น ASSUMED หรือ UNKNOWN และสำคัญต่อ Direction มากที่สุดมากรอก ไม่ต้องคัดลอกบทวิเคราะห์ทั้งหมด'],
+      ['03 · คุณเป็นคนตัดสินใจ', 'เลือก Agree หรือ Challenge พร้อมเขียนเหตุผลด้วยคำของคุณเอง แล้วสรุปว่า Direction เดิมยังอยู่หรือต้องเปลี่ยน'],
+    ],
+    statusTitle: 'อ่าน STATUS จาก Chat อย่างไร',
+    statuses: [
+      ['KNOWN', 'มีหลักฐานรองรับแล้ว ใช้เป็น Context ได้ โดยทั่วไปไม่ต้องนำมา Debate'],
+      ['ASSUMED', 'ฟังดูเป็นไปได้ แต่ยังไม่มีหลักฐานเพียงพอ เหมาะที่จะนำมาพิจารณา'],
+      ['UNKNOWN', 'ข้อมูลยังไม่พอจะรู้ว่าเป็นจริงหรือไม่ เลือกได้ถ้ากระทบ Direction สูง'],
+    ],
+    mappingTitle: 'จากคำตอบ Chat → ช่องที่ต้องกรอก',
+    mapping: [
+      ['ASSUMPTION', 'คัดลอกเฉพาะประโยคสมมติฐานลงใน DIRECTION ASSUMES THAT…'],
+      ['EVIDENCE / FAILURE MODE / IMPACT', 'ใช้ประกอบการคิด ไม่ต้องคัดลอกทั้งหมด'],
+      ['QUESTION FOR OWNER', 'ตอบคำถามนี้ แล้วเลือก WE AGREE หรือ WE CHALLENGE'],
+      ['OWNER REASON / WHAT SHOULD CHANGE', 'บันทึกเหตุผลของคุณ และสิ่งที่ต้องเปลี่ยนเมื่อ Challenge'],
+    ],
+    agree: 'ยอมรับเป็น Working assumption เพื่อสร้างและทดสอบต่อ ไม่ได้แปลว่าเป็นข้อเท็จจริง',
+    challenge: 'เห็นว่าเสี่ยงหรือไม่เหมาะเป็นฐานของ Product จึงต้องบันทึกเหตุผลและสิ่งที่จะเปลี่ยน',
+    exampleTitle: 'ตัวอย่างสั้น ๆ',
+    example: 'Chat: “ผู้ใช้พร้อมกลับมาทุกวันโดยไม่ต้องมีสิ่งเตือน” → นำประโยคนี้มากรอก → เลือก Challenge → เหตุผล: ผู้ใช้เหนื่อยและเคยเลิกใช้ Habit app → เปลี่ยน: ไม่ใช้ Daily streak เป็นแกนหลัก',
+  },
+  en: {
+    title: 'AI does not make the decision in this step',
+    intro: 'AI exposes what the direction may be overlooking. You decide whether to accept that risk or revise the direction before building.',
+    steps: [
+      ['01 · LET AI CHALLENGE', 'Use the Prompt Kit to find 3–5 assumptions. Read the evidence, failure mode, and impact to understand each risk.'],
+      ['02 · CHOOSE ONLY 2', 'Bring back only critical ASSUMED or UNKNOWN items. Do not copy the full analysis into the form.'],
+      ['03 · MAKE THE HUMAN DECISION', 'Choose Agree or Challenge, explain the reason in your own words, then decide whether the direction stays or changes.'],
+    ],
+    statusTitle: 'How to read Chat status',
+    statuses: [
+      ['KNOWN', 'Supported by evidence. Use it as context; it usually does not need debate.'],
+      ['ASSUMED', 'Plausible but not sufficiently supported. A strong candidate for debate.'],
+      ['UNKNOWN', 'There is not enough information. Select it when it could materially affect the direction.'],
+    ],
+    mappingTitle: 'Chat response → form field',
+    mapping: [
+      ['ASSUMPTION', 'Copy only the assumption into DIRECTION ASSUMES THAT…'],
+      ['EVIDENCE / FAILURE MODE / IMPACT', 'Use these to think; do not copy the entire analysis.'],
+      ['QUESTION FOR OWNER', 'Answer it, then choose WE AGREE or WE CHALLENGE.'],
+      ['OWNER REASON / WHAT SHOULD CHANGE', 'Record your reason and the change when you challenge.'],
+    ],
+    agree: 'Accept it as a working assumption to build and test—not as a proven fact.',
+    challenge: 'It is too risky or unsuitable as a foundation, so record why and what changes.',
+    exampleTitle: 'Short example',
+    example: 'Chat: “Users will return every day without a reminder” → copy that sentence → choose Challenge → reason: tired users have abandoned habit apps → change: do not make a daily streak the core mechanism.',
+  },
+} as const
+
 export function DebatePhase({ project }: { project: ProjectRow }) {
   const { isThai } = useLanguage()
   const draft = usePhaseDraft({ projectId: project.id, phase: 'D', initialValues: initialDebate })
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const assumptions = draft.values.assumptions as unknown as Assumption[]
+  const guide = debateGuide[isThai ? 'th' : 'en']
   const completion = useMutation({ mutationFn: async () => { await draft.saveAll(); return completePhase(project.id, 'D') }, onSuccess: async () => { await queryClient.invalidateQueries({ queryKey: ['project', project.id] }); navigate(`/projects/${project.id}/E`) } })
   function updateAssumption(index: number, patch: Partial<Assumption>) { draft.setField('assumptions', assumptions.map((item, itemIndex) => itemIndex === index ? { ...item, ...patch } : item) as unknown as Json) }
-  const ready = assumptions.every((item) => item.text.trim() && item.stance && (item.stance !== 'challenge' || (item.why.trim() && item.change.trim()))) && Boolean(String(draft.values.directionResult)) && Boolean(String(draft.values.whatChanged).trim())
+  const ready = assumptions.every((item) => item.text.trim() && item.stance && item.why.trim() && (item.stance !== 'challenge' || item.change.trim())) && Boolean(String(draft.values.directionResult)) && Boolean(String(draft.values.whatChanged).trim())
 
   return (
     <JourneyLayout project={project} phase="D" phaseName="DEBATE" chatContext={draft.values} saveState={draft.saveState}>
+      <aside className="debate-guide" aria-labelledby="debate-guide-title">
+        <header>
+          <span>HOW THIS STEP WORKS</span>
+          <h2 id="debate-guide-title">{guide.title}</h2>
+          <p>{guide.intro}</p>
+        </header>
+        <div className="debate-guide__steps">
+          {guide.steps.map(([title, description]) => <article key={title}><strong>{title}</strong><p>{description}</p></article>)}
+        </div>
+        <div className="debate-guide__reference">
+          <section>
+            <h3>{guide.statusTitle}</h3>
+            <dl>{guide.statuses.map(([term, description]) => <div key={term}><dt>{term}</dt><dd>{description}</dd></div>)}</dl>
+          </section>
+          <section>
+            <h3>{guide.mappingTitle}</h3>
+            <dl>{guide.mapping.map(([term, description]) => <div key={term}><dt>{term}</dt><dd>{description}</dd></div>)}</dl>
+          </section>
+        </div>
+        <details className="debate-guide__example" open>
+          <summary>{guide.exampleTitle}</summary>
+          <p>{guide.example}</p>
+        </details>
+      </aside>
+
       <PhaseSection step="01" title="EXPOSE THE ASSUMPTIONS" description={isThai ? 'ใช้ Prompt Kit ค้นหาสิ่งที่ข้อเสนอถือว่าเป็นจริงโดยยังไม่มีหลักฐาน' : 'Use the Prompt Kit to expose what the proposal treats as true without evidence.'}>
         <div className="assumption-stack">
           {assumptions.map((assumption, index) => (
             <article className="assumption-card" key={index}>
-              <FormField label={`AI ASSUMED THAT… ${index + 1}`} guideKey="debate.assumption" required><textarea rows={3} value={assumption.text} onChange={(event) => updateAssumption(index, { text: event.target.value })} /></FormField>
+              <FormField label={`DIRECTION ASSUMES THAT… ${index + 1}`} guideKey="debate.assumption" required><textarea rows={3} value={assumption.text} onChange={(event) => updateAssumption(index, { text: event.target.value })} /></FormField>
               <div className="stance-buttons">
-                <button className={assumption.stance === 'agree' ? 'is-active' : ''} type="button" onClick={() => updateAssumption(index, { stance: 'agree' })}>WE AGREE</button>
-                <button className={assumption.stance === 'challenge' ? 'is-active challenge' : ''} type="button" onClick={() => updateAssumption(index, { stance: 'challenge' })}>WE CHALLENGE</button>
+                <button className={assumption.stance === 'agree' ? 'is-active' : ''} type="button" onClick={() => updateAssumption(index, { stance: 'agree', change: '' })}><strong>WE AGREE</strong><small>{guide.agree}</small></button>
+                <button className={assumption.stance === 'challenge' ? 'is-active challenge' : ''} type="button" onClick={() => updateAssumption(index, { stance: 'challenge' })}><strong>WE CHALLENGE</strong><small>{guide.challenge}</small></button>
               </div>
-              {assumption.stance === 'challenge' ? <div className="form-grid form-grid--two challenge-fields"><FormField label="WHY?" guideKey="debate.why"><textarea rows={3} value={assumption.why} onChange={(event) => updateAssumption(index, { why: event.target.value })} /></FormField><FormField label="WHAT SHOULD CHANGE?" guideKey="debate.change"><textarea rows={3} value={assumption.change} onChange={(event) => updateAssumption(index, { change: event.target.value })} /></FormField></div> : null}
+              {assumption.stance ? <div className={`form-grid ${assumption.stance === 'challenge' ? 'form-grid--two' : ''} challenge-fields`}><FormField label={assumption.stance === 'agree' ? 'WHY ARE YOU ACCEPTING THIS RISK?' : 'WHY DO YOU CHALLENGE IT?'} guideKey={assumption.stance === 'agree' ? 'debate.agreeReason' : 'debate.challengeReason'} required><textarea rows={3} value={assumption.why} onChange={(event) => updateAssumption(index, { why: event.target.value })} /></FormField>{assumption.stance === 'challenge' ? <FormField label="WHAT SHOULD CHANGE?" guideKey="debate.change" required><textarea rows={3} value={assumption.change} onChange={(event) => updateAssumption(index, { change: event.target.value })} /></FormField> : null}</div> : null}
             </article>
           ))}
         </div>
