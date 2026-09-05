@@ -35,10 +35,10 @@ export function EstablishPhase({ project }: { project: ProjectRow }) {
           <ListEditor title="NOT IN THIS VERSION" guideKey="establish.nonGoal" items={nonGoals} onChange={(index, value) => updateList('nonGoals', index, value)} onRemove={(index) => removeItem('nonGoals', index)} onAdd={() => addItem('nonGoals')} />
         </div>
       </PhaseSection>
-      <PhaseSection step="02" title="LOCKED BASIC BUILD RULES" description={isThai ? 'ข้อจำกัดของ Course นี้แก้ไขไม่ได้' : 'These course constraints are fixed.'}>
+      <PhaseSection step="02" title="BUILD CONDITIONS FOR THIS EXERCISE" description={isThai ? 'ในแบบฝึกนี้ Application ที่คุณกำลังสร้างจะใช้ขอบเขตทางเทคนิคต่อไปนี้' : 'The application you create in this exercise will use the following technical boundaries.'}>
         <ul className="locked-rules">{basicRules.map((rule) => <li key={rule}><LockKeyhole aria-hidden="true" size={16} /> {rule}</li>)}</ul>
       </PhaseSection>
-      <ReviewGate title="SCOPE GATE" question={isThai ? 'ถ้า Chat เสนอ Feature ใหม่หลังจากนี้ คุณพร้อมจะไม่เพิ่มมันโดยอัตโนมัติหรือยัง?' : 'If Chat suggests a new feature now, are you ready not to add it automatically?'} actions={<ArcadeButton disabled={!ready || completion.isPending} onClick={() => completion.mutate()}><LockKeyhole aria-hidden="true" size={18} /> {completion.isPending ? 'LOCKING…' : 'LOCK PRODUCT SCOPE'}</ArcadeButton>}>
+      <ReviewGate title="SCOPE GATE" question={isThai ? 'ถ้า Chat เสนอ Feature ใหม่ คุณจะตรวจ Scope ก่อนเพิ่มหรือไม่?' : 'If Chat suggests a new feature, will you check the scope before adding it?'} actions={<ArcadeButton disabled={!ready || completion.isPending} onClick={() => completion.mutate()}><LockKeyhole aria-hidden="true" size={18} /> {completion.isPending ? 'LOCKING…' : 'LOCK PRODUCT SCOPE'}</ArcadeButton>}>
         <dl><div><dt>WE ARE BUILDING</dt><dd>{String(draft.values.direction)}</dd></div><div><dt>MUST HAVE</dt><dd>{mustHaves.filter(Boolean).join(' · ')}</dd></div><div><dt>NOT IN THIS VERSION</dt><dd>{nonGoals.filter(Boolean).join(' · ')}</dd></div></dl>
         {completion.isError ? <p className="field-error" role="alert">Lock scope ไม่สำเร็จ ข้อมูลยังไม่เปลี่ยนสถานะ</p> : null}
       </ReviewGate>
