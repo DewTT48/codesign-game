@@ -3083,6 +3083,17 @@ main {
   line-height: 1.65;
 }
 
+/* Press Start 2P has no Thai glyphs. Mixed Thai-English labels otherwise
+   fall back mid-line and make Thai look smaller than adjacent Latin text. */
+:lang(th) .debate-guide__steps strong,
+:lang(th) .debate-guide__reference h3,
+:lang(th) .debate-guide__example summary {
+  font-family: var(--font-body);
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1.55;
+}
+
 .option-stack,
 .assumption-stack {
   display: grid;
