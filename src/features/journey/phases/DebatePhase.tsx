@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { ArrowRight } from 'lucide-react'
+import { ArrowRight, Plus, X } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { ArcadeButton } from '../../../components/ui/ArcadeButton'
 import type { Json, ProjectRow } from '../../../lib/supabase/database.types'
@@ -10,6 +10,8 @@ import { FormField, PhaseSection, ReviewGate } from '../PhaseFormComponents'
 import { usePhaseDraft } from '../usePhaseDraft'
 
 type Assumption = { text: string; stance: '' | 'agree' | 'challenge'; why: string; change: string }
+const MIN_ASSUMPTIONS = 2
+const MAX_ASSUMPTIONS = 5
 const blankAssumption = (): Assumption => ({ text: '', stance: '', why: '', change: '' })
 const initialDebate = { assumptions: [blankAssumption(), blankAssumption()] as unknown as Json, directionResult: '', whatChanged: '' }
 
@@ -19,7 +21,7 @@ const debateGuide = {
     intro: <>AI มีหน้าที่เปิดเผยมุมที่ Direction อาจมองข้าม ส่วนคุณมีหน้าที่ตัดสินใจว่าจะยอมรับความเสี่ยงนั้น หรือปรับ Direction <span className="keep-together">ก่อนสร้างจริง</span></>,
     steps: [
       ['01 · ให้ AI ท้าทาย', 'ใช้ Prompt Kit เพื่อหา 3–5 สมมติฐาน แล้วอ่าน Evidence, Failure\u00a0mode และ Impact เพื่อเข้าใจความเสี่ยง'],
-      ['02 · เลือกเพียง 2 ข้อ', 'เลือกเฉพาะ ASSUMPTION สถานะ ASSUMED หรือ UNKNOWN จำนวน 2 ข้อที่สำคัญต่อ Direction มากที่สุด แล้วนำมากรอกโดยไม่ต้องคัดลอกบทวิเคราะห์ทั้งหมด'],
+      ['02 · เลือกอย่างน้อย 2 ข้อ', 'เริ่มจาก ASSUMPTION สถานะ ASSUMED หรือ UNKNOWN ที่สำคัญที่สุด 2 ข้อ และเพิ่มได้ถึง 5 ข้อเมื่อจำเป็น โดยไม่ต้องคัดลอกบทวิเคราะห์ทั้งหมด'],
       ['03 · คุณเป็นคนตัดสินใจ', 'เลือก Agree หรือ Challenge พร้อมเขียนเหตุผลด้วยคำของคุณเอง แล้วสรุปว่า Direction เดิมยังอยู่หรือต้องเปลี่ยน'],
     ],
     statusTitle: 'อ่าน STATUS จาก Chat อย่างไร',
@@ -45,7 +47,7 @@ const debateGuide = {
     intro: 'AI exposes what the direction may be overlooking. You decide whether to accept that risk or revise the direction before building.',
     steps: [
       ['01 · LET AI CHALLENGE', 'Use the Prompt Kit to find 3–5 assumptions. Read the evidence, failure mode, and impact to understand each risk.'],
-      ['02 · CHOOSE ONLY 2', 'Bring back only critical ASSUMED or UNKNOWN items. Do not copy the full analysis into the form.'],
+      ['02 · CHOOSE AT LEAST 2', 'Start with the 2 most critical ASSUMED or UNKNOWN items. Add up to 5 when needed; do not copy the full analysis.'],
       ['03 · MAKE THE HUMAN DECISION', 'Choose Agree or Challenge, explain the reason in your own words, then decide whether the direction stays or changes.'],
     ],
     statusTitle: 'How to read Chat status',
@@ -77,6 +79,14 @@ export function DebatePhase({ project }: { project: ProjectRow }) {
   const guide = debateGuide[isThai ? 'th' : 'en']
   const completion = useMutation({ mutationFn: async () => { await draft.saveAll(); return completePhase(project.id, 'D') }, onSuccess: async () => { await queryClient.invalidateQueries({ queryKey: ['project', project.id] }); navigate(`/projects/${project.id}/E`) } })
   function updateAssumption(index: number, patch: Partial<Assumption>) { draft.setField('assumptions', assumptions.map((item, itemIndex) => itemIndex === index ? { ...item, ...patch } : item) as unknown as Json) }
+  function addAssumption() {
+    if (assumptions.length >= MAX_ASSUMPTIONS) return
+    draft.setField('assumptions', [...assumptions, blankAssumption()] as unknown as Json)
+  }
+  function removeAssumption(index: number) {
+    if (assumptions.length <= MIN_ASSUMPTIONS) return
+    draft.setField('assumptions', assumptions.filter((_, itemIndex) => itemIndex !== index) as unknown as Json)
+  }
   const ready = assumptions.every((item) => item.text.trim() && item.stance && item.why.trim() && (item.stance !== 'challenge' || item.change.trim())) && Boolean(String(draft.values.directionResult)) && Boolean(String(draft.values.whatChanged).trim())
 
   return (
@@ -110,6 +120,7 @@ export function DebatePhase({ project }: { project: ProjectRow }) {
         <div className="assumption-stack">
           {assumptions.map((assumption, index) => (
             <article className="assumption-card" key={index}>
+              {assumptions.length > MIN_ASSUMPTIONS ? <button className="assumption-card__remove" type="button" onClick={() => removeAssumption(index)} aria-label={`${isThai ? 'ลบสมมติฐานข้อที่' : 'Remove assumption'} ${index + 1}`}><X aria-hidden="true" size={17} /> REMOVE</button> : null}
               <FormField label={`DIRECTION ASSUMES THAT… ${index + 1}`} guideKey="debate.assumption" required><textarea rows={3} value={assumption.text} onChange={(event) => updateAssumption(index, { text: event.target.value })} /></FormField>
               <div className="stance-buttons">
                 <button className={assumption.stance === 'agree' ? 'is-active' : ''} type="button" onClick={() => updateAssumption(index, { stance: 'agree', change: '' })}><strong>WE AGREE</strong><small>{guide.agree}</small></button>
@@ -119,6 +130,7 @@ export function DebatePhase({ project }: { project: ProjectRow }) {
             </article>
           ))}
         </div>
+        <button className="add-list-item assumption-add" type="button" disabled={assumptions.length >= MAX_ASSUMPTIONS} onClick={addAssumption}><Plus aria-hidden="true" size={17} /> ADD ASSUMPTION ({assumptions.length}/{MAX_ASSUMPTIONS})</button>
       </PhaseSection>
       <PhaseSection step="02" title="RECONSIDER WITH CHAT" description={isThai ? 'ใช้ Locked Context และคำท้าทายของคุณพิจารณา Direction ใหม่' : 'Reconsider the direction using locked context and your challenges.'}>
         <div className="choice-grid choice-grid--two">

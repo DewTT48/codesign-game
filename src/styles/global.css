@@ -3111,6 +3111,32 @@ main {
   border: 3px solid var(--line);
 }
 
+.assumption-card__remove {
+  min-height: 42px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 18px auto;
+  padding: 8px 12px;
+  color: var(--muted);
+  background: var(--deep-3);
+  border: 2px solid var(--line);
+  font-family: var(--font-display);
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.assumption-card__remove:hover,
+.assumption-card__remove:focus-visible {
+  color: var(--white);
+  background: var(--magenta);
+  border-color: var(--white);
+}
+
+.assumption-add {
+  margin-top: 20px;
+}
+
 .option-card > header {
   display: flex;
   align-items: center;
@@ -4056,6 +4082,11 @@ main {
   .stance-buttons {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .assumption-add {
+    width: 100%;
+    justify-content: center;
   }
 
   .completion-actions,
