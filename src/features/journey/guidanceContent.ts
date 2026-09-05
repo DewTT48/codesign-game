@@ -57,8 +57,8 @@ const fieldGuides: Record<string, Localized<FieldGuide>> = {
   'debate.whatChanged': field('หลังท้าทายสมมติฐาน Direction เปลี่ยนอะไร และเพราะอะไร?', 'After challenging assumptions, what changed and why?', 'ยังใช้ Daily Reflection แต่ตัด streak pressure ออกเพราะขัดกับบริบทที่ผู้ใช้เหนื่อย', 'Keep daily reflection but remove streak pressure because it conflicts with the tired-user context'),
 
   'establish.direction': field('สรุป Product version นี้ในหนึ่งประโยค: ใคร ใช้อะไร เพื่อผลลัพธ์ใด?', 'Describe this version in one sentence: who uses what to achieve which outcome?', 'เว็บแอปสะท้อนคิด 21 วันสำหรับพนักงานใหม่ เพื่อสร้างนิสัยทบทวนงานวันละไม่เกิน 10 นาที', 'A 21-day reflection web app for new employees to build a ten-minute daily reflection habit'),
-  'establish.mustHave': field('ถ้าตัดสิ่งนี้ออก Product จะยังช่วยให้ผู้ใช้บรรลุ Goal หลักได้หรือไม่?', 'If this is removed, can the product still deliver its core goal?', 'Daily prompt, saved response, progress overview', 'Daily prompt, saved response, progress overview', 'Nice-to-have หรือรายละเอียดตกแต่ง', 'Nice-to-haves or decorative details'),
-  'establish.nonGoal': field('อะไรที่น่าสนใจแต่ตั้งใจไม่ทำใน Version แรก?', 'What attractive idea are you intentionally excluding from version one?', 'Social sharing, AI-generated coaching, account sync', 'Social sharing, AI-generated coaching, account sync', 'คำกว้าง ๆ เช่น Feature ที่ไม่จำเป็น', 'Vague phrases such as unnecessary features'),
+  'establish.mustHave': field('ผู้ใช้ต้องทำอะไรใน Product นี้ จึงจะบรรลุ Goal หลัก?', 'What must the user do in this product to achieve the core goal?', 'ตอบ Daily prompt, บันทึกคำตอบ, ดูความคืบหน้า', 'Answer a daily prompt, save a response, view progress', 'Nice-to-have รายละเอียดตกแต่ง หรือสิ่งที่ไม่เชื่อมกับ Goal หลัก', 'Nice-to-haves, decoration, or anything not tied to the core goal', 'ระบุเฉพาะสิ่งที่ผู้ใช้จำเป็นต้องทำหรือได้รับ หากขาดสิ่งนี้ ผู้ใช้จะไปไม่ถึง Goal หลัก', 'Include only what the user must do or receive; without it, the user cannot reach the core goal'),
+  'establish.nonGoal': field('เราจะยังไม่สร้างอะไรใน Version แรก แม้สิ่งนั้นจะน่าสนใจ?', 'What will we intentionally not build in version one, even if it is attractive?', 'Social sharing, AI-generated coaching, account sync', 'Social sharing, AI-generated coaching, account sync', 'คำกว้าง ๆ เช่น Feature ที่ไม่จำเป็น', 'Vague phrases such as unnecessary features'),
 
   'spec.flow': field('เขียนเป็นการกระทำที่ผู้ใช้ทำตามลำดับ ตั้งแต่เริ่มจนเห็นผลลัพธ์', 'Write observable user actions in order, from entry to outcome', 'Open app → choose Day 1 → answer prompt → save → see progress', 'Open app → choose Day 1 → answer prompt → save → see progress', 'ชื่อหน้าจอที่ไม่บอกว่าผู้ใช้ทำอะไร', 'Screen names that do not describe user action'),
   'spec.screenName': field('ตั้งชื่อตามหน้าที่ของ Screen หรือ State', 'Name the screen or state by its job', 'Daily Activity', 'Daily Activity'),
@@ -265,19 +265,63 @@ export function getPhaseGuide(
       th: {
         headline: 'EXPLORATION ENDS HERE.',
         principle: 'หยุดเพิ่ม Option แล้วตัดสินใจว่า Version แรกจะเป็นอะไรและจะไม่เป็นอะไร',
-        hint: 'Must Have คือสิ่งที่ขาดแล้ว Goal หลักเกิดขึ้นไม่ได้ ส่วนสิ่งที่เพียงน่าสนใจให้ย้ายไป Non-goal',
-        chatGoal: 'ตรวจ Scope เทียบกับ Locked Context โดยไม่เพิ่ม Feature ใหม่',
-        prompt: `ช่วยตรวจ Product scope สำหรับ “21 DAYS OF ${topic}”\n\nWHO: ${who}\nGOAL: ${goal}\nSUCCESS: ${success}\nCONSTRAINTS: ${constraints}\nDIRECTION หลัง Debate: ${sourceValue(source, 'D', 'whatChanged')}\n\nScope ที่ผมกำลังคิด:\nWE ARE BUILDING: ${text(current.direction)}\nMUST HAVE: ${text(current.mustHaves)}\nNOT IN THIS VERSION: ${text(current.nonGoals)}\n\nใช้เกณฑ์เดียว: ถ้าตัดสิ่งนี้ออก ผู้ใช้ยังบรรลุ Goal หลักได้หรือไม่? ชี้สิ่งที่กว้าง ซ้ำ หรือเป็น Nice-to-have และช่วยตั้งคำถามให้ผมตัดสินใจ ห้ามเพิ่ม Feature ใหม่`,
-        followUps: ['Must Have ข้อใดไม่เชื่อมกับ Goal?', 'ข้อใดควรรวมกันเป็น Product capability เดียว?', 'มี Non-goal ใดที่ควรระบุเพื่อป้องกัน scope creep?'],
+        hint: 'กำหนดเฉพาะสิ่งที่ผู้ใช้ต้องทำเพื่อบรรลุ Goal หลัก ส่วนสิ่งที่น่าสนใจแต่ไม่จำเป็นให้ย้ายไป Non-goal',
+        chatGoal: 'ตรวจว่าทุก Must Have รองรับสิ่งที่ผู้ใช้ต้องทำเพื่อบรรลุ Goal โดยไม่เพิ่ม Feature ใหม่',
+        prompt: `ช่วยตรวจ Product scope สำหรับ “21 DAYS OF ${topic}”
+
+WHO: ${who}
+GOAL: ${goal}
+SUCCESS: ${success}
+CONSTRAINTS: ${constraints}
+DIRECTION หลัง Debate: ${sourceValue(source, 'D', 'whatChanged')}
+
+Scope ที่ผมกำลังคิด:
+WE ARE BUILDING: ${text(current.direction)}
+MUST HAVE: ${text(current.mustHaves)}
+NOT IN THIS VERSION: ${text(current.nonGoals)}
+
+เริ่มตรวจจากคำถามหลัก: ผู้ใช้ต้องทำอะไรใน Product นี้ จึงจะบรรลุ Goal หลัก?
+
+สำหรับแต่ละ MUST HAVE:
+1. ตรวจว่าเขียนเป็นการกระทำของผู้ใช้ หรือความสามารถที่ Product ต้องรองรับอย่างชัดเจนหรือไม่
+2. อธิบายว่าข้อนั้นช่วยให้ผู้ใช้บรรลุ GOAL หรือ SUCCESS อย่างไร
+3. ใช้คำถาม “ถ้าตัดข้อนี้ออก ผู้ใช้ยังบรรลุ Goal หลักได้ไหม?” เป็นเกณฑ์ตรวจ หากยังบรรลุได้ ให้เสนอว่าย้ายไป Nice-to-have หรือ NOT IN THIS VERSION
+
+สำหรับ NOT IN THIS VERSION ให้ตรวจว่าเป็นสิ่งที่เราตั้งใจยังไม่สร้างใน Version แรกอย่างชัดเจนหรือไม่
+
+ชี้รายการที่กว้าง ซ้ำ ไม่เชื่อมกับ Goal หรือเป็นเพียงรายละเอียดตกแต่ง แล้วถามผมทีละคำถามเพื่อให้ผมตัดสินใจ ห้ามเพิ่ม Feature ใหม่และห้ามตัดสินใจแทนผม`,
+        followUps: ['ผู้ใช้ทำอะไรไม่ได้ถ้าตัด Must Have ข้อนี้ออก?', 'Must Have ข้อใดไม่ช่วยให้ผู้ใช้บรรลุ Goal?', 'ข้อใดควรรวมกันเป็น Product capability เดียว?', 'มี Non-goal ใดที่ควรระบุเพื่อป้องกัน scope creep?'],
         bringBack: 'กลับมาพร้อม Direction หนึ่งประโยค, Must Have 1–8 ข้อ และ Non-goal อย่างน้อย 2 ข้อ',
       },
       en: {
         headline: 'EXPLORATION ENDS HERE.',
         principle: 'Stop adding options and decide what version one is—and is not.',
-        hint: 'A must-have is something whose removal breaks the core goal. Move merely attractive ideas to non-goals.',
-        chatGoal: 'Review scope against locked context without adding new features.',
-        prompt: `Review the product scope for “21 DAYS OF ${topic}”.\n\nWHO: ${who}\nGOAL: ${goal}\nSUCCESS: ${success}\nCONSTRAINTS: ${constraints}\nPOST-DEBATE DIRECTION: ${sourceValue(source, 'D', 'whatChanged')}\n\nCURRENT SCOPE:\nWE ARE BUILDING: ${text(current.direction)}\nMUST HAVE: ${text(current.mustHaves)}\nNOT IN THIS VERSION: ${text(current.nonGoals)}\n\nUse one test: if this item is removed, can the user still achieve the core goal? Identify broad, duplicate, or nice-to-have items and ask me questions so I decide. Do not add features.`,
-        followUps: ['Which must-have does not connect to the goal?', 'Which items should be one capability?', 'Which non-goal would best prevent scope creep?'],
+        hint: 'Define only what the user must do to reach the core goal. Move attractive but unnecessary ideas to non-goals.',
+        chatGoal: 'Check that every must-have supports what the user must do to reach the goal, without adding features.',
+        prompt: `Review the product scope for “21 DAYS OF ${topic}”.
+
+WHO: ${who}
+GOAL: ${goal}
+SUCCESS: ${success}
+CONSTRAINTS: ${constraints}
+POST-DEBATE DIRECTION: ${sourceValue(source, 'D', 'whatChanged')}
+
+CURRENT SCOPE:
+WE ARE BUILDING: ${text(current.direction)}
+MUST HAVE: ${text(current.mustHaves)}
+NOT IN THIS VERSION: ${text(current.nonGoals)}
+
+Begin with this active question: What must the user do in this product to achieve the core goal?
+
+For each MUST HAVE:
+1. Check whether it clearly states a user action or a capability the product must support.
+2. Explain how it helps the user achieve the GOAL or SUCCESS.
+3. Use “If this is removed, can the user still achieve the core goal?” only as a validation test. If yes, suggest moving it to Nice-to-have or NOT IN THIS VERSION.
+
+For NOT IN THIS VERSION, check whether it clearly states what we intentionally will not build in version one.
+
+Identify items that are broad, duplicated, disconnected from the goal, or merely decorative. Ask me one question at a time so I decide. Do not add features or decide for me.`,
+        followUps: ['What becomes impossible for the user if this must-have is removed?', 'Which must-have does not help the user reach the goal?', 'Which items should become one product capability?', 'Which non-goal would best prevent scope creep?'],
         bringBack: 'Return with a one-sentence direction, 1–8 must-haves, and at least two explicit non-goals.',
       },
     },

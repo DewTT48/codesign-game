@@ -91,4 +91,24 @@ describe('guided content', () => {
     expect(guide.prompt).not.toContain('["Daily activity"')
     expect(guide.prompt).not.toContain('{"name"')
   })
+
+  it('frames Establish must-haves as user actions and keeps removal as a validation test', () => {
+    const guide = getPhaseGuide('th', 'E', {
+      C: {
+        who: 'พนักงานใหม่',
+        goal: 'ทบทวนงานอย่างต่อเนื่อง',
+        success: 'บันทึกครบ 14 วัน',
+        constraints: 'ใช้เวลาไม่เกิน 10 นาที',
+      },
+      D: { whatChanged: 'ใช้กิจกรรมสะท้อนคิดรายวัน' },
+    }, {
+      direction: 'เว็บแอปสะท้อนคิดรายวัน',
+      mustHaves: ['ตอบคำถามประจำวัน', 'บันทึกคำตอบ'],
+      nonGoals: ['Social sharing', 'AI coaching'],
+    }, 'REFLECTION')
+
+    expect(guide.prompt).toContain('ผู้ใช้ต้องทำอะไรใน Product นี้ จึงจะบรรลุ Goal หลัก?')
+    expect(guide.prompt).toContain('เป็นเกณฑ์ตรวจ')
+    expect(guide.prompt).toContain('ห้ามเพิ่ม Feature ใหม่และห้ามตัดสินใจแทนผม')
+  })
 })
