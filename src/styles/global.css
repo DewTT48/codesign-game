@@ -2964,7 +2964,8 @@ main {
 
 .debate-guide > header > span {
   color: var(--accent);
-  font-size: 8px;
+  font-size: 12px;
+  line-height: 1.6;
 }
 
 .debate-guide > header h2 {
@@ -2977,7 +2978,7 @@ main {
   max-width: 980px;
   margin: 14px 0 0;
   color: var(--muted);
-  font-size: 18px;
+  font-size: 19px;
   font-weight: 600;
   line-height: 1.65;
 }
@@ -2997,14 +2998,14 @@ main {
 
 .debate-guide__steps strong {
   color: var(--accent);
-  font-size: 7px;
+  font-size: 12px;
   line-height: 1.7;
 }
 
 .debate-guide__steps p {
   margin: 12px 0 0;
   color: var(--white);
-  font-size: 16px;
+  font-size: 18px;
   line-height: 1.6;
 }
 
@@ -3024,7 +3025,7 @@ main {
 .debate-guide__reference h3 {
   margin: 0 0 18px;
   color: var(--white);
-  font-size: 8px;
+  font-size: 12px;
   line-height: 1.7;
 }
 
@@ -3036,7 +3037,7 @@ main {
 
 .debate-guide dl div {
   display: grid;
-  grid-template-columns: minmax(110px, 0.4fr) minmax(0, 1.6fr);
+  grid-template-columns: minmax(160px, 0.6fr) minmax(0, 1.4fr);
   gap: 14px;
   padding-top: 14px;
   border-top: 1px solid var(--line);
@@ -3049,16 +3050,16 @@ main {
 
 .debate-guide dt {
   color: var(--positive);
-  font-size: 6px;
+  font-size: 11px;
   line-height: 1.7;
 }
 
 .debate-guide dd {
   margin: 0;
   color: var(--muted);
-  font-size: 15px;
+  font-size: 17px;
   font-weight: 600;
-  line-height: 1.55;
+  line-height: 1.65;
 }
 
 .debate-guide__example {
@@ -3070,14 +3071,14 @@ main {
 }
 
 .debate-guide__example summary {
-  font-size: 7px;
+  font-size: 11px;
   line-height: 1.6;
   cursor: pointer;
 }
 
 .debate-guide__example p {
   margin: 12px 0 0;
-  font-size: 16px;
+  font-size: 18px;
   font-weight: 600;
   line-height: 1.65;
 }
@@ -3175,7 +3176,7 @@ main {
 
 .stance-buttons button strong {
   font-family: var(--font-display);
-  font-size: 7px;
+  font-size: 11px;
   line-height: 1.5;
 }
 
@@ -3183,9 +3184,9 @@ main {
   margin: 0;
   color: inherit;
   font-family: var(--font-body);
-  font-size: 14px;
+  font-size: 17px;
   font-weight: 600;
-  line-height: 1.5;
+  line-height: 1.6;
 }
 
 .stance-buttons button.is-active,
