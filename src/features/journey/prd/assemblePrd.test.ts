@@ -39,5 +39,30 @@ describe('assemblePrd', () => {
     expect(markdown).toContain('- No backend.')
     expect(markdown).toContain('PRODUCT DECISION REQUIRED')
   })
-})
 
+  it('assembles the simplified Specify model into a companion-file handoff', () => {
+    const markdown = assemblePrd(project, {
+      C: { who: 'New writers', goal: 'Write daily', success: '21 entries' },
+      E: { direction: 'A calm daily writing companion', mustHaves: ['Complete one activity'], nonGoals: ['Social feed'] },
+      S: {
+        specificationVersion: 2,
+        journeySummary: 'Open → do today’s activity → save → see progress',
+        dailyCompletionRule: 'Save one reflection',
+        returnRule: 'allow-edit',
+        sequenceRule: 'sequential',
+        storageRule: 'browser-device',
+        productLanguage: 'en',
+        contentArcs: [{ range: 'DAY 01–07', title: 'Notice', goal: 'Build awareness' }],
+        dailyContent: [{ day: 1, title: 'Begin', objective: 'Start', content: 'Read', exercise: 'Write', reflection: 'Notice', record: 'Answer', completion: 'Save', duration: '5 min', reviewed: true }],
+        selectedExperience: 'Calm Focus',
+        experienceOwnerConfirmed: true,
+      },
+    })
+
+    expect(markdown).toContain('# CODESIGN HANDOFF — 21 DAYS OF WRITING')
+    expect(markdown).toContain('`CONTENT_PACK.md`')
+    expect(markdown).toContain('Owner-selected direction:** Calm Focus')
+    expect(markdown).toContain('Thai content must use natural word wrapping')
+    expect(markdown).toContain('No embedded AI')
+  })
+})

@@ -1,5 +1,11 @@
 import type { Json, ProjectRow } from '../../../lib/supabase/database.types'
 import type { JourneyExportData } from '../journey.service'
+import {
+  countCompleteDays,
+  normalizeContentArcs,
+  normalizeDailyContent,
+  normalizeExperienceOptions,
+} from '../specify/specifyModel'
 
 const text = (value: Json | undefined, fallback = 'Not recorded') =>
   typeof value === 'string' && value.trim() ? value.trim() : fallback
@@ -24,6 +30,61 @@ export function assembleJournal(project: ProjectRow, data: JourneyExportData): s
   const i = data.phases.I ?? {}
   const g = data.phases.G ?? {}
   const n = data.phases.N ?? {}
+  const isCurrentSpecification = Number(s.specificationVersion) >= 2
+  const contentArcs = normalizeContentArcs(s.contentArcs)
+  const dailyContent = normalizeDailyContent(s.dailyContent)
+  const experienceOptions = normalizeExperienceOptions(s.experienceOptions)
+  const selectedExperience = experienceOptions.find((option) => option.name === text(s.selectedExperience, ''))
+  const specificationSummary = isCurrentSpecification ? `### Journey & Rules
+
+- **Primary journey:** ${text(s.journeySummary)}
+- **One day is complete when:** ${text(s.dailyCompletionRule)}
+- **Return rule:** ${text(s.returnRule)}
+- **Sequence rule:** ${text(s.sequenceRule)}
+- **Storage rule:** ${text(s.storageRule)}
+- **Product language:** ${text(s.productLanguage)}
+
+### Content Blueprint
+
+${contentArcs.map((arc) => `- **${arc.range} — ${arc.title || 'Not recorded'}:** ${arc.goal || 'Not recorded'}`).join('\n')}
+
+- **Daily content pattern:** ${text(s.contentPattern)}
+- **Daily exercise pattern:** ${text(s.exercisePattern)}
+- **Daily record pattern:** ${text(s.recordPattern)}
+- **Complete days:** ${countCompleteDays(dailyContent)}/21
+- **Owner reviewed Content Pack:** ${String(Boolean(s.contentOwnerConfirmed))}
+
+### Experience Direction
+
+${selectedExperience ? `- **Selected:** ${selectedExperience.name}\n- **Mood:** ${selectedExperience.mood}\n- **Colors:** ${selectedExperience.background}, ${selectedExperience.surface}, ${selectedExperience.primary}, ${selectedExperience.accent}, ${selectedExperience.text}\n- **Rationale:** ${selectedExperience.rationale}` : '- Not recorded'}
+- **Owner confirmed direction:** ${String(Boolean(s.experienceOwnerConfirmed))}
+
+### Acceptance Criteria
+
+${bullets(list(s.acceptanceCriteria))}` : `### Primary Flow
+
+${bullets(list(s.flowSteps))}
+
+### Screens & Behaviors
+
+${jsonBlock(s.screens)}
+
+### Content & Browser State
+
+- **Content readiness:** ${text(s.contentReadiness)}
+- **Implementation source:** ${text(s.contentImplementationReady)}
+- **Day fields:** ${list(s.dayFields).join(', ') || 'Not recorded'}
+- **Browser state:** ${list(s.browserState).join(', ') || 'Not recorded'}
+
+### Visual Direction
+
+- **Character:** ${list(s.feelWords).join(', ') || 'Not recorded'}
+- **Style:** ${text(s.visualStyle)}
+- **Rationale:** ${text(s.visualRationale)}
+
+### Edge Cases & Acceptance Criteria
+
+${bullets(list(s.acceptanceCriteria))}`
 
   return `# CODESIGN JOURNAL — ${project.title}
 
@@ -71,30 +132,7 @@ ${bullets(list(e.nonGoals))}
 
 ## S — Specification
 
-### Primary Flow
-
-${bullets(list(s.flowSteps))}
-
-### Screens & Behaviors
-
-${jsonBlock(s.screens)}
-
-### Content & Browser State
-
-- **Content readiness:** ${text(s.contentReadiness)}
-- **Implementation source:** ${text(s.contentImplementationReady)}
-- **Day fields:** ${list(s.dayFields).join(', ') || 'Not recorded'}
-- **Browser state:** ${list(s.browserState).join(', ') || 'Not recorded'}
-
-### Visual Direction
-
-- **Character:** ${list(s.feelWords).join(', ') || 'Not recorded'}
-- **Style:** ${text(s.visualStyle)}
-- **Rationale:** ${text(s.visualRationale)}
-
-### Edge Cases & Acceptance Criteria
-
-${bullets(list(s.acceptanceCriteria))}
+${specificationSummary}
 
 ## PRD Snapshot
 
@@ -102,6 +140,7 @@ ${data.prd?.markdown_content ?? 'No locked PRD snapshot found.'}
 
 ## I — Implement
 
+- **GitHub readiness at handoff:** ${text(i.githubReadiness)}
 - **Working app confirmed:** ${String(i.workingApp ?? false)}
 - **App URL:** ${data.build?.app_url ?? text(i.appUrl)}
 - **Repository URL:** ${data.build?.repository_url ?? text(i.repositoryUrl)}
@@ -129,4 +168,3 @@ ${data.decisions.length ? data.decisions.map((decision) => `- **${decision.phase
 You don't need the perfect first prompt. You need a process that turns uncertainty into decisions.
 `
 }
-

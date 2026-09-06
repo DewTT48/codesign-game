@@ -4,6 +4,7 @@ import {
   BotOff,
   Check,
   Database,
+  Github,
   Globe2,
   ShieldCheck,
 } from 'lucide-react'
@@ -23,10 +24,12 @@ export function MissionBriefPage() {
   const { isThai } = useLanguage()
   const outcomes = isThai ? [
     'เว็บแอปที่ใช้งานได้และมี Public URL',
+    'GitHub Repository ที่ Codex ช่วยสร้างและกลับมาแก้ไขต่อได้',
     'PRD ที่บันทึก Product Definition ของคุณ',
     'Journal ที่แสดงว่าความคิดพัฒนาอย่างไร',
   ] : [
     'A working web app with a public URL',
+    'A GitHub repository Codex helps create and you can continue editing',
     'A PRD that records your Product Definition',
     'A Journal showing how your thinking evolved',
   ]
@@ -93,6 +96,13 @@ export function MissionBriefPage() {
               {isThai ? '21 วันคือโครงสร้างของ Product ที่คุณกำลังสร้าง' : 'The 21 days are the structure of the product you are building.'}
               <strong>{isThai ? 'ไม่ใช่เวลาที่ต้องใช้ในการสร้าง' : 'They are not the build timeline.'}</strong>
             </p>
+          </section>
+          <section className="github-preview" aria-labelledby="github-preview-title">
+            <Github size={27} aria-hidden="true" />
+            <div>
+              <span id="github-preview-title">GITHUB COMES LATER</span>
+              <p>{isThai ? 'GitHub จะเป็นบ้านของไฟล์ App และใช้ Publish ผ่าน GitHub Pages คุณไม่ต้องมีบัญชีหรือใช้เป็นก่อนเริ่มภารกิจ—เมื่อถึงขั้น Implement, Codex จะอธิบายและพาทำทีละขั้น' : 'GitHub will store the app files and publish through GitHub Pages. You do not need an account or prior experience now—Codex will explain and guide setup during Implement.'}</p>
+            </div>
           </section>
         </aside>
       </div>

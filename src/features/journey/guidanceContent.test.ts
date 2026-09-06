@@ -70,7 +70,7 @@ describe('guided content', () => {
     expect(guide.prompt).not.toContain('\\n')
   })
 
-  it('formats structured lists and screen specifications without JSON syntax', () => {
+  it('formats the simplified Specify brief and requests importable Markdown instead of JSON', () => {
     const guide = getPhaseGuide('en', 'S', {
       C: { importantContext: 'Used on a phone' },
       E: {
@@ -79,17 +79,26 @@ describe('guided content', () => {
         nonGoals: ['Social sharing', 'AI coaching'],
       },
     }, {
-      flowSteps: ['Open app', 'Complete activity', 'See progress'],
-      screens: [{ name: 'Daily Activity', sees: 'Prompt', actions: 'Write and save', next: 'Progress' }],
-      dayFields: ['Day number', 'Prompt'],
-      browserState: ['Completed days'],
-      acceptanceCriteria: ['A saved answer survives refresh'],
+      productLanguage: 'th',
+      brandCopy: '21 DAYS OF',
+      journeySummary: 'Open app → Complete activity → See progress',
+      dailyCompletionRule: 'Save one reflection',
+      returnRule: 'allow-edit',
+      sequenceRule: 'sequential',
+      storageRule: 'browser-device',
+      dailyDuration: '10 minutes',
+      contentArcs: [{ range: 'DAY 01–07', title: 'Notice', goal: 'Build awareness' }],
+      contentPattern: 'One short idea',
+      exercisePattern: 'One small action',
+      recordPattern: 'One saved reflection',
     }, 'REFLECTION')
 
     expect(guide.prompt).toContain('1. Daily activity')
-    expect(guide.prompt).toContain('ITEM 01\nNAME: Daily Activity')
+    expect(guide.prompt).toContain('PRIMARY JOURNEY: Open app → Complete activity → See progress')
+    expect(guide.prompt).toContain('## DAY 01')
+    expect(guide.prompt).toContain('## THEME OPTION 1')
+    expect(guide.prompt).toContain('must not use JSON')
     expect(guide.prompt).not.toContain('["Daily activity"')
-    expect(guide.prompt).not.toContain('{"name"')
   })
 
   it('frames Establish must-haves as user actions and keeps removal as a validation test', () => {

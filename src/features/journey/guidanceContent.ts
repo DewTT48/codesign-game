@@ -328,21 +328,159 @@ Identify items that are broad, duplicated, disconnected from the goal, or merely
     S: {
       th: {
         headline: 'MAKE IT BUILDABLE.',
-        principle: 'แปลง Product decisions ให้เป็น Flow, Behavior, Data และเกณฑ์ที่ผู้พัฒนาไม่ต้องเดา',
-        hint: 'เขียนสิ่งที่สังเกตได้: ผู้ใช้เห็นอะไร ทำอะไร ระบบตอบอย่างไร และ App ต้องจำอะไร',
-        chatGoal: 'ให้ Chat ทำหน้าที่ Reviewer ชี้เฉพาะจุดกำกวมโดยไม่เติม Product decisions ให้',
-        prompt: `ตรวจ Specification ของ “21 DAYS OF ${topic}” ในฐานะ Product reviewer\n\nLOCKED DIRECTION: ${direction}\nMUST HAVE: ${mustHaves}\nNON-GOALS: ${nonGoals}\nCONTEXT: ${context}\nCONSTRAINTS: ${constraints}\n\nCURRENT SPECIFICATION\nFLOW: ${text(current.flowSteps)}\nSCREENS: ${text(current.screens)}\nDAY DATA: ${text(current.dayFields)}\nBROWSER STATE: ${text(current.browserState)}\nACCEPTANCE: ${text(current.acceptanceCriteria)}\n\nชี้เฉพาะจุดที่กำกวม ขัดกัน หรือทำให้ Codex ต้องเดา จัดกลุ่มเป็น FLOW / SCREEN BEHAVIOR / CONTENT & DATA / VISUAL RATIONALE / EDGE CASES / ACCEPTANCE CRITERIA ห้ามเติมคำตอบหรือ Feature ใหม่ ให้ถามคำถามที่ผมต้องตัดสินใจแทน`,
-        followUps: ['ข้อใดอธิบายความตั้งใจแต่ยังทดสอบไม่ได้?', 'มี Screen ใดไม่มีทางเข้าออกที่ชัดเจน?', 'Codex ยังต้องเดากติกาใดเกี่ยวกับข้อมูลหรือสถานะ?'],
-        bringBack: 'แก้เฉพาะ Specification ในจุดที่คุณตัดสินใจแล้ว และตรวจให้ Acceptance criteria เป็น Pass/Fail ได้',
+        principle: 'กำหนด Journey, เนื้อหา และ Experience ที่ต้องการ แล้วให้ Chat ช่วยร่างรายละเอียดก่อนคุณตัดสินใจ',
+        hint: 'คุณไม่ต้องออกแบบทุก Screen เอง ให้ตัดสินใจเฉพาะสิ่งที่เปลี่ยนประสบการณ์หรือผลลัพธ์ของผู้ใช้',
+        chatGoal: 'ให้ AI ภายนอกช่วยร่าง Content Pack 21 วันและเสนอ Experience Direction โดยไม่เลือกแทน Product Owner',
+        prompt: `ช่วยทำหน้าที่ Specification Co-designer สำหรับ “21 DAYS OF ${topic}”
+
+Product Owner เป็นผู้ตัดสินใจ ส่วนคุณช่วยร่างรายละเอียดจากข้อมูลที่ Lock แล้ว ห้ามเพิ่ม Feature นอก MUST HAVE
+
+LOCKED DIRECTION
+${direction}
+
+MUST HAVE
+${mustHaves}
+
+NOT IN THIS VERSION
+${nonGoals}
+
+USER CONTEXT
+${context}
+
+CONSTRAINTS
+${constraints}
+
+OWNER SPECIFICATION
+PRODUCT LANGUAGE: ${text(current.productLanguage)}
+BRAND COPY — DO NOT TRANSLATE: ${text(current.brandCopy)}
+PRIMARY JOURNEY: ${text(current.journeySummary)}
+ONE DAY IS COMPLETE WHEN: ${text(current.dailyCompletionRule)}
+RETURN RULE: ${text(current.returnRule)}
+DAY SEQUENCE: ${text(current.sequenceRule)}
+SAVE BEHAVIOR: ${text(current.storageRule)}
+TIME PER DAY: ${text(current.dailyDuration)}
+
+CONTENT BLUEPRINT
+CONTENT ARCS: ${text(current.contentArcs)}
+DAILY CONTENT PATTERN: ${text(current.contentPattern)}
+DAILY EXERCISE PATTERN: ${text(current.exercisePattern)}
+DAILY RECORD PATTERN: ${text(current.recordPattern)}
+
+วิธีทำงาน:
+1. ตรวจเฉพาะความกำกวมที่เปลี่ยน Product behavior, เนื้อหาหลัก หรือผลลัพธ์ของผู้ใช้
+2. หากต้องถาม ให้ถามทีละคำถาม และไม่เกิน 5 คำถามสำคัญ
+3. รายละเอียดมาตรฐานที่ย้อนแก้ได้ ให้เสนอค่าแนะนำพร้อมระบุว่า AI RECOMMENDATION
+4. ห้ามตัดสินใจแทน Product Owner และห้ามเพิ่ม Feature นอก Scope
+5. เมื่อผมตอบคำถามครบหรือพิมพ์ FINALIZE ให้สร้าง Markdown สองส่วนตาม Template ด้านล่าง ห้ามเปลี่ยนชื่อหัวข้อหรือชื่อ Field
+
+CONTENT PACK TEMPLATE — ทำให้ครบ DAY 01 ถึง DAY 21:
+<!-- CODESIGN:CONTENT_PACK:v1 -->
+## DAY 01
+TITLE:
+OBJECTIVE:
+CONTENT:
+EXERCISE:
+REFLECTION:
+RECORD:
+COMPLETION:
+DURATION:
+
+EXPERIENCE TEMPLATE — เสนอ 3 แบบที่ต่างกันจริง:
+<!-- CODESIGN:EXPERIENCE_DRAFT:v1 -->
+## THEME OPTION 1
+NAME:
+MOOD:
+BACKGROUND: #RRGGBB
+SURFACE: #RRGGBB
+PRIMARY: #RRGGBB
+ACCENT: #RRGGBB
+TEXT: #RRGGBB
+TYPOGRAPHY:
+INTERACTION:
+RATIONALE:
+TRADEOFF:
+
+เนื้อหาต้องพร้อมใช้จริง ไม่ใส่ TODO และไม่ใช้ JSON`,
+        followUps: ['คำถามใดถ้าไม่ตอบแล้วจะเปลี่ยน Product behavior จริง?', 'ช่วยรักษาเนื้อหาแต่ละวันให้อยู่ในเวลาที่กำหนด', 'ตรวจว่าแต่ละวันมีเนื้อหา แบบฝึก แบบบันทึก และเกณฑ์สำเร็จครบ', 'เสนอ Theme ที่ต่างกันทั้ง Mood และ Visual approach ไม่ใช่เพียงเปลี่ยนสี'],
+        bringBack: 'พิมพ์ FINALIZE แล้วนำ Markdown ที่มี CONTENT_PACK และ EXPERIENCE_DRAFT กลับมาวางหรืออัปโหลดใน CODESIGN',
       },
       en: {
         headline: 'MAKE IT BUILDABLE.',
-        principle: 'Turn product decisions into flow, behavior, data, and criteria a builder does not have to guess.',
-        hint: 'Write observable details: what users see, what they do, how the system responds, and what the app remembers.',
-        chatGoal: 'Ask Chat to identify ambiguity without inventing product decisions.',
-        prompt: `Review the specification for “21 DAYS OF ${topic}” as a product reviewer.\n\nLOCKED DIRECTION: ${direction}\nMUST HAVE: ${mustHaves}\nNON-GOALS: ${nonGoals}\nCONTEXT: ${context}\nCONSTRAINTS: ${constraints}\n\nCURRENT SPECIFICATION\nFLOW: ${text(current.flowSteps)}\nSCREENS: ${text(current.screens)}\nDAY DATA: ${text(current.dayFields)}\nBROWSER STATE: ${text(current.browserState)}\nACCEPTANCE: ${text(current.acceptanceCriteria)}\n\nIdentify ambiguity, conflict, or anything that makes Codex guess. Group findings under FLOW / SCREEN BEHAVIOR / CONTENT & DATA / VISUAL RATIONALE / EDGE CASES / ACCEPTANCE CRITERIA. Do not add answers or features; ask the questions I must decide.`,
-        followUps: ['Which statements describe intent but cannot be tested?', 'Does any screen lack a clear entry or exit?', 'Which data or state rule would Codex still have to guess?'],
-        bringBack: 'Update only the specification decisions you made and make every acceptance criterion pass/fail testable.',
+        principle: 'Define the journey, content, and intended experience. Let Chat draft detail before you decide.',
+        hint: 'You do not need to design every screen. Decide only what changes user experience or outcomes.',
+        chatGoal: 'Ask an external AI to draft the 21-day Content Pack and three Experience Directions without choosing for the Product Owner.',
+        prompt: `Act as the Specification Co-designer for “21 DAYS OF ${topic}”.
+
+The Product Owner makes decisions. You draft detail from locked information. Do not add features outside MUST HAVE.
+
+LOCKED DIRECTION
+${direction}
+
+MUST HAVE
+${mustHaves}
+
+NOT IN THIS VERSION
+${nonGoals}
+
+USER CONTEXT
+${context}
+
+CONSTRAINTS
+${constraints}
+
+OWNER SPECIFICATION
+PRODUCT LANGUAGE: ${text(current.productLanguage)}
+BRAND COPY — DO NOT TRANSLATE: ${text(current.brandCopy)}
+PRIMARY JOURNEY: ${text(current.journeySummary)}
+ONE DAY IS COMPLETE WHEN: ${text(current.dailyCompletionRule)}
+RETURN RULE: ${text(current.returnRule)}
+DAY SEQUENCE: ${text(current.sequenceRule)}
+SAVE BEHAVIOR: ${text(current.storageRule)}
+TIME PER DAY: ${text(current.dailyDuration)}
+
+CONTENT BLUEPRINT
+CONTENT ARCS: ${text(current.contentArcs)}
+DAILY CONTENT PATTERN: ${text(current.contentPattern)}
+DAILY EXERCISE PATTERN: ${text(current.exercisePattern)}
+DAILY RECORD PATTERN: ${text(current.recordPattern)}
+
+Working method:
+1. Ask only about ambiguity that materially changes product behavior, core content, or the user outcome.
+2. Ask one question at a time, with no more than five high-impact questions.
+3. For reversible standard detail, provide a sensible default labeled AI RECOMMENDATION.
+4. Never decide for the Product Owner or add features outside scope.
+5. When I answer the questions or type FINALIZE, output two Markdown sections using the exact headings and fields below.
+
+CONTENT PACK TEMPLATE — repeat for DAY 01 through DAY 21:
+<!-- CODESIGN:CONTENT_PACK:v1 -->
+## DAY 01
+TITLE:
+OBJECTIVE:
+CONTENT:
+EXERCISE:
+REFLECTION:
+RECORD:
+COMPLETION:
+DURATION:
+
+EXPERIENCE TEMPLATE — provide three meaningfully different options:
+<!-- CODESIGN:EXPERIENCE_DRAFT:v1 -->
+## THEME OPTION 1
+NAME:
+MOOD:
+BACKGROUND: #RRGGBB
+SURFACE: #RRGGBB
+PRIMARY: #RRGGBB
+ACCENT: #RRGGBB
+TEXT: #RRGGBB
+TYPOGRAPHY:
+INTERACTION:
+RATIONALE:
+TRADEOFF:
+
+The content must be implementation-ready, contain no TODO markers, and must not use JSON.`,
+        followUps: ['Which unanswered question would materially change product behavior?', 'Keep every day within the defined time limit.', 'Check that every day has content, an exercise, a record, and a completion rule.', 'Make the themes differ in mood and visual approach, not color alone.'],
+        bringBack: 'Type FINALIZE, then paste or upload the Markdown containing CONTENT_PACK and EXPERIENCE_DRAFT into CODESIGN.',
       },
     },
     PRD: {
@@ -368,20 +506,20 @@ Identify items that are broad, duplicated, disconnected from the goal, or merely
     I: {
       th: {
         headline: 'YOU KNOW WHAT TO BUILD. NOW LET CODEX BUILD IT.',
-        principle: 'Codex ตัดสินใจเรื่อง Implementation ได้ แต่ต้องไม่สร้าง Product decision สำคัญขึ้นมาเอง',
-        hint: 'แนบ PRD ที่ Solidified เป็น source of truth และกำหนดให้ Codex หยุดถามเมื่อความกำกวมเปลี่ยน Product behavior',
-        chatGoal: 'ส่งมอบ PRD ให้ Codex พร้อมขอบเขตอำนาจตัดสินใจที่ชัดเจน',
-        prompt: `Implement แอป “21 DAYS OF ${topic}” ตาม PRD ที่ผมจะแนบให้ครบถ้วน\n\nกติกาการทำงาน:\n1. ใช้ PRD เป็น source of truth\n2. ตัดสินใจเรื่องโครงสร้างโค้ดและ implementation details ได้\n3. ห้ามเพิ่ม Feature ที่อยู่นอก Must Have\n4. ถ้าความกำกวมเปลี่ยน User flow, behavior, data rule หรือ acceptance criteria ให้หยุดและระบุ “PRODUCT DECISION REQUIRED” พร้อมตัวเลือกและผลกระทบ\n5. ทดสอบตาม Acceptance criteria และรายงานสิ่งที่ผ่าน/ไม่ผ่าน\n6. เตรียม deploy ผ่าน GitHub Pages\n\nก่อนเริ่ม ให้สรุปสิ่งที่จะสร้าง Non-goals และคำถามที่เป็น Product decision เท่านั้น`,
-        followUps: ['มีจุดใดที่เป็น PRODUCT DECISION REQUIRED?', 'Acceptance criterion ใดยังไม่ผ่านและเพราะอะไร?', 'สิ่งที่สร้างเพิ่มทุกข้อเชื่อมกับ Must Have ข้อใด?'],
+        principle: 'Codex ช่วยสร้าง App และพาใช้ GitHub ได้ แต่คุณยังเป็นผู้ยืนยัน Product decision และข้อมูลความปลอดภัยทุกครั้ง',
+        hint: 'แนบ Handoff ทั้ง 4 ไฟล์ ถ้ายังไม่มี GitHub ให้บอก Codex ตรง ๆ ว่าต้องการคำอธิบายและให้พาทำทีละขั้น',
+        chatGoal: 'ส่งมอบ Build Package ให้ Codex พร้อมระดับความพร้อมเรื่อง GitHub และขอบเขตอำนาจตัดสินใจ',
+        prompt: `ช่วยสร้างแอป “21 DAYS OF ${topic}” จากไฟล์ Handoff 4 ไฟล์ที่ผมจะแนบ และพาผมทำงานทีละขั้นในฐานะผู้ใช้ Non-Tech\n\nGITHUB READINESS: ${text(current.githubReadiness)}\n\nกติกาการทำงาน:\n1. อ่าน CODESIGN_HANDOFF.md, CONTENT_PACK.md, EXPERIENCE_DIRECTION.md และ START_WITH_CODEX.md ให้ครบ\n2. ใช้ไฟล์เหล่านี้เป็น source of truth และห้ามเพิ่ม Feature นอก Must Have\n3. ตัดสินใจเรื่องโครงสร้างโค้ด Layout responsive และ implementation details ที่ไม่เปลี่ยน Product ได้\n4. ถ้าความกำกวมเปลี่ยน User, Journey, Content, Completion rule, Data behavior หรือ Experience direction ให้ระบุ “PRODUCT DECISION REQUIRED” และถามผมหนึ่งคำถาม\n5. อธิบาย GitHub, Repository และ GitHub Pages ด้วยภาษาง่าย ถ้าผมยังไม่มีบัญชี ให้พาเปิดบัญชีและสร้าง Repository ทีละขั้น\n6. ห้ามขอ Password, OTP, CAPTCHA, Recovery code หรือ 2FA secret ให้หยุดรอผมทำขั้นตอนความปลอดภัยเอง\n7. สร้าง App ให้ครบ 21 วัน ทดสอบ Desktop, Tablet, Mobile, Keyboard และการตัดคำภาษาไทย\n8. แสดง Preview ให้ผมตรวจ แล้วจึง Publish ผ่าน GitHub Pages\n\nก่อนเริ่ม ให้สรุปสิ่งที่จะสร้าง Non-goals ความพร้อม GitHub ของผม และคำถามที่เป็น Product decision เท่านั้น`,
+        followUps: ['มีจุดใดที่เป็น PRODUCT DECISION REQUIRED จริง ๆ?', 'ช่วยอธิบายขั้นตอน GitHub ถัดไปด้วยภาษาสำหรับคนที่ไม่เคยใช้', 'Acceptance criterion ใดยังไม่ผ่านและเพราะอะไร?', 'ช่วยทดสอบ Mobile และการตัดคำภาษาไทยอีกครั้ง'],
         bringBack: 'บันทึก Public App URL และ Repository URL หลัง Build ทำงานจริงและผ่านการ Preview',
       },
       en: {
         headline: 'YOU KNOW WHAT TO BUILD. NOW LET CODEX BUILD IT.',
-        principle: 'Codex may decide implementation details, but it must not invent important product decisions.',
-        hint: 'Attach the solidified PRD as the source of truth and require Codex to stop when ambiguity changes product behavior.',
-        chatGoal: 'Hand off the PRD to Codex with explicit decision boundaries.',
-        prompt: `Implement “21 DAYS OF ${topic}” completely from the PRD I will attach.\n\nWorking rules:\n1. Treat the PRD as the source of truth.\n2. Decide code structure and implementation details.\n3. Do not add features outside Must Have.\n4. If ambiguity changes user flow, behavior, data rules, or acceptance criteria, stop and label it “PRODUCT DECISION REQUIRED” with options and impact.\n5. Test against every acceptance criterion and report pass/fail.\n6. Prepare deployment to GitHub Pages.\n\nBefore building, summarize the build, non-goals, and only the questions that require a product decision.`,
-        followUps: ['Is anything a PRODUCT DECISION REQUIRED?', 'Which acceptance criteria still fail, and why?', 'Which must-have supports each added element?'],
+        principle: 'Codex can build the app and guide GitHub setup, while you confirm every product and security decision.',
+        hint: 'Attach all four handoff files. If GitHub is new to you, ask Codex to explain and guide one step at a time.',
+        chatGoal: 'Hand the Build Package to Codex with GitHub readiness and explicit decision boundaries.',
+        prompt: `Build “21 DAYS OF ${topic}” from the four handoff files I will attach, guiding me step by step as a non-technical owner.\n\nGITHUB READINESS: ${text(current.githubReadiness)}\n\nRules:\n1. Read CODESIGN_HANDOFF.md, CONTENT_PACK.md, EXPERIENCE_DIRECTION.md, and START_WITH_CODEX.md.\n2. Treat them as the source of truth. Do not add features outside Must Have.\n3. Decide code structure, responsive layout, and implementation details that do not change the product.\n4. If ambiguity changes the user, journey, content, completion rule, data behavior, or experience direction, mark PRODUCT DECISION REQUIRED and ask one question.\n5. Explain GitHub, repositories, and GitHub Pages plainly; guide account and repository setup if needed.\n6. Never request passwords, OTPs, CAPTCHAs, recovery codes, or 2FA secrets. Pause while I complete security steps.\n7. Build all 21 days and test desktop, tablet, mobile, keyboard use, and text wrapping.\n8. Show me a preview before publishing through GitHub Pages.\n\nFirst summarize the build, non-goals, my GitHub readiness, and only genuine product-decision questions.`,
+        followUps: ['Is anything genuinely PRODUCT DECISION REQUIRED?', 'Explain the next GitHub step for a first-time user.', 'Which acceptance criteria still fail, and why?', 'Retest mobile layout and text wrapping.'],
         bringBack: 'Save the public app URL and repository URL after the build works and has been previewed.',
       },
     },

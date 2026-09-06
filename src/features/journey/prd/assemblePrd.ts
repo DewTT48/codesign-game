@@ -1,12 +1,14 @@
 import type { Json, ProjectRow } from '../../../lib/supabase/database.types'
 import type { PrdSource } from '../journey.service'
+import {
+  countCompleteDays,
+  normalizeContentArcs,
+  normalizeDailyContent,
+  normalizeExperienceOptions,
+} from '../specify/specifyModel'
+import { defaultAcceptanceCriteria } from './handoffFiles'
 
-type ScreenSpec = {
-  name?: string
-  sees?: string
-  actions?: string
-  next?: string
-}
+type ScreenSpec = { name?: string; sees?: string; actions?: string; next?: string }
 
 const text = (value: Json | undefined, fallback = 'Not specified') => {
   if (typeof value === 'string' && value.trim()) return value.trim()
@@ -23,9 +25,7 @@ const bullets = (items: string[], fallback = 'Not specified') =>
   items.length ? items.map((item) => `- ${item}`).join('\n') : `- ${fallback}`
 
 const numbered = (items: string[], fallback = 'Not specified') =>
-  items.length
-    ? items.map((item, index) => `${index + 1}. ${item}`).join('\n')
-    : `1. ${fallback}`
+  items.length ? items.map((item, index) => `${index + 1}. ${item}`).join('\n') : `1. ${fallback}`
 
 const screens = (value: Json | undefined) =>
   (Array.isArray(value) ? value : []).filter(
@@ -33,6 +33,127 @@ const screens = (value: Json | undefined) =>
   )
 
 export function assemblePrd(project: ProjectRow, source: PrdSource): string {
+  const specify = source.S ?? {}
+  return Number(specify.specificationVersion) >= 2
+    ? assembleCurrentPrd(project, source)
+    : assembleLegacyPrd(project, source)
+}
+
+function assembleCurrentPrd(project: ProjectRow, source: PrdSource) {
+  const context = source.C ?? {}
+  const options = source.O ?? {}
+  const debate = source.D ?? {}
+  const establish = source.E ?? {}
+  const specify = source.S ?? {}
+  const optionList = Array.isArray(options.options) ? options.options : []
+  const favoriteIndex = typeof options.favorite === 'number' ? options.favorite : -1
+  const favorite = optionList[favoriteIndex]
+  const selectedOption = favorite && typeof favorite === 'object' && !Array.isArray(favorite)
+    ? favorite as Record<string, Json | undefined>
+    : undefined
+  const arcs = normalizeContentArcs(specify.contentArcs)
+  const days = normalizeDailyContent(specify.dailyContent)
+  const themes = normalizeExperienceOptions(specify.experienceOptions)
+  const selectedTheme = themes.find((theme) => theme.name === text(specify.selectedExperience, ''))
+  const acceptance = defaultAcceptanceCriteria(specify)
+
+  return `# CODESIGN HANDOFF — ${project.title}
+
+> Owner-approved Product Definition for Codex. Read this file together with \`CONTENT_PACK.md\` and \`EXPERIENCE_DIRECTION.md\`.
+
+## 1. Product Summary
+
+${text(establish.direction)}
+
+The product helps ${text(context.who, 'the intended user')} achieve ${text(context.goal, 'the defined goal')}.
+
+## 2. Primary User and Context
+
+- **Primary user:** ${text(context.who)}
+- **Goal:** ${text(context.goal)}
+- **Observable success:** ${text(context.success)}
+- **Important context:** ${text(context.importantContext)}
+- **Constraints:** ${text(context.constraints)}
+
+## 3. Product Direction and Decision History
+
+${text(establish.direction)}
+
+${selectedOption ? `- **Selected option:** ${text(selectedOption.name)}\n- **Core idea:** ${text(selectedOption.coreIdea)}` : '- **Selected option:** Not specified'}
+- **What the debate changed:** ${text(debate.whatChanged)}
+
+## 4. Must Have
+
+${bullets(list(establish.mustHaves))}
+
+## 5. Not in This Version
+
+${bullets(list(establish.nonGoals))}
+
+## 6. Primary Journey and Product Rules
+
+- **Primary journey:** ${text(specify.journeySummary)}
+- **One day is complete when:** ${text(specify.dailyCompletionRule)}
+- **Return to earlier days:** ${text(specify.returnRule)}
+- **Day sequence:** ${text(specify.sequenceRule)}
+- **Save behavior:** ${text(specify.storageRule)}
+- **Expected time per day:** ${text(specify.dailyDuration)}
+- **Product language:** ${text(specify.productLanguage)}
+- **Copy that must remain unchanged:** ${text(specify.brandCopy)}
+
+## 7. Content Blueprint
+
+${arcs.map((arc) => `- **${arc.range} — ${arc.title || 'Untitled arc'}:** ${arc.goal || 'Goal not specified'}`).join('\n')}
+
+- **Daily content pattern:** ${text(specify.contentPattern)}
+- **Daily exercise pattern:** ${text(specify.exercisePattern)}
+- **Daily record pattern:** ${text(specify.recordPattern)}
+- **Content Pack status:** ${countCompleteDays(days)}/21 days complete; owner confirmation: ${specify.contentOwnerConfirmed ? 'YES' : 'NO'}
+- The full approved daily content is in \`CONTENT_PACK.md\` and must be implemented without silent rewriting.
+
+## 8. Experience Direction
+
+${selectedTheme ? `- **Owner-selected direction:** ${selectedTheme.name}
+- **Mood:** ${selectedTheme.mood}
+- **Color roles:** background ${selectedTheme.background}; surface ${selectedTheme.surface}; primary ${selectedTheme.primary}; accent ${selectedTheme.accent}; text ${selectedTheme.text}
+- **Typography:** ${selectedTheme.typography}
+- **Interaction character:** ${selectedTheme.interaction}
+- **Rationale:** ${selectedTheme.rationale}
+- **Trade-off to manage:** ${selectedTheme.tradeoff}` : '- No experience direction selected.'}
+- **Owner confirmation:** ${specify.experienceOwnerConfirmed ? 'YES' : 'NO'}
+- Full guardrails and alternatives considered are in \`EXPERIENCE_DIRECTION.md\`.
+
+## 9. Responsive and Accessibility Requirements
+
+- The complete journey must work on desktop, tablet, and mobile without clipped, overlapping, or unreadably small text.
+- Thai content must use natural word wrapping; do not break Thai text character by character.
+- Interactive controls must be keyboard accessible, have visible focus states, and use semantic labels.
+- Respect reduced-motion preferences where animation is used.
+- Empty, incomplete, return, and completion states must communicate what happened and what the user can do next.
+
+## 10. Acceptance Criteria
+
+${bullets(acceptance)}
+
+## 11. Basic Technical Constraints
+
+- Build a standalone web app.
+- No embedded AI.
+- No backend, authentication, or cloud database.
+- No required paid or external service.
+- Browser/device persistence may be used only according to the locked save behavior.
+- Must be deployable to GitHub Pages.
+- Do not add analytics or collect personal data unless the owner explicitly makes a new Product Decision.
+
+## 12. Implementation Notes and Decision Boundary
+
+${text(specify.advancedNotes, 'No additional owner-written build notes.')}
+
+Codex may decide component structure, spacing, responsive layout, code organization, validation details, and implementation-level states that do not change the locked product behavior. If an ambiguity would materially change the user, goal, journey, content, completion rule, scope, data behavior, or experience direction, mark it **PRODUCT DECISION REQUIRED** and ask the owner one clear question.
+`
+}
+
+function assembleLegacyPrd(project: ProjectRow, source: PrdSource): string {
   const context = source.C ?? {}
   const options = source.O ?? {}
   const debate = source.D ?? {}
@@ -168,4 +289,3 @@ ${bullets(list(specify.acceptanceCriteria))}
 Implement this PRD faithfully. Do not add important product features or behaviors that are not defined here. You may make reasonable implementation-level decisions. If an ambiguity would materially change product behavior, flag it as \`PRODUCT DECISION REQUIRED\` instead of silently inventing a product rule.
 `
 }
-
