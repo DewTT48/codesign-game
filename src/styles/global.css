@@ -1,8 +1,12 @@
 :root {
   color-scheme: dark;
   --font-body: 'Chakra Petch', system-ui, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, 'Chakra Petch', monospace;
   font-family: var(--font-body);
-  --font-display: 'Press Start 2P', monospace;
+  /* Press Start 2P contains Latin glyphs only. Keep Chakra Petch next in the
+     stack so every Thai glyph uses the same face instead of a browser-chosen
+     system fallback. */
+  --font-display: 'Press Start 2P', 'Chakra Petch', monospace;
   --deep: #0b5792;
   --deep-2: #063761;
   --deep-3: #1674ad;
@@ -105,6 +109,13 @@ input,
 textarea,
 select {
   font: inherit;
+}
+
+pre,
+code,
+kbd,
+samp {
+  font-family: var(--font-mono);
 }
 
 button:focus-visible,
@@ -2853,7 +2864,7 @@ main {
   background: #f7fbff;
   border: 4px solid var(--ink);
   box-shadow: 7px 7px 0 rgba(0, 0, 0, 0.38);
-  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-family: var(--font-mono);
   font-size: 14px;
   line-height: 1.65;
   resize: vertical;
@@ -3201,7 +3212,7 @@ main {
   margin: 24px 0 0;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
-  font: 13px/1.65 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font: 13px/1.65 var(--font-mono);
 }
 
 .completion-principle {
@@ -5147,7 +5158,7 @@ main {
     color: #111;
     white-space: pre-wrap;
     overflow-wrap: anywhere;
-    font: 11pt/1.55 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font: 11pt/1.55 var(--font-mono);
   }
 }
 
