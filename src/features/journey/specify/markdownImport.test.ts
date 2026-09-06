@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { parseSpecifyMarkdown, serializeContentPack, serializeExperienceDraft } from './markdownImport'
-import { createDailyContent, starterExperienceOptions } from './specifyModel'
+import { contrastRatio, createDailyContent, starterExperienceOptions } from './specifyModel'
 
 describe('Specify Markdown import', () => {
   it('parses daily content without exposing Markdown control text', () => {
@@ -67,5 +67,18 @@ TRADEOFF: Less playful`
     expect(result.days).toHaveLength(21)
     expect(result.experienceOptions).toHaveLength(3)
     expect(result.days[0].reviewed).toBe(false)
+  })
+
+  it('keeps every starter theme readable on its named palette', () => {
+    expect(starterExperienceOptions.map((option) => option.name)).toEqual([
+      'Calm Focus',
+      'Retro Quest',
+      'Warm Momentum',
+    ])
+    for (const option of starterExperienceOptions) {
+      expect(contrastRatio(option.text, option.background)).toBeGreaterThanOrEqual(4.5)
+      expect(contrastRatio(option.text, option.surface)).toBeGreaterThanOrEqual(4.5)
+      expect(contrastRatio(option.background, option.primary)).toBeGreaterThanOrEqual(3)
+    }
   })
 })
