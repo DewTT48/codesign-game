@@ -22,6 +22,12 @@ const buildRules = [
 
 export function MissionBriefPage() {
   const { isThai } = useLanguage()
+  const displayedBuildRules = isThai ? [
+    { icon: Globe2, text: 'เป็น Web App ที่ทำงานได้ด้วยตัวเอง' },
+    { icon: BotOff, text: 'ไม่มี AI ฝังอยู่ใน App' },
+    { icon: Database, text: 'บันทึกข้อมูลไว้ใน Browser เท่านั้น' },
+    { icon: ShieldCheck, text: 'App ที่คุณสร้างไม่มีระบบเข้าสู่ระบบหรือ Backend' },
+  ] : buildRules
   const outcomes = isThai ? [
     'เว็บแอปที่ใช้งานได้และมี Public URL',
     'GitHub Repository ที่ Codex ช่วยสร้างและกลับมาแก้ไขต่อได้',
@@ -36,20 +42,20 @@ export function MissionBriefPage() {
   return (
     <div className="content-page mission-brief-page">
       <Link className="back-link" to="/">
-        <ArrowLeft aria-hidden="true" size={18} /> BACK TO BASE
+        <ArrowLeft aria-hidden="true" size={18} /> {isThai ? 'กลับหน้าแรก' : 'BACK TO BASE'}
       </Link>
 
       <header className="page-heading">
         <div>
-          <span className="chapter-code">MISSION BRIEF</span>
-          <h1>BUILD WITH GUIDE</h1>
+          <span className="chapter-code">{isThai ? 'รายละเอียดภารกิจ' : 'MISSION BRIEF'}</span>
+          <h1>{isThai ? 'สร้างแบบมีคำแนะนำ' : 'BUILD WITH GUIDE'}</h1>
         </div>
-        <span className="mission-badge">QUEST 01</span>
+        <span className="mission-badge">{isThai ? 'ภารกิจ 01' : 'QUEST 01'}</span>
       </header>
 
       <div className="brief-layout">
         <section className="brief-main arcade-panel" aria-labelledby="brief-title">
-          <div className="panel-kicker">PRIMARY OBJECTIVE</div>
+          <div className="panel-kicker">{isThai ? 'เป้าหมายหลัก' : 'PRIMARY OBJECTIVE'}</div>
           <h2 id="brief-title">
             {isThai ? (
               <>สร้าง <span>21 DAYS OF ______</span><br />ให้กลายเป็น Product จริง</>
@@ -73,17 +79,17 @@ export function MissionBriefPage() {
           </div>
 
           <div className="role-callout">
-            <strong>YOU ARE THE PRODUCT OWNER.</strong>
+            <strong>{isThai ? 'คุณคือเจ้าของ Product' : 'YOU ARE THE PRODUCT OWNER.'}</strong>
             <p>{isThai ? 'AI ช่วยคุณคิด แต่คุณเป็นคนตัดสินว่าอะไรจะกลายเป็นจริง' : 'AI helps you think, but you decide what becomes real.'}</p>
           </div>
         </section>
 
         <aside className="brief-sidebar">
           <section className="arcade-panel course-rules" aria-labelledby="rules-title">
-            <div className="panel-kicker">BASIC BUILD RULES</div>
-            <h2 id="rules-title">BUILD SMALL. FINISH STRONG.</h2>
+            <div className="panel-kicker">{isThai ? 'กติกาพื้นฐานในการสร้าง' : 'BASIC BUILD RULES'}</div>
+            <h2 id="rules-title">{isThai ? 'สร้างให้เล็ก แล้วทำให้สำเร็จ' : 'BUILD SMALL. FINISH STRONG.'}</h2>
             <ul>
-              {buildRules.map(({ icon: Icon, text }) => (
+              {displayedBuildRules.map(({ icon: Icon, text }) => (
                 <li key={text}>
                   <Icon aria-hidden="true" size={19} /> {text}
                 </li>
@@ -91,7 +97,7 @@ export function MissionBriefPage() {
             </ul>
           </section>
           <section className="time-card" aria-label={isThai ? 'คำอธิบาย 21 วัน' : '21-day clarification'}>
-            <span>IMPORTANT</span>
+            <span>{isThai ? 'สำคัญ' : 'IMPORTANT'}</span>
             <p>
               {isThai ? '21 วันคือโครงสร้างของ Product ที่คุณกำลังสร้าง' : 'The 21 days are the structure of the product you are building.'}
               <strong>{isThai ? 'ไม่ใช่เวลาที่ต้องใช้ในการสร้าง' : 'They are not the build timeline.'}</strong>
@@ -100,7 +106,7 @@ export function MissionBriefPage() {
           <section className="github-preview" aria-labelledby="github-preview-title">
             <Github size={27} aria-hidden="true" />
             <div>
-              <span id="github-preview-title">GITHUB COMES LATER</span>
+              <span id="github-preview-title">{isThai ? 'GitHub จะใช้ในขั้นถัดไป' : 'GITHUB COMES LATER'}</span>
               <p>{isThai ? 'GitHub จะเป็นบ้านของไฟล์ App และใช้ Publish ผ่าน GitHub Pages คุณไม่ต้องมีบัญชีหรือใช้เป็นก่อนเริ่มภารกิจ—เมื่อถึงขั้น Implement, Codex จะอธิบายและพาทำทีละขั้น' : 'GitHub will store the app files and publish through GitHub Pages. You do not need an account or prior experience now—Codex will explain and guide setup during Implement.'}</p>
             </div>
           </section>
@@ -111,11 +117,11 @@ export function MissionBriefPage() {
 
       <div className="launch-row">
         <div>
-          <span>READY CHECK</span>
+          <span>{isThai ? 'ตรวจความพร้อม' : 'READY CHECK'}</span>
           <p>{isThai ? 'คุณไม่ต้องมีคำตอบทั้งหมด แค่พร้อมเริ่มทำความเข้าใจไอเดียของคุณ' : 'You do not need every answer—only readiness to understand your idea.'}</p>
         </div>
         <ArcadeButton to="/auth">
-          START BUILDING <ArrowRight aria-hidden="true" size={20} />
+          {isThai ? 'เริ่มสร้าง' : 'START BUILDING'} <ArrowRight aria-hidden="true" size={20} />
         </ArcadeButton>
       </div>
     </div>

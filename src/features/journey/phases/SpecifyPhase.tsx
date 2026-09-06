@@ -130,7 +130,7 @@ export function SpecifyPhase({ project }: { project: ProjectRow }) {
   return (
     <JourneyLayout project={project} phase="S" phaseName="SPECIFY" chatContext={draft.values} saveState={draft.saveState}>
       <section className="specify-intro">
-        <span>HOW THIS MISSION WORKS</span>
+        <span>{isThai ? 'ขั้นตอนการทำภารกิจนี้' : 'HOW THIS MISSION WORKS'}</span>
         <h2>{isThai ? 'คุณกำหนดทิศทาง ส่วนรายละเอียดจำนวนมากให้ Chat ช่วยร่าง' : 'You set the direction. Let Chat draft the detail.'}</h2>
         <ol>
           <li><strong>01</strong>{isThai ? 'ตัดสินใจเฉพาะกติกาที่เปลี่ยน Product' : 'Decide only the rules that change the product.'}</li>
@@ -140,8 +140,8 @@ export function SpecifyPhase({ project }: { project: ProjectRow }) {
         <p>{isThai ? 'CODESIGN ไม่ได้ส่งข้อมูลไปหา AI และจะไม่เลือกแทนคุณ' : 'CODESIGN does not send data to AI and will not choose for you.'}</p>
       </section>
 
-      <PhaseSection step="S1" title="JOURNEY & PRODUCT RULES" description={isThai ? 'กำหนดเฉพาะกติกาที่มีผลต่อประสบการณ์จริง รายละเอียดเชิงเทคนิคให้ Codex ตัดสินใจได้' : 'Define only rules that change the real experience. Codex can decide implementation details.'}>
-        <FormField label="PRODUCT LANGUAGE" required hint={isThai ? 'ภาษาที่ผู้ใช้ปลายทางจะเห็นใน Product นี้' : 'The language shown in the product you are building'}>
+      <PhaseSection step="S1" title={isThai ? 'เส้นทางและกติกาของ Product' : 'JOURNEY & PRODUCT RULES'} description={isThai ? 'กำหนดเฉพาะกติกาที่มีผลต่อประสบการณ์จริง รายละเอียดเชิงเทคนิคให้ Codex ตัดสินใจได้' : 'Define only rules that change the real experience. Codex can decide implementation details.'}>
+        <FormField label={isThai ? 'ภาษาของ Product' : 'PRODUCT LANGUAGE'} required hint={isThai ? 'ภาษาที่ผู้ใช้ปลายทางจะเห็นใน Product นี้' : 'The language shown in the product you are building'}>
           <div className="choice-grid choice-grid--three">
             {[
               ['th', 'ภาษาไทย', 'THAI'],
@@ -156,13 +156,13 @@ export function SpecifyPhase({ project }: { project: ProjectRow }) {
           </div>
         </FormField>
         <div className="form-grid form-grid--two">
-          <FormField label="BRAND COPY" hint={isThai ? 'ข้อความที่ต้องคงรูปเดิมและไม่แปล' : 'Copy that must remain unchanged'}><input value={String(draft.values.brandCopy)} onChange={(event) => draft.setField('brandCopy', event.target.value)} /></FormField>
-          <FormField label="TIME PER DAY" required hint={isThai ? 'เวลาที่เหมาะกับบริบทของผู้ใช้' : 'A duration that fits the user context'}><input value={String(draft.values.dailyDuration)} onChange={(event) => draft.setField('dailyDuration', event.target.value)} /></FormField>
+          <FormField label={isThai ? 'ข้อความประจำ Product' : 'BRAND COPY'} hint={isThai ? 'ข้อความที่ต้องคงรูปเดิมและไม่แปล' : 'Copy that must remain unchanged'}><input value={String(draft.values.brandCopy)} onChange={(event) => draft.setField('brandCopy', event.target.value)} /></FormField>
+          <FormField label={isThai ? 'เวลาต่อวัน' : 'TIME PER DAY'} required hint={isThai ? 'เวลาที่เหมาะกับบริบทของผู้ใช้' : 'A duration that fits the user context'}><input value={String(draft.values.dailyDuration)} onChange={(event) => draft.setField('dailyDuration', event.target.value)} /></FormField>
         </div>
-        <FormField label="PRIMARY JOURNEY" required hint={isThai ? 'เขียนเป็นเส้นทางสั้น ๆ ตั้งแต่เปิด App จนเห็นความคืบหน้า' : 'Describe the short path from opening the app to seeing progress'}>
+        <FormField label={isThai ? 'เส้นทางหลักของผู้ใช้' : 'PRIMARY JOURNEY'} required hint={isThai ? 'เขียนเป็นเส้นทางสั้น ๆ ตั้งแต่เปิด App จนเห็นความคืบหน้า' : 'Describe the short path from opening the app to seeing progress'}>
           <textarea rows={4} value={String(draft.values.journeySummary) || legacyFlow.join(' → ')} onChange={(event) => draft.setField('journeySummary', event.target.value)} />
         </FormField>
-        <FormField label="ONE DAY IS COMPLETE WHEN…" required hint={isThai ? 'ระบุการกระทำที่สังเกตและตรวจได้' : 'Use an observable, testable action'}>
+        <FormField label={isThai ? 'หนึ่งวันถือว่าสำเร็จเมื่อ…' : 'ONE DAY IS COMPLETE WHEN…'} required hint={isThai ? 'ระบุการกระทำที่สังเกตและตรวจได้' : 'Use an observable, testable action'}>
           <textarea rows={3} value={String(draft.values.dailyCompletionRule)} onChange={(event) => draft.setField('dailyCompletionRule', event.target.value)} />
         </FormField>
         <div className="form-grid form-grid--three rule-select-grid">
@@ -172,7 +172,7 @@ export function SpecifyPhase({ project }: { project: ProjectRow }) {
         </div>
       </PhaseSection>
 
-      <PhaseSection step="S2" title="CONTENT BLUEPRINT" description={isThai ? 'วางเส้นทางการเรียนรู้ก่อนให้ Chat ช่วยร่างเนื้อหา 21 วัน' : 'Set the learning progression before Chat drafts all 21 days.'}>
+      <PhaseSection step="S2" title={isThai ? 'โครงสร้างเนื้อหา' : 'CONTENT BLUEPRINT'} description={isThai ? 'วางเส้นทางการเรียนรู้ก่อนให้ Chat ช่วยร่างเนื้อหา 21 วัน' : 'Set the learning progression before Chat drafts all 21 days.'}>
         <div className="content-arc-grid">
           {arcs.map((arc, index) => (
             <article key={arc.range}>
@@ -183,13 +183,13 @@ export function SpecifyPhase({ project }: { project: ProjectRow }) {
           ))}
         </div>
         <div className="form-grid form-grid--three content-pattern-grid">
-          <FormField label="DAILY CONTENT" required hint={isThai ? 'เนื้อหาประจำวันควรสั้นและมีรูปแบบอย่างไร' : 'How short daily content should work'}><textarea rows={4} value={String(draft.values.contentPattern)} onChange={(event) => draft.setField('contentPattern', event.target.value)} /></FormField>
-          <FormField label="DAILY EXERCISE" required hint={isThai ? 'ผู้ใช้จะคิด เลือก หรือทำอะไร' : 'What the user will think, choose, or do'}><textarea rows={4} value={String(draft.values.exercisePattern)} onChange={(event) => draft.setField('exercisePattern', event.target.value)} /></FormField>
-          <FormField label="DAILY RECORD" required hint={isThai ? 'แต่ละวันต้องบันทึกคำตอบหรือหลักฐานอะไร' : 'What answer or evidence is saved each day'}><textarea rows={4} value={String(draft.values.recordPattern)} onChange={(event) => draft.setField('recordPattern', event.target.value)} /></FormField>
+          <FormField label={isThai ? 'เนื้อหาประจำวัน' : 'DAILY CONTENT'} required hint={isThai ? 'เนื้อหาประจำวันควรสั้นและมีรูปแบบอย่างไร' : 'How short daily content should work'}><textarea rows={4} value={String(draft.values.contentPattern)} onChange={(event) => draft.setField('contentPattern', event.target.value)} /></FormField>
+          <FormField label={isThai ? 'แบบฝึกประจำวัน' : 'DAILY EXERCISE'} required hint={isThai ? 'ผู้ใช้จะคิด เลือก หรือทำอะไร' : 'What the user will think, choose, or do'}><textarea rows={4} value={String(draft.values.exercisePattern)} onChange={(event) => draft.setField('exercisePattern', event.target.value)} /></FormField>
+          <FormField label={isThai ? 'สิ่งที่บันทึกประจำวัน' : 'DAILY RECORD'} required hint={isThai ? 'แต่ละวันต้องบันทึกคำตอบหรือหลักฐานอะไร' : 'What answer or evidence is saved each day'}><textarea rows={4} value={String(draft.values.recordPattern)} onChange={(event) => draft.setField('recordPattern', event.target.value)} /></FormField>
         </div>
       </PhaseSection>
 
-      <PhaseSection step="S3" title="DAILY CONTENT PACK" description={isThai ? 'ใช้ Prompt Kit ให้ AI ภายนอกร่าง จากนั้นนำ Markdown กลับมาตรวจ เนื้อหาจะไม่ถูกส่งออกจาก CODESIGN อัตโนมัติ' : 'Let an external AI draft it with the Prompt Kit, then bring Markdown back for review. CODESIGN never sends it automatically.'}>
+      <PhaseSection step="S3" title={isThai ? 'ชุดเนื้อหา 21 วัน' : 'DAILY CONTENT PACK'} description={isThai ? 'ใช้ชุดคำสั่งให้ AI ภายนอกร่าง จากนั้นนำไฟล์ Markdown กลับมาตรวจ เนื้อหาจะไม่ถูกส่งออกจาก CODESIGN อัตโนมัติ' : 'Let an external AI draft it with the Prompt Kit, then bring Markdown back for review. CODESIGN never sends it automatically.'}>
         <SpecifyImportPanel
           onApplyDays={(incoming, mode) => updateDays(mergeDailyContent(days, incoming, mode))}
           onApplyExperience={(incoming) => {
@@ -197,7 +197,7 @@ export function SpecifyPhase({ project }: { project: ProjectRow }) {
             draft.setField('selectedExperience', '')
           }}
         />
-        <div className="content-pack-progress"><span>{isThai ? 'CONTENT พร้อม' : 'CONTENT READY'}</span><strong>{completeDays}/21</strong><div><i style={{ width: `${(completeDays / 21) * 100}%` }} /></div></div>
+        <div className="content-pack-progress"><span>{isThai ? 'เนื้อหาพร้อมแล้ว' : 'CONTENT READY'}</span><strong>{completeDays}/21</strong><div><i style={{ width: `${(completeDays / 21) * 100}%` }} /></div></div>
         <DailyContentEditor days={days} onChange={updateDays} />
         <label className={draft.values.contentOwnerConfirmed ? 'owner-confirm is-active' : 'owner-confirm'}>
           <input type="checkbox" disabled={completeDays < 21} checked={Boolean(draft.values.contentOwnerConfirmed)} onChange={(event) => draft.setField('contentOwnerConfirmed', event.target.checked)} />
@@ -206,7 +206,7 @@ export function SpecifyPhase({ project }: { project: ProjectRow }) {
         </label>
       </PhaseSection>
 
-      <PhaseSection step="S4" title="EXPERIENCE DIRECTION" description={isThai ? 'เลือกจากภาพรวมที่เห็นจริง คุณกำลังกำหนดทิศทาง ไม่ได้ออกแบบทุกหน้าด้วยตัวเอง' : 'Choose from a visible preview. You are setting a direction, not designing every screen.'}>
+      <PhaseSection step="S4" title={isThai ? 'ทิศทางประสบการณ์' : 'EXPERIENCE DIRECTION'} description={isThai ? 'เลือกจากภาพรวมที่เห็นจริง คุณกำลังกำหนดทิศทาง ไม่ได้ออกแบบทุกหน้าด้วยตัวเอง' : 'Choose from a visible preview. You are setting a direction, not designing every screen.'}>
         <ExperienceSelector options={experienceOptions} selectedName={selectedExperience} onSelect={(name) => { draft.setField('selectedExperience', name); draft.setField('experienceOwnerConfirmed', false) }} onChange={updateExperience} />
         <label className={draft.values.experienceOwnerConfirmed ? 'owner-confirm is-active' : 'owner-confirm'}>
           <input type="checkbox" disabled={!selectedExperience} checked={Boolean(draft.values.experienceOwnerConfirmed)} onChange={(event) => draft.setField('experienceOwnerConfirmed', event.target.checked)} />
@@ -214,17 +214,17 @@ export function SpecifyPhase({ project }: { project: ProjectRow }) {
           <span><strong>{isThai ? 'ฉันเลือก Experience Direction นี้' : 'I CHOOSE THIS EXPERIENCE DIRECTION'}</strong><small>{isThai ? 'Theme นี้เป็นการตัดสินใจของฉัน ไม่ใช่สิ่งที่ AI เลือกแทน' : 'This theme is my decision, not a choice made for me by AI.'}</small></span>
         </label>
         <details className="advanced-specification">
-          <summary>{isThai ? 'Advanced Specification — เปิดเมื่ออยากกำหนดรายละเอียดเพิ่ม' : 'ADVANCED SPECIFICATION — OPTIONAL DETAILS'}</summary>
+          <summary>{isThai ? 'รายละเอียดเพิ่มเติม — เปิดเมื่ออยากกำหนดเอง' : 'ADVANCED SPECIFICATION — OPTIONAL DETAILS'}</summary>
           <p>{isThai ? 'หากปล่อยว่าง Codex สามารถตัดสินใจรายละเอียดการจัดหน้าจอ การรองรับ Mobile, Empty state และ Error state ภายใน Product Rules ที่ Lock แล้วได้' : 'If left blank, Codex may decide screens, mobile layout, empty states, and error states within the locked product rules.'}</p>
-          <FormField label="ADDITIONAL BUILD NOTES"><textarea rows={5} value={String(draft.values.advancedNotes)} onChange={(event) => draft.setField('advancedNotes', event.target.value)} /></FormField>
-          <ReorderableList title="OWNER-WRITTEN ACCEPTANCE CRITERIA — OPTIONAL" guideKey="spec.acceptance" items={acceptanceCriteria} minimum={0} maximum={8} placeholder="User can… / App remembers…" onChange={(items) => draft.setField('acceptanceCriteria', items as unknown as Json)} />
+          <FormField label={isThai ? 'หมายเหตุเพิ่มเติมสำหรับการสร้าง' : 'ADDITIONAL BUILD NOTES'}><textarea rows={5} value={String(draft.values.advancedNotes)} onChange={(event) => draft.setField('advancedNotes', event.target.value)} /></FormField>
+          <ReorderableList title={isThai ? 'เกณฑ์ตรวจรับที่คุณเขียนเอง — ไม่บังคับ' : 'OWNER-WRITTEN ACCEPTANCE CRITERIA — OPTIONAL'} guideKey="spec.acceptance" items={acceptanceCriteria} minimum={0} maximum={8} placeholder={isThai ? 'ผู้ใช้สามารถ… / App จดจำ…' : 'User can… / App remembers…'} onChange={(items) => draft.setField('acceptanceCriteria', items as unknown as Json)} />
         </details>
       </PhaseSection>
 
       <ReviewGate
-        title="SPECIFICATION QUALITY GATE"
+        title={isThai ? 'ตรวจความพร้อมก่อนส่งต่อ' : 'SPECIFICATION QUALITY GATE'}
         question={isThai ? <>เนื้อหาและ Experience พร้อมส่งต่อ<br />โดยไม่ให้ Codex เดา Product decision แล้วหรือยัง?</> : <>Are the content and experience ready<br />without making Codex guess product decisions?</>}
-        actions={<ArcadeButton disabled={issues.length > 0 || completion.isPending} onClick={() => completion.mutate()}><LockKeyhole size={18} /> {completion.isPending ? 'SOLIDIFYING…' : 'SOLIDIFY SPECIFICATION'}</ArcadeButton>}
+        actions={<ArcadeButton disabled={issues.length > 0 || completion.isPending} onClick={() => completion.mutate()}><LockKeyhole size={18} /> {completion.isPending ? (isThai ? 'กำลังยืนยัน…' : 'SOLIDIFYING…') : (isThai ? 'ยืนยันรายละเอียด' : 'SOLIDIFY SPECIFICATION')}</ArcadeButton>}
       >
         {issues.length ? <><p>{isThai ? `ยังเหลือ ${issues.length} เรื่องก่อนส่งต่อ` : `${issues.length} items remain before handoff`}</p><ul className="spec-quality-list">{issues.map((issue) => <li key={issue}>{issue}</li>)}</ul></> : <p>{isThai ? 'Journey, Content และ Experience พร้อมสำหรับ Final Handoff' : 'Journey, content, and experience are ready for Final Handoff.'}</p>}
         {completion.isError ? <p className="field-error" role="alert">{isThai ? 'Solidify ไม่สำเร็จ ข้อมูลยังไม่ถูก Lock' : 'Solidify failed. Your data remains unlocked.'}</p> : null}

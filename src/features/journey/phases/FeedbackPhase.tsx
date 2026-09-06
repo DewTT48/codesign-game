@@ -20,6 +20,17 @@ const checks = [
   ['prdRules', 'CONFIRM IMPORTANT PRD RULES'],
 ] as const
 
+const thaiCheckLabels: Record<(typeof checks)[number][0], string> = {
+  mobile: 'เปิดใช้งานบนโทรศัพท์',
+  start: 'เริ่มโปรแกรม 21 วัน',
+  dailyFlow: 'ทำขั้นตอนของหนึ่งวันตัวอย่างจนจบ',
+  saveData: 'กรอกและบันทึกข้อมูลของผู้ใช้',
+  reopen: 'รีเฟรชหรือเปิด App ใหม่',
+  persistence: 'ตรวจว่าความคืบหน้ายังคงอยู่',
+  navigation: 'ออกจากหน้าแล้วกลับเข้ามาใหม่',
+  prdRules: 'ตรวจยืนยันกติกาสำคัญจาก PRD',
+}
+
 const initialFeedback = {
   mobile: false, start: false, dailyFlow: false, saveData: false,
   reopen: false, persistence: false, navigation: false, prdRules: false,
@@ -48,20 +59,20 @@ export function FeedbackPhase({ project }: { project: ProjectRow }) {
 
   return (
     <JourneyLayout project={project} phase="G" phaseName="GET FEEDBACK" chatContext={draft.values} saveState={draft.saveState}>
-      <PhaseSection step="01" title="CREATOR TEST CHECKLIST">
-        <div className="test-checklist">{checks.map(([key, label]) => <label className={draft.values[key] ? 'is-active' : ''} key={key}><input type="checkbox" checked={Boolean(draft.values[key])} onChange={(event) => draft.setField(key, event.target.checked)} /><Check size={17} /> {label}</label>)}</div>
+      <PhaseSection step="01" title={isThai ? 'รายการทดสอบสำหรับผู้สร้าง' : 'CREATOR TEST CHECKLIST'}>
+        <div className="test-checklist">{checks.map(([key, label]) => <label className={draft.values[key] ? 'is-active' : ''} key={key}><input type="checkbox" checked={Boolean(draft.values[key])} onChange={(event) => draft.setField(key, event.target.checked)} /><Check size={17} /> {isThai ? thaiCheckLabels[key] : label}</label>)}</div>
       </PhaseSection>
-      <PhaseSection step="02" title="USER TEST" description={isThai ? 'ให้คนอื่นทดลองก่อน แล้วบันทึก Observation โดยไม่ชี้นำหรืออธิบายแทน Interface' : 'Let another person test first, then record observations without coaching them.'}>
+      <PhaseSection step="02" title={isThai ? 'ทดสอบกับผู้ใช้' : 'USER TEST'} description={isThai ? 'ให้คนอื่นทดลองก่อน แล้วบันทึกสิ่งที่สังเกตได้โดยไม่ชี้นำหรืออธิบายแทนหน้าจอ' : 'Let another person test first, then record observations without coaching them.'}>
         <div className="form-grid form-grid--two">
-          <FormField label="I EXPECTED THEM TO…" guideKey="feedback.expected" required><textarea rows={3} value={String(draft.values.expected)} onChange={(event) => draft.setField('expected', event.target.value)} /></FormField>
-          <FormField label="THEY ACTUALLY…" guideKey="feedback.actual" required><textarea rows={3} value={String(draft.values.actual)} onChange={(event) => draft.setField('actual', event.target.value)} /></FormField>
-          <FormField label="THEY GOT STUCK AT…" guideKey="feedback.stuck" required><textarea rows={3} value={String(draft.values.stuck)} onChange={(event) => draft.setField('stuck', event.target.value)} /></FormField>
-          <FormField label="WHAT WORKED WELL…" guideKey="feedback.worked" required><textarea rows={3} value={String(draft.values.worked)} onChange={(event) => draft.setField('worked', event.target.value)} /></FormField>
+          <FormField label={isThai ? 'ฉันคาดว่าผู้ใช้จะ…' : 'I EXPECTED THEM TO…'} guideKey="feedback.expected" required><textarea rows={3} value={String(draft.values.expected)} onChange={(event) => draft.setField('expected', event.target.value)} /></FormField>
+          <FormField label={isThai ? 'สิ่งที่ผู้ใช้ทำจริงคือ…' : 'THEY ACTUALLY…'} guideKey="feedback.actual" required><textarea rows={3} value={String(draft.values.actual)} onChange={(event) => draft.setField('actual', event.target.value)} /></FormField>
+          <FormField label={isThai ? 'ผู้ใช้ติดขัดตรง…' : 'THEY GOT STUCK AT…'} guideKey="feedback.stuck" required><textarea rows={3} value={String(draft.values.stuck)} onChange={(event) => draft.setField('stuck', event.target.value)} /></FormField>
+          <FormField label={isThai ? 'สิ่งที่ทำงานได้ดีคือ…' : 'WHAT WORKED WELL…'} guideKey="feedback.worked" required><textarea rows={3} value={String(draft.values.worked)} onChange={(event) => draft.setField('worked', event.target.value)} /></FormField>
         </div>
-        <FormField label="MOST IMPORTANT FEEDBACK…" guideKey="feedback.important" required><textarea rows={4} value={String(draft.values.mostImportant)} onChange={(event) => draft.setField('mostImportant', event.target.value)} /></FormField>
+        <FormField label={isThai ? 'ข้อเสนอแนะที่สำคัญที่สุดคือ…' : 'MOST IMPORTANT FEEDBACK…'} guideKey="feedback.important" required><textarea rows={4} value={String(draft.values.mostImportant)} onChange={(event) => draft.setField('mostImportant', event.target.value)} /></FormField>
       </PhaseSection>
-      <ReviewGate title="FEEDBACK GATE" question={isThai ? 'คุณได้ทดสอบ Product จริงและบันทึกสิ่งที่เกิดขึ้นโดยไม่แก้ต่างแทน Interface แล้วหรือยัง?' : 'Did you test the real product and record what happened without defending the interface?'} actions={<ArcadeButton disabled={!checksComplete || !feedbackComplete || completion.isPending} onClick={() => completion.mutate()}>{completion.isPending ? 'LOCKING FEEDBACK…' : 'CHOOSE NEXT ITERATION'} <ArrowRight size={18} /></ArcadeButton>}>
-        <p>{checksComplete && feedbackComplete ? 'CREATOR TEST + USER OBSERVATION READY' : (isThai ? 'ทำ Checklist และ User test fields ให้ครบก่อน' : 'Complete the checklist and all user-test fields first.')}</p>
+      <ReviewGate title={isThai ? 'ตรวจความพร้อมของข้อเสนอแนะ' : 'FEEDBACK GATE'} question={isThai ? 'คุณได้ทดสอบ Product จริงและบันทึกสิ่งที่เกิดขึ้นโดยไม่แก้ต่างแทน Interface แล้วหรือยัง?' : 'Did you test the real product and record what happened without defending the interface?'} actions={<ArcadeButton disabled={!checksComplete || !feedbackComplete || completion.isPending} onClick={() => completion.mutate()}>{completion.isPending ? (isThai ? 'กำลังบันทึกข้อเสนอแนะ…' : 'LOCKING FEEDBACK…') : (isThai ? 'เลือกสิ่งที่จะปรับรอบถัดไป' : 'CHOOSE NEXT ITERATION')} <ArrowRight size={18} /></ArcadeButton>}>
+        <p>{checksComplete && feedbackComplete ? (isThai ? 'รายการทดสอบและสิ่งที่สังเกตจากผู้ใช้พร้อมแล้ว' : 'CREATOR TEST + USER OBSERVATION READY') : (isThai ? 'ทำรายการทดสอบและกรอกผลทดสอบกับผู้ใช้ให้ครบก่อน' : 'Complete the checklist and all user-test fields first.')}</p>
         {completion.isError ? <p className="field-error" role="alert">บันทึก Feedback ไม่สำเร็จ</p> : null}
       </ReviewGate>
     </JourneyLayout>

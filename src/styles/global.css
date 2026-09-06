@@ -930,6 +930,10 @@ main {
   gap: 24px;
 }
 
+.brief-layout > * {
+  min-width: 0;
+}
+
 .arcade-panel {
   padding: clamp(24px, 4vw, 42px);
 }
@@ -939,6 +943,7 @@ main {
   margin: 22px 0 0;
   font-size: clamp(24px, 3vw, 34px);
   line-height: 1.45;
+  overflow-wrap: anywhere;
 }
 
 .brief-main h2 span {

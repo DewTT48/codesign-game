@@ -29,15 +29,15 @@ export function ProjectWorkspacePage() {
   if (!projectId) return <Navigate to="/dashboard" replace />
 
   if (project.isLoading) {
-    return <div className="route-loading" role="status">LOADING PROJECT…</div>
+    return <div className="route-loading" role="status">{isThai ? 'กำลังโหลด Project…' : 'LOADING PROJECT…'}</div>
   }
 
   if (project.isError || !project.data) {
     return (
       <div className="content-page project-load-error">
-        <Link className="back-link" to="/dashboard"><ArrowLeft size={18} /> DASHBOARD</Link>
+        <Link className="back-link" to="/dashboard"><ArrowLeft size={18} /> {isThai ? 'แดชบอร์ด' : 'DASHBOARD'}</Link>
         <section className="dashboard-state dashboard-state--error" role="alert">
-          <strong>PROJECT NOT AVAILABLE</strong>
+          <strong>{isThai ? 'ไม่พบ Project นี้' : 'PROJECT NOT AVAILABLE'}</strong>
           <p>{isThai ? 'Project นี้ไม่มีอยู่ หรือบัญชีของคุณไม่มีสิทธิ์เข้าถึง' : 'This project does not exist or your account cannot access it.'}</p>
         </section>
       </div>

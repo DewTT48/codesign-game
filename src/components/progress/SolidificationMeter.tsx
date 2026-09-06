@@ -16,14 +16,23 @@ export function SolidificationMeter({
 }: SolidificationMeterProps) {
   const { isThai } = useLanguage()
   const currentIndex = stages.indexOf(current)
+  const thaiStageLabels: Record<(typeof stages)[number], string> = {
+    IDEA: 'ไอเดีย',
+    UNDERSTOOD: 'เข้าใจแล้ว',
+    EXPLORED: 'สำรวจแล้ว',
+    DECIDED: 'ตัดสินใจแล้ว',
+    SOLID: 'ชัดเจนแล้ว',
+    'BUILD READY': 'พร้อมสร้าง',
+  }
+  const displayStage = isThai ? thaiStageLabels[current] : current
 
   return (
     <section className="solid-meter" aria-labelledby="solid-meter-title">
       <div className="solid-meter__header">
         <span className="section-label" id="solid-meter-title">
-          PRODUCT DEFINITION
+          {isThai ? 'ระดับความชัดเจนของ Product' : 'PRODUCT DEFINITION'}
         </span>
-        <strong>{current}</strong>
+        <strong>{displayStage}</strong>
       </div>
       <div
         className="solid-meter__stages"
@@ -31,7 +40,7 @@ export function SolidificationMeter({
         aria-valuemin={0}
         aria-valuemax={stages.length - 1}
         aria-valuenow={currentIndex}
-        aria-label={`Product definition stage: ${current}`}
+        aria-label={isThai ? `ระดับความชัดเจนของ Product: ${displayStage}` : `Product definition stage: ${current}`}
       >
         {stages.map((stage, index) => (
           <div
@@ -47,7 +56,7 @@ export function SolidificationMeter({
               aria-hidden="true"
             />
             <span className="solid-meter__label" aria-hidden="true">
-              {stage}
+              {isThai ? thaiStageLabels[stage] : stage}
             </span>
           </div>
         ))}

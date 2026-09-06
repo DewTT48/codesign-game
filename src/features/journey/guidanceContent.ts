@@ -203,7 +203,7 @@ export function getPhaseGuide(
   const guides: Record<string, Localized<PhaseGuide>> = {
     C: {
       th: {
-        headline: "DON'T DESIGN YET.",
+        headline: 'ยังไม่ต้องออกแบบ',
         principle: 'ก่อนคิดว่า App จะมี Feature อะไร ทำให้ชัดก่อนว่าคุณกำลังสร้างมันให้ใครและเพื่ออะไร',
         hint: 'นึกถึงผู้ใช้หลักหนึ่งกลุ่มในสถานการณ์จริง แล้วแยก Goal ของเขาออกจาก Feature ที่คุณอยากสร้าง',
         chatGoal: 'ให้ Chat ช่วยถามเพื่อทำให้ WHO · GOAL · SUCCESS · CONTEXT · CONSTRAINTS ชัด โดยยังไม่ออกแบบ App',
@@ -223,7 +223,7 @@ export function getPhaseGuide(
     },
     O: {
       th: {
-        headline: "DON'T FALL IN LOVE WITH THE FIRST IDEA.",
+        headline: 'อย่าเพิ่งหลงรักไอเดียแรก',
         principle: 'Problem เดียวสามารถกลายเป็น Product ได้หลายแบบ ก่อนเลือกต้องเห็นความแตกต่างและสิ่งที่ต้องแลก',
         hint: 'Direction ที่ต่างกันจริงต้องเปลี่ยนกลไกที่พาผู้ใช้ไปถึง Goal ไม่ใช่แค่เปลี่ยนสี ชื่อ หรือ Layout',
         chatGoal: 'สร้างอย่างน้อย 3 Product directions ที่แตกต่างกันจริงจาก Context ที่ Lock ไว้',
@@ -243,7 +243,7 @@ export function getPhaseGuide(
     },
     D: {
       th: {
-        headline: "AI SOUNDS CONFIDENT. THAT DOESN'T MAKE IT RIGHT.",
+        headline: 'AI ฟังดูมั่นใจ ไม่ได้แปลว่าถูก',
         principle: 'แยกสิ่งที่รู้จริงออกจากสิ่งที่ AI และทีมกำลังคาด ก่อนยอมรับ Direction',
         hint: 'มองหา Assumption เกี่ยวกับ Behavior, Motivation, เวลา อุปกรณ์ และความเต็มใจกลับมาใช้ซ้ำ',
         chatGoal: 'เปิดเผย Assumptions และ Failure modes ของ Direction ที่กำลังชอบ',
@@ -263,7 +263,7 @@ export function getPhaseGuide(
     },
     E: {
       th: {
-        headline: 'EXPLORATION ENDS HERE.',
+        headline: 'จบการสำรวจ ตัดสินใจให้ชัด',
         principle: 'หยุดเพิ่ม Option แล้วตัดสินใจว่า Version แรกจะเป็นอะไรและจะไม่เป็นอะไร',
         hint: 'กำหนดเฉพาะสิ่งที่ผู้ใช้ต้องทำเพื่อบรรลุ Goal หลัก ส่วนสิ่งที่น่าสนใจแต่ไม่จำเป็นให้ย้ายไป Non-goal',
         chatGoal: 'ตรวจว่าทุก Must Have รองรับสิ่งที่ผู้ใช้ต้องทำเพื่อบรรลุ Goal โดยไม่เพิ่ม Feature ใหม่',
@@ -327,7 +327,7 @@ Identify items that are broad, duplicated, disconnected from the goal, or merely
     },
     S: {
       th: {
-        headline: 'MAKE IT BUILDABLE.',
+        headline: 'ทำให้พร้อมสร้างจริง',
         principle: 'กำหนด Journey, เนื้อหา และ Experience ที่ต้องการ แล้วให้ Chat ช่วยร่างรายละเอียดก่อนคุณตัดสินใจ',
         hint: 'คุณไม่ต้องออกแบบทุก Screen เอง ให้ตัดสินใจเฉพาะสิ่งที่เปลี่ยนประสบการณ์หรือผลลัพธ์ของผู้ใช้',
         chatGoal: 'ให้ AI ภายนอกช่วยร่าง Content Pack 21 วันและเสนอ Experience Direction โดยไม่เลือกแทน Product Owner',
@@ -485,7 +485,7 @@ The content must be implementation-ready, contain no TODO markers, and must not 
     },
     PRD: {
       th: {
-        headline: 'MAKE EVERY DECISION VISIBLE.',
+        headline: 'ทำให้ทุกการตัดสินใจมองเห็นได้',
         principle: 'PRD ต้องสะท้อนการตัดสินใจที่คุณทำไว้ โดยไม่ให้ AI เติม Product rule ที่ขาดหาย',
         hint: 'อ่านเหมือนผู้พัฒนา: ทุกหัวข้อบอกสิ่งที่ต้องสร้างและเกณฑ์ตรวจรับได้หรือยัง?',
         chatGoal: 'Review ความชัดเจนและความครบถ้วนของ PRD โดยไม่เพิ่ม Feature หรือ Product decision ใหม่',
@@ -505,7 +505,7 @@ The content must be implementation-ready, contain no TODO markers, and must not 
     },
     I: {
       th: {
-        headline: 'YOU KNOW WHAT TO BUILD. NOW LET CODEX BUILD IT.',
+        headline: 'คุณรู้แล้วว่าจะสร้างอะไร ให้ Codex ลงมือสร้าง',
         principle: 'Codex ช่วยสร้าง App และพาใช้ GitHub ได้ แต่คุณยังเป็นผู้ยืนยัน Product decision และข้อมูลความปลอดภัยทุกครั้ง',
         hint: 'แนบ Handoff ทั้ง 4 ไฟล์ ถ้ายังไม่มี GitHub ให้บอก Codex ตรง ๆ ว่าต้องการคำอธิบายและให้พาทำทีละขั้น',
         chatGoal: 'ส่งมอบ Build Package ให้ Codex พร้อมระดับความพร้อมเรื่อง GitHub และขอบเขตอำนาจตัดสินใจ',
@@ -525,7 +525,7 @@ The content must be implementation-ready, contain no TODO markers, and must not 
     },
     G: {
       th: {
-        headline: 'TEST WHAT YOU BUILT, NOT WHAT YOU INTENDED.',
+        headline: 'ทดสอบสิ่งที่สร้าง ไม่ใช่สิ่งที่ตั้งใจ',
         principle: 'สังเกตสิ่งที่เกิดขึ้นจริงโดยไม่อธิบาย Interface หรือแก้ต่างแทนผู้ใช้',
         hint: 'เขียนสิ่งที่เห็นและได้ยินก่อนตีความ เช่น หยุด กดซ้ำ ย้อนกลับ หรือถามอะไร',
         chatGoal: 'จัดกลุ่ม Observation โดยแยกสิ่งที่ผู้ใช้ทำจริงออกจากการตีความและ Solution',
@@ -545,7 +545,7 @@ The content must be implementation-ready, contain no TODO markers, and must not 
     },
     N: {
       th: {
-        headline: "DON'T FIX EVERYTHING.",
+        headline: 'ไม่ต้องแก้ทุกอย่าง',
         principle: 'เลือกการเปลี่ยนแปลงหนึ่งเรื่องที่พา Product เข้าใกล้ Goal มากที่สุด',
         hint: 'เลือก Behavior หรือ Friction ที่สังเกตและทดสอบผลได้ ไม่ใช้คำกว้าง ๆ เช่น make it better',
         chatGoal: 'ใช้ Feedback เพื่อจัดลำดับความสำคัญโดยไม่ให้ Chat เลือก Feature แทน',

@@ -9,13 +9,23 @@ type MissionMapProps = {
 
 export function MissionMap({ activeMission = 'C', compact }: MissionMapProps) {
   const { isThai } = useLanguage()
+  const thaiMissionNames: Record<string, string> = {
+    C: 'บริบท',
+    O: 'ทางเลือก',
+    D: 'ท้าทาย',
+    E: 'ขอบเขต',
+    S: 'รายละเอียด',
+    I: 'สร้างแอป',
+    G: 'ข้อเสนอแนะ',
+    N: 'รอบถัดไป',
+  }
   return (
     <section
       className={`mission-map ${compact ? 'mission-map--compact' : ''}`}
       aria-labelledby="mission-map-title"
     >
       <div className="section-label" id="mission-map-title">
-        MISSION MAP
+        {isThai ? 'แผนที่ภารกิจ' : 'MISSION MAP'}
       </div>
       <ol className="mission-track">
         {missions.map((mission, index) => {
@@ -34,7 +44,7 @@ export function MissionMap({ activeMission = 'C', compact }: MissionMapProps) {
               </span>
               <span className="mission-name">
                 <span className="sr-only">{mission.key} — </span>
-                {mission.name}
+                {isThai ? (thaiMissionNames[mission.key] ?? mission.name) : mission.name}
               </span>
               {active ? <span className="mission-you">{isThai ? 'คุณอยู่ที่นี่' : 'YOU ARE HERE'}</span> : null}
             </li>

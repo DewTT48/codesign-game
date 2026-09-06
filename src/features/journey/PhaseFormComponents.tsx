@@ -36,7 +36,7 @@ export function FormField({
     <div className="form-field">
       <label className="form-field__control">
         <span>
-          {label} {required ? <em>REQUIRED</em> : null}
+          {label} {required ? <em>{isThai ? 'จำเป็น' : 'REQUIRED'}</em> : null}
         </span>
         {guide ? <p className="form-field__question">{guide.question}</p> : null}
         {hint ? <small>{hint}</small> : null}

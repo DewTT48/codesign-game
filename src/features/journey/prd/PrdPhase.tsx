@@ -111,9 +111,9 @@ export function PrdPhase({ project }: { project: ProjectRow }) {
   const copyMarkdown = async () => {
     try {
       await navigator.clipboard.writeText(markdown)
-      setFeedback('PRD COPIED')
+      setFeedback(isThai ? 'คัดลอก PRD แล้ว' : 'PRD COPIED')
     } catch {
-      setFeedback('COPY FAILED — SELECT THE TEXT MANUALLY')
+      setFeedback(isThai ? 'คัดลอกไม่สำเร็จ — กรุณาเลือกและคัดลอกข้อความเอง' : 'COPY FAILED — SELECT THE TEXT MANUALLY')
     }
   }
 
@@ -129,17 +129,36 @@ export function PrdPhase({ project }: { project: ProjectRow }) {
   }
 
   if (source.isError || draft.isError) {
-    return <div className="route-loading" role="alert">PRD SOURCE COULD NOT BE LOADED.</div>
+    return <div className="route-loading" role="alert">{isThai ? 'โหลดข้อมูลสำหรับ PRD ไม่สำเร็จ' : 'PRD SOURCE COULD NOT BE LOADED.'}</div>
   }
 
   if (source.isLoading || draft.isLoading || !hydratedRef.current) {
-    return <div className="route-loading" role="status">ASSEMBLING PRD…</div>
+    return <div className="route-loading" role="status">{isThai ? 'กำลังประกอบชุดส่งต่องาน…' : 'ASSEMBLING PRD…'}</div>
   }
 
   const specify = source.data?.S ?? {}
   const contentPack = assembleContentPack(specify)
   const experienceDirection = assembleExperienceDirection(specify)
   const startWithCodex = assembleStartWithCodex(project)
+  const checklist = isThai ? [
+    'เข้าใจบริบทแล้ว',
+    'สำรวจทางเลือกแล้ว',
+    'ท้าทายสมมติฐานแล้ว',
+    'ยืนยันขอบเขตแล้ว',
+    'กำหนดเส้นทางแล้ว',
+    'เนื้อหาพร้อมแล้ว',
+    'กำหนดประสบการณ์แล้ว',
+    'มีเกณฑ์ตรวจรับแล้ว',
+  ] : [
+    'CONTEXT',
+    'OPTIONS EXPLORED',
+    'ASSUMPTIONS CHALLENGED',
+    'SCOPE LOCKED',
+    'FLOW DEFINED',
+    'CONTENT READY',
+    'EXPERIENCE DEFINED',
+    'ACCEPTANCE CRITERIA',
+  ]
 
   return (
     <JourneyLayout
@@ -151,24 +170,15 @@ export function PrdPhase({ project }: { project: ProjectRow }) {
     >
       <PhaseSection
         step="01"
-        title="YOUR BUILD PACKAGE"
+        title={isThai ? 'ชุดไฟล์สำหรับสร้างแอป' : 'YOUR BUILD PACKAGE'}
         description={isThai ? 'CODESIGN ประกอบการตัดสินใจของคุณเป็นชุดไฟล์ที่ Codex ใช้สร้าง Product ได้ โดยไม่ต้องคัดลอกคำตอบทีละส่วน' : 'CODESIGN turns your decisions into a build package Codex can use without copying answers one by one.'}
       >
-        <div className="prd-checklist" aria-label="Product definition checklist">
-          {[
-            'CONTEXT',
-            'OPTIONS EXPLORED',
-            'ASSUMPTIONS CHALLENGED',
-            'SCOPE LOCKED',
-            'FLOW DEFINED',
-            'CONTENT READY',
-            'EXPERIENCE DEFINED',
-            'ACCEPTANCE CRITERIA',
-          ].map((item) => <span key={item}><Check size={16} aria-hidden="true" /> {item}</span>)}
+        <div className="prd-checklist" aria-label={isThai ? 'รายการตรวจความพร้อมของ Product' : 'Product definition checklist'}>
+          {checklist.map((item) => <span key={item}><Check size={16} aria-hidden="true" /> {item}</span>)}
         </div>
       </PhaseSection>
 
-      <PhaseSection step="02" title="GITHUB — THE PROJECT HOME" description={isThai ? 'คุณยังไม่ต้องรู้วิธีเขียนโค้ดหรือใช้คำสั่ง Git และยังไม่จำเป็นต้องมีบัญชีในขั้นนี้' : 'You do not need to know code or Git commands, and an account is not required at this step.'}>
+      <PhaseSection step="02" title={isThai ? 'GitHub — บ้านของโครงการ' : 'GITHUB — THE PROJECT HOME'} description={isThai ? 'คุณยังไม่ต้องรู้วิธีเขียนโค้ดหรือใช้คำสั่ง Git และยังไม่จำเป็นต้องมีบัญชีในขั้นนี้' : 'You do not need to know code or Git commands, and an account is not required at this step.'}>
         <div className="github-orientation">
           <Github size={36} aria-hidden="true" />
           <div>
@@ -178,35 +188,35 @@ export function PrdPhase({ project }: { project: ProjectRow }) {
         </div>
       </PhaseSection>
 
-      <PhaseSection step="03" title="DOWNLOAD THE HANDOFF" description={isThai ? 'ดาวน์โหลดทั้ง 4 ไฟล์ไว้ใน Folder เดียวกัน แล้วส่งให้ Codex ในขั้นถัดไป' : 'Download all four files into one folder, then give them to Codex in the next step.'}>
+      <PhaseSection step="03" title={isThai ? 'ดาวน์โหลดชุดส่งต่องาน' : 'DOWNLOAD THE HANDOFF'} description={isThai ? 'ดาวน์โหลดทั้ง 4 ไฟล์ไว้ใน Folder เดียวกัน แล้วส่งให้ Codex ในขั้นถัดไป' : 'Download all four files into one folder, then give them to Codex in the next step.'}>
         <div className="handoff-file-grid">
-          <button type="button" onClick={() => downloadFile('CODESIGN_HANDOFF.md', markdown, 'HANDOFF DOWNLOADED')}><FileCode2 size={21} /><span><strong>CODESIGN_HANDOFF.md</strong><small>{isThai ? 'Product decisions และขอบเขตงาน' : 'Product decisions and scope'}</small></span><Download size={18} /></button>
-          <button type="button" onClick={() => downloadFile('CONTENT_PACK.md', contentPack, 'CONTENT PACK DOWNLOADED')}><FileCode2 size={21} /><span><strong>CONTENT_PACK.md</strong><small>{isThai ? 'เนื้อหา แบบฝึก และการบันทึกครบ 21 วัน' : 'All 21 days of content and exercises'}</small></span><Download size={18} /></button>
-          <button type="button" onClick={() => downloadFile('EXPERIENCE_DIRECTION.md', experienceDirection, 'EXPERIENCE DOWNLOADED')}><FileCode2 size={21} /><span><strong>EXPERIENCE_DIRECTION.md</strong><small>{isThai ? 'Theme ที่เลือกและ Design guardrails' : 'Selected theme and design guardrails'}</small></span><Download size={18} /></button>
-          <button type="button" onClick={() => downloadFile('START_WITH_CODEX.md', startWithCodex, 'CODEX GUIDE DOWNLOADED')}><FileCode2 size={21} /><span><strong>START_WITH_CODEX.md</strong><small>{isThai ? 'คำสั่งเริ่มสร้างและคำแนะนำ GitHub' : 'Build brief and GitHub guidance'}</small></span><Download size={18} /></button>
+          <button type="button" onClick={() => downloadFile('CODESIGN_HANDOFF.md', markdown, isThai ? 'ดาวน์โหลดไฟล์ส่งต่องานแล้ว' : 'HANDOFF DOWNLOADED')}><FileCode2 size={21} /><span><strong>CODESIGN_HANDOFF.md</strong><small>{isThai ? 'การตัดสินใจเกี่ยวกับ Product และขอบเขตงาน' : 'Product decisions and scope'}</small></span><Download size={18} /></button>
+          <button type="button" onClick={() => downloadFile('CONTENT_PACK.md', contentPack, isThai ? 'ดาวน์โหลดชุดเนื้อหาแล้ว' : 'CONTENT PACK DOWNLOADED')}><FileCode2 size={21} /><span><strong>CONTENT_PACK.md</strong><small>{isThai ? 'เนื้อหา แบบฝึก และการบันทึกครบ 21 วัน' : 'All 21 days of content and exercises'}</small></span><Download size={18} /></button>
+          <button type="button" onClick={() => downloadFile('EXPERIENCE_DIRECTION.md', experienceDirection, isThai ? 'ดาวน์โหลดทิศทางประสบการณ์แล้ว' : 'EXPERIENCE DOWNLOADED')}><FileCode2 size={21} /><span><strong>EXPERIENCE_DIRECTION.md</strong><small>{isThai ? 'Theme ที่เลือกและแนวทางกำกับการออกแบบ' : 'Selected theme and design guardrails'}</small></span><Download size={18} /></button>
+          <button type="button" onClick={() => downloadFile('START_WITH_CODEX.md', startWithCodex, isThai ? 'ดาวน์โหลดคู่มือเริ่มงานกับ Codex แล้ว' : 'CODEX GUIDE DOWNLOADED')}><FileCode2 size={21} /><span><strong>START_WITH_CODEX.md</strong><small>{isThai ? 'คำสั่งเริ่มสร้างและคำแนะนำ GitHub' : 'Build brief and GitHub guidance'}</small></span><Download size={18} /></button>
         </div>
         <div className="prd-toolbar">
-          <button type="button" onClick={() => void copyMarkdown()}><Clipboard size={17} /> COPY HANDOFF</button>
-          <button type="button" onClick={() => window.print()}><Printer size={17} /> PRINT / PDF</button>
+          <button type="button" onClick={() => void copyMarkdown()}><Clipboard size={17} /> {isThai ? 'คัดลอกชุดส่งต่องาน' : 'COPY HANDOFF'}</button>
+          <button type="button" onClick={() => window.print()}><Printer size={17} /> {isThai ? 'พิมพ์ / บันทึก PDF' : 'PRINT / PDF'}</button>
           {feedback ? <span role="status">{feedback}</span> : null}
         </div>
         <details className="prd-source-editor">
-          <summary>{isThai ? 'ADVANCED — ตรวจหรือแก้ CODESIGN_HANDOFF.md' : 'ADVANCED — REVIEW OR EDIT CODESIGN_HANDOFF.md'}</summary>
+          <summary>{isThai ? 'รายละเอียดเพิ่มเติม — ตรวจหรือแก้ CODESIGN_HANDOFF.md' : 'ADVANCED — REVIEW OR EDIT CODESIGN_HANDOFF.md'}</summary>
           <p>{isThai ? 'แก้เฉพาะเมื่อ Product decision ในเอกสารไม่ตรงกับสิ่งที่คุณตั้งใจ ระบบจะ Autosave จนกว่าจะ Lock' : 'Edit only when a product decision does not match your intent. Changes autosave until locked.'}</p>
-          <textarea ref={editorRef} className="prd-editor" aria-label="Editable CODESIGN handoff Markdown" spellCheck="false" value={markdown} onChange={(event) => updateMarkdown(event.target.value)} />
+          <textarea ref={editorRef} className="prd-editor" aria-label={isThai ? 'แก้ไขไฟล์ Markdown สำหรับส่งต่องานจาก CODESIGN' : 'Editable CODESIGN handoff Markdown'} spellCheck="false" value={markdown} onChange={(event) => updateMarkdown(event.target.value)} />
         </details>
         <pre className="prd-print-preview" aria-hidden="true">{markdown}</pre>
       </PhaseSection>
 
       <ReviewGate
-        title="FINAL HANDOFF GATE"
+        title={isThai ? 'ตรวจความพร้อมของชุดส่งต่องาน' : 'FINAL HANDOFF GATE'}
         question={isThai ? 'ชุดส่งต่องานนี้สะท้อนสิ่งที่คุณตัดสินใจ และพร้อมให้ Codex เริ่มสร้างแล้วหรือยัง?' : 'Does this handoff reflect your decisions and give Codex what it needs to begin?'}
         actions={(
           <>
             <ArcadeButton
               variant="secondary"
               onClick={() => {
-                setFeedback('REVIEW THE DRAFT — REMOVE OR CLARIFY ANY INVENTED DECISION')
+                setFeedback(isThai ? 'ตรวจร่างอีกครั้ง — ลบหรืออธิบายการตัดสินใจที่ไม่ได้มาจากคุณให้ชัด' : 'REVIEW THE DRAFT — REMOVE OR CLARIFY ANY INVENTED DECISION')
                 editorRef.current?.focus()
               }}
             >
@@ -216,7 +226,7 @@ export function PrdPhase({ project }: { project: ProjectRow }) {
               disabled={!markdown.trim() || completion.isPending || saveState === 'saving'}
               onClick={() => completion.mutate()}
             >
-              <LockKeyhole size={18} /> {completion.isPending ? 'SOLIDIFYING…' : (isThai ? 'พร้อม — LOCK HANDOFF' : 'READY — LOCK HANDOFF')}
+              <LockKeyhole size={18} /> {completion.isPending ? (isThai ? 'กำลังยืนยัน…' : 'SOLIDIFYING…') : (isThai ? 'พร้อม — ยืนยันชุดส่งต่องาน' : 'READY — LOCK HANDOFF')}
             </ArcadeButton>
           </>
         )}

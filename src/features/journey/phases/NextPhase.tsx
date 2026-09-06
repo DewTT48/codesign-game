@@ -32,15 +32,15 @@ export function NextPhase({ project }: { project: ProjectRow }) {
 
   return (
     <JourneyLayout project={project} phase="N" phaseName="NEXT ITERATION" chatContext={{ ...draft.values, mostImportant }} saveState={draft.saveState}>
-      <PhaseSection step="01" title="WHAT THE TEST REVEALED">
-        <blockquote className="feedback-quote">{typeof mostImportant === 'string' ? mostImportant : 'Feedback กำลังโหลด…'}</blockquote>
+      <PhaseSection step="01" title={isThai ? 'สิ่งที่การทดสอบเปิดเผย' : 'WHAT THE TEST REVEALED'}>
+        <blockquote className="feedback-quote">{typeof mostImportant === 'string' ? mostImportant : (isThai ? 'กำลังโหลดข้อเสนอแนะ…' : 'Loading feedback…')}</blockquote>
       </PhaseSection>
-      <PhaseSection step="02" title="LOCK ONE CHANGE" description="ถ้าแก้ได้หนึ่งเรื่องก่อน อะไรจะทำให้ Product เข้าใกล้ Goal มากที่สุด?">
-        <FormField label="CHANGE" guideKey="next.change" required><textarea rows={4} value={String(draft.values.change)} onChange={(event) => draft.setField('change', event.target.value)} /></FormField>
-        <FormField label="BECAUSE" guideKey="next.because" required><textarea rows={4} value={String(draft.values.because)} onChange={(event) => draft.setField('because', event.target.value)} /></FormField>
-        <FormField label="EXPECTED RESULT" guideKey="next.expected" required><textarea rows={4} value={String(draft.values.expectedResult)} onChange={(event) => draft.setField('expectedResult', event.target.value)} /></FormField>
+      <PhaseSection step="02" title={isThai ? 'เลือกการเปลี่ยนแปลงหนึ่งเรื่อง' : 'LOCK ONE CHANGE'} description={isThai ? 'ถ้าแก้ได้หนึ่งเรื่องก่อน อะไรจะทำให้ Product เข้าใกล้ Goal มากที่สุด?' : 'If you could change one thing first, what would move the product closest to its goal?'}>
+        <FormField label={isThai ? 'สิ่งที่จะเปลี่ยน' : 'CHANGE'} guideKey="next.change" required><textarea rows={4} value={String(draft.values.change)} onChange={(event) => draft.setField('change', event.target.value)} /></FormField>
+        <FormField label={isThai ? 'เพราะอะไร' : 'BECAUSE'} guideKey="next.because" required><textarea rows={4} value={String(draft.values.because)} onChange={(event) => draft.setField('because', event.target.value)} /></FormField>
+        <FormField label={isThai ? 'ผลลัพธ์ที่คาดหวัง' : 'EXPECTED RESULT'} guideKey="next.expected" required><textarea rows={4} value={String(draft.values.expectedResult)} onChange={(event) => draft.setField('expectedResult', event.target.value)} /></FormField>
       </PhaseSection>
-      <ReviewGate title="NEXT ITERATION GATE" question={isThai ? 'นี่คือการเปลี่ยนแปลงที่สำคัญที่สุด—not แค่สิ่งที่แก้ง่ายที่สุด—ใช่หรือไม่?' : 'Is this the most important change—not merely the easiest one?'} actions={<ArcadeButton disabled={!ready || completion.isPending} onClick={() => completion.mutate()}><LockKeyhole size={18} /> {completion.isPending ? 'LOCKING…' : 'LOCK NEXT ITERATION'}</ArcadeButton>}>
+      <ReviewGate title={isThai ? 'ตรวจการเปลี่ยนแปลงรอบถัดไป' : 'NEXT ITERATION GATE'} question={isThai ? 'นี่คือการเปลี่ยนแปลงที่สำคัญที่สุด ไม่ใช่แค่สิ่งที่แก้ง่ายที่สุด ใช่หรือไม่?' : 'Is this the most important change—not merely the easiest one?'} actions={<ArcadeButton disabled={!ready || completion.isPending} onClick={() => completion.mutate()}><LockKeyhole size={18} /> {completion.isPending ? (isThai ? 'กำลังยืนยัน…' : 'LOCKING…') : (isThai ? 'ยืนยันการเปลี่ยนแปลงรอบถัดไป' : 'LOCK NEXT ITERATION')}</ArcadeButton>}>
         <p><Flag size={17} /> {isThai ? 'การตัดสินใจนี้จะถูกเก็บใน Decision History และปิด Guided Build รอบแรก' : 'This decision will enter Decision History and complete the first Guided Build.'}</p>
         {completion.isError ? <p className="field-error" role="alert">Lock Next Iteration ไม่สำเร็จ</p> : null}
       </ReviewGate>

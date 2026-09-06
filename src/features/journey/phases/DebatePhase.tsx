@@ -93,7 +93,7 @@ export function DebatePhase({ project }: { project: ProjectRow }) {
     <JourneyLayout project={project} phase="D" phaseName="DEBATE" chatContext={draft.values} saveState={draft.saveState}>
       <aside className="debate-guide" aria-labelledby="debate-guide-title">
         <header>
-          <span>HOW THIS STEP WORKS</span>
+          <span>{isThai ? 'ขั้นตอนนี้ทำงานอย่างไร' : 'HOW THIS STEP WORKS'}</span>
           <h2 id="debate-guide-title">{guide.title}</h2>
           <p>{guide.intro}</p>
         </header>
@@ -116,29 +116,29 @@ export function DebatePhase({ project }: { project: ProjectRow }) {
         </details>
       </aside>
 
-      <PhaseSection step="01" title="EXPOSE THE ASSUMPTIONS" description={isThai ? 'ใช้ Prompt Kit ค้นหาสิ่งที่ข้อเสนอถือว่าเป็นจริงโดยยังไม่มีหลักฐาน' : 'Use the Prompt Kit to expose what the proposal treats as true without evidence.'}>
+      <PhaseSection step="01" title={isThai ? 'เปิดเผยสมมติฐาน' : 'EXPOSE THE ASSUMPTIONS'} description={isThai ? 'ใช้ชุดคำสั่งค้นหาสิ่งที่ข้อเสนอถือว่าเป็นจริงโดยยังไม่มีหลักฐาน' : 'Use the Prompt Kit to expose what the proposal treats as true without evidence.'}>
         <div className="assumption-stack">
           {assumptions.map((assumption, index) => (
             <article className="assumption-card" key={index}>
-              {assumptions.length > MIN_ASSUMPTIONS ? <button className="assumption-card__remove" type="button" onClick={() => removeAssumption(index)} aria-label={`${isThai ? 'ลบสมมติฐานข้อที่' : 'Remove assumption'} ${index + 1}`}><X aria-hidden="true" size={17} /> REMOVE</button> : null}
-              <FormField label={`DIRECTION ASSUMES THAT… ${index + 1}`} guideKey="debate.assumption" required><textarea rows={3} value={assumption.text} onChange={(event) => updateAssumption(index, { text: event.target.value })} /></FormField>
+              {assumptions.length > MIN_ASSUMPTIONS ? <button className="assumption-card__remove" type="button" onClick={() => removeAssumption(index)} aria-label={`${isThai ? 'ลบสมมติฐานข้อที่' : 'Remove assumption'} ${index + 1}`}><X aria-hidden="true" size={17} /> {isThai ? 'ลบ' : 'REMOVE'}</button> : null}
+              <FormField label={isThai ? `Direction นี้ตั้งอยู่บนสมมติฐานว่า… ${index + 1}` : `DIRECTION ASSUMES THAT… ${index + 1}`} guideKey="debate.assumption" required><textarea rows={3} value={assumption.text} onChange={(event) => updateAssumption(index, { text: event.target.value })} /></FormField>
               <div className="stance-buttons">
-                <button className={assumption.stance === 'agree' ? 'is-active' : ''} type="button" onClick={() => updateAssumption(index, { stance: 'agree', change: '' })}><strong>WE AGREE</strong><small>{guide.agree}</small></button>
-                <button className={assumption.stance === 'challenge' ? 'is-active challenge' : ''} type="button" onClick={() => updateAssumption(index, { stance: 'challenge' })}><strong>WE CHALLENGE</strong><small>{guide.challenge}</small></button>
+                <button className={assumption.stance === 'agree' ? 'is-active' : ''} type="button" onClick={() => updateAssumption(index, { stance: 'agree', change: '' })}><strong>{isThai ? 'ยอมรับสมมติฐานนี้' : 'WE AGREE'}</strong><small>{guide.agree}</small></button>
+                <button className={assumption.stance === 'challenge' ? 'is-active challenge' : ''} type="button" onClick={() => updateAssumption(index, { stance: 'challenge' })}><strong>{isThai ? 'ท้าทายสมมติฐานนี้' : 'WE CHALLENGE'}</strong><small>{guide.challenge}</small></button>
               </div>
-              {assumption.stance ? <div className={`form-grid ${assumption.stance === 'challenge' ? 'form-grid--two' : ''} challenge-fields`}><FormField label={assumption.stance === 'agree' ? 'WHY ARE YOU ACCEPTING THIS RISK?' : 'WHY DO YOU CHALLENGE IT?'} guideKey={assumption.stance === 'agree' ? 'debate.agreeReason' : 'debate.challengeReason'} required><textarea rows={3} value={assumption.why} onChange={(event) => updateAssumption(index, { why: event.target.value })} /></FormField>{assumption.stance === 'challenge' ? <FormField label="WHAT SHOULD CHANGE?" guideKey="debate.change" required><textarea rows={3} value={assumption.change} onChange={(event) => updateAssumption(index, { change: event.target.value })} /></FormField> : null}</div> : null}
+              {assumption.stance ? <div className={`form-grid ${assumption.stance === 'challenge' ? 'form-grid--two' : ''} challenge-fields`}><FormField label={assumption.stance === 'agree' ? (isThai ? 'ทำไมคุณจึงยอมรับความเสี่ยงนี้?' : 'WHY ARE YOU ACCEPTING THIS RISK?') : (isThai ? 'ทำไมคุณจึงท้าทายสมมติฐานนี้?' : 'WHY DO YOU CHALLENGE IT?')} guideKey={assumption.stance === 'agree' ? 'debate.agreeReason' : 'debate.challengeReason'} required><textarea rows={3} value={assumption.why} onChange={(event) => updateAssumption(index, { why: event.target.value })} /></FormField>{assumption.stance === 'challenge' ? <FormField label={isThai ? 'ควรเปลี่ยนอะไร?' : 'WHAT SHOULD CHANGE?'} guideKey="debate.change" required><textarea rows={3} value={assumption.change} onChange={(event) => updateAssumption(index, { change: event.target.value })} /></FormField> : null}</div> : null}
             </article>
           ))}
         </div>
-        <button className="add-list-item assumption-add" type="button" disabled={assumptions.length >= MAX_ASSUMPTIONS} onClick={addAssumption}><Plus aria-hidden="true" size={17} /> ADD ASSUMPTION ({assumptions.length}/{MAX_ASSUMPTIONS})</button>
+        <button className="add-list-item assumption-add" type="button" disabled={assumptions.length >= MAX_ASSUMPTIONS} onClick={addAssumption}><Plus aria-hidden="true" size={17} /> {isThai ? 'เพิ่มสมมติฐาน' : 'ADD ASSUMPTION'} ({assumptions.length}/{MAX_ASSUMPTIONS})</button>
       </PhaseSection>
-      <PhaseSection step="02" title="RECONSIDER WITH CHAT" description={isThai ? 'ใช้ Locked Context และคำท้าทายของคุณพิจารณา Direction ใหม่' : 'Reconsider the direction using locked context and your challenges.'}>
+      <PhaseSection step="02" title={isThai ? 'พิจารณา Direction อีกครั้งกับ Chat' : 'RECONSIDER WITH CHAT'} description={isThai ? 'ใช้บริบทที่ยืนยันแล้วและคำท้าทายของคุณพิจารณา Direction ใหม่' : 'Reconsider the direction using locked context and your challenges.'}>
         <div className="choice-grid choice-grid--two">
-          {['OUR DIRECTION STAYED THE SAME', 'WE CHANGED OUR DIRECTION'].map((option) => <label className={draft.values.directionResult === option ? 'simple-choice is-active' : 'simple-choice'} key={option}><input type="radio" name="direction-result" checked={draft.values.directionResult === option} onChange={() => draft.setField('directionResult', option)} />{option}</label>)}
+          {['OUR DIRECTION STAYED THE SAME', 'WE CHANGED OUR DIRECTION'].map((option) => <label className={draft.values.directionResult === option ? 'simple-choice is-active' : 'simple-choice'} key={option}><input type="radio" name="direction-result" checked={draft.values.directionResult === option} onChange={() => draft.setField('directionResult', option)} />{isThai ? (option === 'OUR DIRECTION STAYED THE SAME' ? 'ใช้ Direction เดิมต่อ' : 'เปลี่ยน Direction') : option}</label>)}
         </div>
-        <FormField label="WHAT CHANGED AND WHY?" guideKey="debate.whatChanged" required><textarea rows={4} value={String(draft.values.whatChanged)} onChange={(event) => draft.setField('whatChanged', event.target.value)} /></FormField>
+        <FormField label={isThai ? 'อะไรเปลี่ยนไป และเพราะอะไร?' : 'WHAT CHANGED AND WHY?'} guideKey="debate.whatChanged" required><textarea rows={4} value={String(draft.values.whatChanged)} onChange={(event) => draft.setField('whatChanged', event.target.value)} /></FormField>
       </PhaseSection>
-      <ReviewGate title="DEBATE COMPLETE" question={isThai ? 'คุณได้ท้าทายสิ่งที่ AI คาดไว้ และบันทึกเหตุผลของมนุษย์แล้วหรือยัง?' : 'Have you challenged AI assumptions and recorded the human reasoning?'} actions={<ArcadeButton disabled={!ready || completion.isPending} onClick={() => completion.mutate()}>{completion.isPending ? 'LOCKING…' : 'ESTABLISH DIRECTION'} <ArrowRight aria-hidden="true" size={18} /></ArcadeButton>}>
+      <ReviewGate title={isThai ? 'ตรวจความพร้อมหลังการท้าทาย' : 'DEBATE COMPLETE'} question={isThai ? 'คุณได้ท้าทายสิ่งที่ AI คาดไว้ และบันทึกเหตุผลของมนุษย์แล้วหรือยัง?' : 'Have you challenged AI assumptions and recorded the human reasoning?'} actions={<ArcadeButton disabled={!ready || completion.isPending} onClick={() => completion.mutate()}>{completion.isPending ? (isThai ? 'กำลังยืนยัน…' : 'LOCKING…') : (isThai ? 'กำหนด Direction' : 'ESTABLISH DIRECTION')} <ArrowRight aria-hidden="true" size={18} /></ArcadeButton>}>
         <p>{isThai ? 'ข้อเสนอเดิม สมมติฐาน เหตุผล และผลลัพธ์ใหม่จะอยู่ใน Journal โดยไม่เขียนทับกัน' : 'The original proposal, assumptions, reasoning, and revised result remain in the Journal.'}</p>
         {completion.isError ? <p className="field-error" role="alert">{isThai ? 'บันทึก Debate ไม่สำเร็จ กรุณาลองใหม่' : 'Could not save the debate. Please try again.'}</p> : null}
       </ReviewGate>

@@ -25,21 +25,30 @@ export function EstablishPhase({ project }: { project: ProjectRow }) {
   const removeItem = (key: 'mustHaves' | 'nonGoals', index: number) => { const list = key === 'mustHaves' ? mustHaves : nonGoals; draft.setField(key, list.filter((_, itemIndex) => itemIndex !== index) as unknown as Json) }
   const addItem = (key: 'mustHaves' | 'nonGoals') => { const list = key === 'mustHaves' ? mustHaves : nonGoals; draft.setField(key, [...list, ''] as unknown as Json) }
   const ready = String(draft.values.direction).trim() && mustHaves.filter((item) => item.trim()).length >= 1 && nonGoals.filter((item) => item.trim()).length >= 2
+  const displayedRules = isThai ? [
+    'เป็น Web App ที่ทำงานได้ด้วยตัวเอง',
+    'บันทึกข้อมูลไว้ใน Browser ได้',
+    'App ที่ผู้เรียนสร้างไม่ต้องมีระบบเข้าสู่ระบบ',
+    'ไม่ใช้ Cloud Database',
+    'ไม่มี Backend',
+    'ไม่บังคับใช้บริการภายนอกหรือบริการแบบเสียเงิน',
+    'Publish ผ่าน GitHub Pages ได้',
+  ] : basicRules
 
   return (
     <JourneyLayout project={project} phase="E" phaseName="ESTABLISH" chatContext={draft.values} saveState={draft.saveState}>
-      <PhaseSection step="01" title="DECISION BOARD">
-        <FormField label="WE ARE BUILDING" guideKey="establish.direction" hint="ONE CONCISE PRODUCT DIRECTION" required><textarea rows={4} value={String(draft.values.direction)} onChange={(event) => draft.setField('direction', event.target.value)} /></FormField>
+      <PhaseSection step="01" title={isThai ? 'กระดานตัดสินใจ' : 'DECISION BOARD'}>
+        <FormField label={isThai ? 'เรากำลังจะสร้าง' : 'WE ARE BUILDING'} guideKey="establish.direction" hint={isThai ? 'สรุป Product direction ให้กระชับในหนึ่งข้อความ' : 'ONE CONCISE PRODUCT DIRECTION'} required><textarea rows={4} value={String(draft.values.direction)} onChange={(event) => draft.setField('direction', event.target.value)} /></FormField>
         <div className="scope-columns">
-          <ListEditor title="MUST HAVE" guideKey="establish.mustHave" items={mustHaves} limit={8} onChange={(index, value) => updateList('mustHaves', index, value)} onRemove={(index) => removeItem('mustHaves', index)} onAdd={() => addItem('mustHaves')} />
-          <ListEditor title="NOT IN THIS VERSION" guideKey="establish.nonGoal" items={nonGoals} onChange={(index, value) => updateList('nonGoals', index, value)} onRemove={(index) => removeItem('nonGoals', index)} onAdd={() => addItem('nonGoals')} />
+          <ListEditor title={isThai ? 'สิ่งที่ต้องมีใน Version แรก' : 'MUST HAVE'} guideKey="establish.mustHave" items={mustHaves} limit={8} onChange={(index, value) => updateList('mustHaves', index, value)} onRemove={(index) => removeItem('mustHaves', index)} onAdd={() => addItem('mustHaves')} />
+          <ListEditor title={isThai ? 'สิ่งที่ยังไม่ทำใน Version นี้' : 'NOT IN THIS VERSION'} guideKey="establish.nonGoal" items={nonGoals} onChange={(index, value) => updateList('nonGoals', index, value)} onRemove={(index) => removeItem('nonGoals', index)} onAdd={() => addItem('nonGoals')} />
         </div>
       </PhaseSection>
-      <PhaseSection step="02" title="BUILD CONDITIONS FOR THIS EXERCISE" description={isThai ? 'ในแบบฝึกนี้ Application ที่คุณกำลังสร้างจะใช้ขอบเขตทางเทคนิคต่อไปนี้' : 'The application you create in this exercise will use the following technical boundaries.'}>
-        <ul className="locked-rules">{basicRules.map((rule) => <li key={rule}><LockKeyhole aria-hidden="true" size={16} /> {rule}</li>)}</ul>
+      <PhaseSection step="02" title={isThai ? 'รูปแบบของ Application ในแบบฝึกนี้' : 'BUILD CONDITIONS FOR THIS EXERCISE'} description={isThai ? 'ในแบบฝึกนี้ Application ที่คุณกำลังสร้างจะใช้ขอบเขตทางเทคนิคต่อไปนี้' : 'The application you create in this exercise will use the following technical boundaries.'}>
+        <ul className="locked-rules">{displayedRules.map((rule) => <li key={rule}><LockKeyhole aria-hidden="true" size={16} /> {rule}</li>)}</ul>
       </PhaseSection>
-      <ReviewGate title="SCOPE GATE" question={isThai ? 'ถ้า Chat เสนอ Feature ใหม่ คุณจะตรวจ Scope ก่อนเพิ่มหรือไม่?' : 'If Chat suggests a new feature, will you check the scope before adding it?'} actions={<ArcadeButton disabled={!ready || completion.isPending} onClick={() => completion.mutate()}><LockKeyhole aria-hidden="true" size={18} /> {completion.isPending ? 'LOCKING…' : 'LOCK PRODUCT SCOPE'}</ArcadeButton>}>
-        <dl><div><dt>WE ARE BUILDING</dt><dd>{String(draft.values.direction)}</dd></div><div><dt>MUST HAVE</dt><dd>{mustHaves.filter(Boolean).join(' · ')}</dd></div><div><dt>NOT IN THIS VERSION</dt><dd>{nonGoals.filter(Boolean).join(' · ')}</dd></div></dl>
+      <ReviewGate title={isThai ? 'ตรวจขอบเขตของ Product' : 'SCOPE GATE'} question={isThai ? 'ถ้า Chat เสนอ Feature ใหม่ คุณจะตรวจ Scope ก่อนเพิ่มหรือไม่?' : 'If Chat suggests a new feature, will you check the scope before adding it?'} actions={<ArcadeButton disabled={!ready || completion.isPending} onClick={() => completion.mutate()}><LockKeyhole aria-hidden="true" size={18} /> {completion.isPending ? (isThai ? 'กำลังยืนยัน…' : 'LOCKING…') : (isThai ? 'ยืนยันขอบเขต Product' : 'LOCK PRODUCT SCOPE')}</ArcadeButton>}>
+        <dl><div><dt>{isThai ? 'เรากำลังจะสร้าง' : 'WE ARE BUILDING'}</dt><dd>{String(draft.values.direction)}</dd></div><div><dt>{isThai ? 'สิ่งที่ต้องมี' : 'MUST HAVE'}</dt><dd>{mustHaves.filter(Boolean).join(' · ')}</dd></div><div><dt>{isThai ? 'สิ่งที่ยังไม่ทำใน Version นี้' : 'NOT IN THIS VERSION'}</dt><dd>{nonGoals.filter(Boolean).join(' · ')}</dd></div></dl>
         {completion.isError ? <p className="field-error" role="alert">Lock scope ไม่สำเร็จ ข้อมูลยังไม่เปลี่ยนสถานะ</p> : null}
       </ReviewGate>
     </JourneyLayout>
@@ -49,5 +58,5 @@ export function EstablishPhase({ project }: { project: ProjectRow }) {
 function ListEditor({ title, guideKey, items, limit, onChange, onRemove, onAdd }: { title: string; guideKey: string; items: string[]; limit?: number; onChange: (index: number, value: string) => void; onRemove: (index: number) => void; onAdd: () => void }) {
   const { language, isThai } = useLanguage()
   const guide = getFieldGuide(language, guideKey)
-  return <section className="list-editor"><h3>{title}</h3>{guide ? <><p className="list-editor__question">{guide.question}</p><FieldGuideDetails guide={guide} label={isThai ? 'วิธีตอบและตัวอย่าง' : 'How to answer'} isThai={isThai} /></> : null}<ol>{items.map((item, index) => <li key={index}><span>{String(index + 1).padStart(2, '0')}</span><input value={item} onChange={(event) => onChange(index, event.target.value)} aria-label={`${title} item ${index + 1}`} /><button type="button" onClick={() => onRemove(index)} aria-label={`${isThai ? 'ลบ' : 'Remove'} ${title} ${index + 1}`}><X size={17} /></button></li>)}</ol><button className="add-list-item" type="button" disabled={Boolean(limit && items.length >= limit)} onClick={onAdd}><Plus size={17} /> ADD ITEM {limit ? `(${items.length}/${limit})` : ''}</button></section>
+  return <section className="list-editor"><h3>{title}</h3>{guide ? <><p className="list-editor__question">{guide.question}</p><FieldGuideDetails guide={guide} label={isThai ? 'วิธีตอบและตัวอย่าง' : 'How to answer'} isThai={isThai} /></> : null}<ol>{items.map((item, index) => <li key={index}><span>{String(index + 1).padStart(2, '0')}</span><input value={item} onChange={(event) => onChange(index, event.target.value)} aria-label={`${title} item ${index + 1}`} /><button type="button" onClick={() => onRemove(index)} aria-label={`${isThai ? 'ลบ' : 'Remove'} ${title} ${index + 1}`}><X size={17} /></button></li>)}</ol><button className="add-list-item" type="button" disabled={Boolean(limit && items.length >= limit)} onClick={onAdd}><Plus size={17} /> {isThai ? 'เพิ่มรายการ' : 'ADD ITEM'} {limit ? `(${items.length}/${limit})` : ''}</button></section>
 }

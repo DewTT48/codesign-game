@@ -35,6 +35,17 @@ export function JourneyLayout({
     staleTime: 0,
   })
   const guide = getPhaseGuide(language, phase, source.data ?? {}, chatContext, project.topic)
+  const thaiPhaseNames: Record<string, string> = {
+    C: 'ทำความเข้าใจบริบท',
+    O: 'สำรวจทางเลือก',
+    D: 'ท้าทายสมมติฐาน',
+    E: 'กำหนดขอบเขต',
+    S: 'ระบุรายละเอียด',
+    PRD: 'ชุดส่งต่องาน',
+    I: 'สร้างแอป',
+    G: 'รับข้อเสนอแนะ',
+    N: 'วางรอบถัดไป',
+  }
 
   async function copyPrompt() {
     try {
@@ -50,14 +61,14 @@ export function JourneyLayout({
     <div className="content-page journey-page">
       <div className="journey-utility-row">
         <Link className="back-link" to="/dashboard">
-          <ArrowLeft aria-hidden="true" size={18} /> DASHBOARD
+          <ArrowLeft aria-hidden="true" size={18} /> {isThai ? 'แดชบอร์ด' : 'DASHBOARD'}
         </Link>
-        <SaveIndicator state={saveState} />
+        <SaveIndicator state={saveState} isThai={isThai} />
       </div>
       <header className="journey-heading">
         <div className="phase-token" aria-hidden="true">{phase}</div>
         <div>
-          <span className="chapter-code">{phase} — {phaseName}</span>
+          <span className="chapter-code">{phase} — {isThai ? (thaiPhaseNames[phase] ?? phaseName) : phaseName}</span>
           <h1>{guide.headline}</h1>
           <p>{guide.principle}</p>
         </div>
@@ -80,7 +91,7 @@ export function JourneyLayout({
       {openHelp ? (
         <aside className={`help-panel help-panel--${openHelp}`}>
           <div className="help-panel__header">
-            <span>{openHelp === 'hint' ? 'THINKING HINT' : 'CHAT PROMPT KIT'}</span>
+            <span>{openHelp === 'hint' ? (isThai ? 'คำใบ้เพื่อช่วยคิด' : 'THINKING HINT') : (isThai ? 'ชุดคำสั่งสำหรับ Chat' : 'CHAT PROMPT KIT')}</span>
             <button type="button" aria-label={isThai ? 'ปิดคำแนะนำ' : 'Close guidance'} onClick={() => setOpenHelp(null)}>
               <X aria-hidden="true" size={18} />
             </button>
@@ -116,8 +127,13 @@ export function JourneyLayout({
   )
 }
 
-function SaveIndicator({ state }: { state: SaveState }) {
-  const labels: Record<SaveState, string> = {
+function SaveIndicator({ state, isThai }: { state: SaveState; isThai: boolean }) {
+  const labels: Record<SaveState, string> = isThai ? {
+    idle: 'ยังไม่ได้บันทึกการเปลี่ยนแปลง',
+    saving: 'กำลังบันทึก…',
+    saved: 'บันทึกแล้ว',
+    error: 'บันทึกไม่สำเร็จ — ลองอีกครั้ง',
+  } : {
     idle: 'UNSAVED CHANGES',
     saving: 'SAVING…',
     saved: 'SAVED',

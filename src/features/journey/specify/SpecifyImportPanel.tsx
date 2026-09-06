@@ -43,7 +43,7 @@ export function SpecifyImportPanel({ onApplyDays, onApplyExperience }: Props) {
     <section className="spec-import" aria-labelledby="spec-import-title">
       <header>
         <div>
-          <span>EXTERNAL AI HANDOFF</span>
+          <span>{isThai ? 'รับข้อมูลจาก AI ภายนอก' : 'EXTERNAL AI HANDOFF'}</span>
           <h3 id="spec-import-title">{isThai ? 'นำคำตอบจาก Chat กลับเข้า CODESIGN' : 'Bring the Chat response back into CODESIGN'}</h3>
         </div>
         <button type="button" onClick={() => fileRef.current?.click()}><FileUp size={18} /> {isThai ? 'อัปโหลด .MD' : 'UPLOAD .MD'}</button>

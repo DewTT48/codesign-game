@@ -59,7 +59,7 @@ export function DailyContentEditor({ days, onChange }: { days: DailyContent[]; o
 
       <article className="day-editor-card">
         <header>
-          <div><span>DAY {String(current.day).padStart(2, '0')}</span><h3>{current.title || (isThai ? 'ยังไม่มีชื่อวันนี้' : 'UNTITLED DAY')}</h3></div>
+          <div><span>{isThai ? 'วันที่' : 'DAY'} {String(current.day).padStart(2, '0')}</span><h3>{current.title || (isThai ? 'ยังไม่มีชื่อวันนี้' : 'UNTITLED DAY')}</h3></div>
           <span className={isDailyContentComplete(current) ? 'day-status is-complete' : 'day-status'}>
             {isDailyContentComplete(current) ? (isThai ? 'ข้อมูลครบ' : 'COMPLETE') : (isThai ? 'ยังไม่ครบ' : 'INCOMPLETE')}
           </span>

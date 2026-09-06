@@ -44,15 +44,15 @@ export function ImplementPhase({ project }: { project: ProjectRow }) {
     anchor.download = 'START_WITH_CODEX.md'
     anchor.click()
     URL.revokeObjectURL(url)
-    setFeedback('START_WITH_CODEX.md DOWNLOADED')
+    setFeedback(isThai ? 'ดาวน์โหลด START_WITH_CODEX.md แล้ว' : 'START_WITH_CODEX.md DOWNLOADED')
   }
 
   const copyCodexGuide = async () => {
     try {
       await navigator.clipboard.writeText(startWithCodex)
-      setFeedback('CODEX STARTING BRIEF COPIED')
+      setFeedback(isThai ? 'คัดลอกคำสั่งเริ่มงานกับ Codex แล้ว' : 'CODEX STARTING BRIEF COPIED')
     } catch {
-      setFeedback('COPY FAILED — DOWNLOAD THE FILE INSTEAD')
+      setFeedback(isThai ? 'คัดลอกไม่สำเร็จ — กรุณาดาวน์โหลดไฟล์แทน' : 'COPY FAILED — DOWNLOAD THE FILE INSTEAD')
     }
   }
 
@@ -78,7 +78,7 @@ export function ImplementPhase({ project }: { project: ProjectRow }) {
 
   return (
     <JourneyLayout project={project} phase="I" phaseName="IMPLEMENT" chatContext={draft.values} saveState={draft.saveState}>
-      <PhaseSection step="I1" title="GITHUB IN PLAIN LANGUAGE" description={isThai ? 'สิ่งที่ต้องรู้ก่อนเริ่มมีเพียงหน้าที่ของเครื่องมือแต่ละชิ้น' : 'Before starting, you only need to understand what each tool does.'}>
+      <PhaseSection step="I1" title={isThai ? 'ทำความเข้าใจ GitHub แบบง่าย ๆ' : 'GITHUB IN PLAIN LANGUAGE'} description={isThai ? 'สิ่งที่ต้องรู้ก่อนเริ่มมีเพียงหน้าที่ของเครื่องมือแต่ละชิ้น' : 'Before starting, you only need to understand what each tool does.'}>
         <div className="github-basics">
           <article><Github size={29} /><strong>GITHUB</strong><p>{isThai ? 'บ้านออนไลน์ของไฟล์ App และประวัติการเปลี่ยนแปลง' : 'The online home for app files and change history.'}</p></article>
           <article><span aria-hidden="true">R</span><strong>REPOSITORY</strong><p>{isThai ? 'Folder หลักของหนึ่งโครงการบน GitHub' : 'The main project folder on GitHub.'}</p></article>
@@ -87,7 +87,7 @@ export function ImplementPhase({ project }: { project: ProjectRow }) {
         <div className="security-boundary"><ShieldCheck size={22} /><p>{isThai ? 'Codex ช่วยนำทางและทำขั้นตอนทางเทคนิคได้ แต่คุณต้องกรอก Password, OTP, CAPTCHA และยืนยันความปลอดภัยด้วยตัวเอง ห้ามส่งข้อมูลเหล่านี้ให้ AI' : 'Codex can guide and perform technical steps, but you must enter passwords, OTPs, CAPTCHAs, and security confirmations yourself. Never send them to AI.'}</p></div>
       </PhaseSection>
 
-      <PhaseSection step="I2" title="YOUR GITHUB STARTING POINT" description={isThai ? 'เลือกข้อที่ตรงที่สุด ไม่มีคำตอบไหนทำให้เริ่มสร้างไม่ได้' : 'Choose the closest match. None of these prevents you from building.'}>
+      <PhaseSection step="I2" title={isThai ? 'ความพร้อมในการใช้ GitHub' : 'YOUR GITHUB STARTING POINT'} description={isThai ? 'เลือกข้อที่ตรงที่สุด ไม่มีคำตอบไหนทำให้เริ่มสร้างไม่ได้' : 'Choose the closest match. None of these prevents you from building.'}>
         <div className="github-readiness-options">
           {readinessChoices.map((choice) => (
             <label key={choice.value} className={readiness === choice.value ? 'is-active' : ''}>
@@ -99,10 +99,10 @@ export function ImplementPhase({ project }: { project: ProjectRow }) {
         </div>
       </PhaseSection>
 
-      <PhaseSection step="I3" title="HANDOFF TO CODEX" description={isThai ? 'ไฟล์เริ่มงานจะปรับคำแนะนำ GitHub ตามความพร้อมที่คุณเลือก' : 'The starting brief adapts its GitHub guidance to your selected readiness.'}>
+      <PhaseSection step="I3" title={isThai ? 'ส่งต่องานให้ Codex' : 'HANDOFF TO CODEX'} description={isThai ? 'ไฟล์เริ่มงานจะปรับคำแนะนำ GitHub ตามความพร้อมที่คุณเลือก' : 'The starting brief adapts its GitHub guidance to your selected readiness.'}>
         <div className="codex-handoff-actions">
-          <button type="button" onClick={downloadCodexGuide}><Download size={19} /> DOWNLOAD START_WITH_CODEX.md</button>
-          <button type="button" onClick={() => void copyCodexGuide()}><Clipboard size={19} /> COPY STARTING BRIEF</button>
+          <button type="button" onClick={downloadCodexGuide}><Download size={19} /> {isThai ? 'ดาวน์โหลด START_WITH_CODEX.md' : 'DOWNLOAD START_WITH_CODEX.md'}</button>
+          <button type="button" onClick={() => void copyCodexGuide()}><Clipboard size={19} /> {isThai ? 'คัดลอกคำสั่งเริ่มงาน' : 'COPY STARTING BRIEF'}</button>
           {feedback ? <span role="status">{feedback}</span> : null}
         </div>
         <ol className="implementation-steps">
@@ -110,18 +110,18 @@ export function ImplementPhase({ project }: { project: ProjectRow }) {
         </ol>
       </PhaseSection>
 
-      <PhaseSection step="I4" title="RECORD THE WORKING BUILD" description={isThai ? 'กลับมาบันทึก URL หลังจาก Codex สร้าง ทดสอบ และ Publish สำเร็จ' : 'Return after Codex has built, tested, and published the app.'}>
+      <PhaseSection step="I4" title={isThai ? 'บันทึกแอปที่ใช้งานได้จริง' : 'RECORD THE WORKING BUILD'} description={isThai ? 'กลับมาบันทึก URL หลังจาก Codex สร้าง ทดสอบ และ Publish สำเร็จ' : 'Return after Codex has built, tested, and published the app.'}>
         <label className={draft.values.workingApp ? 'build-confirm is-active' : 'build-confirm'}>
           <input type="checkbox" checked={Boolean(draft.values.workingApp)} onChange={(event) => draft.setField('workingApp', event.target.checked)} />
           <Check size={20} /> {isThai ? 'ฉันทดสอบเส้นทางหลักแล้ว และ App ใช้งานได้จริง' : 'I TESTED THE PRIMARY JOURNEY AND THE APP WORKS'}
         </label>
         <div className="form-grid form-grid--two">
-          <FormField label="PUBLIC APP URL" required><input type="url" value={String(draft.values.appUrl)} onChange={(event) => draft.setField('appUrl', event.target.value)} placeholder="https://username.github.io/project/" /></FormField>
-          <FormField label="GITHUB REPOSITORY URL" required><input type="url" value={String(draft.values.repositoryUrl)} onChange={(event) => draft.setField('repositoryUrl', event.target.value)} placeholder="https://github.com/username/project" /></FormField>
+          <FormField label={isThai ? 'URL สาธารณะของ App' : 'PUBLIC APP URL'} required><input type="url" value={String(draft.values.appUrl)} onChange={(event) => draft.setField('appUrl', event.target.value)} placeholder="https://username.github.io/project/" /></FormField>
+          <FormField label={isThai ? 'URL ของ GitHub Repository' : 'GITHUB REPOSITORY URL'} required><input type="url" value={String(draft.values.repositoryUrl)} onChange={(event) => draft.setField('repositoryUrl', event.target.value)} placeholder="https://github.com/username/project" /></FormField>
         </div>
       </PhaseSection>
 
-      <ReviewGate title="BUILD CHECK" question={isThai ? 'App ทำงานจาก Public URL และมี Repository ที่กลับมาแก้ไขต่อได้หรือยัง?' : 'Does the app work from its public URL, with a repository you can continue editing?'} actions={<ArcadeButton disabled={!ready || completion.isPending} onClick={() => completion.mutate()}>TEST THE BUILD <ArrowRight size={18} /></ArcadeButton>}>
+      <ReviewGate title={isThai ? 'ตรวจสอบแอปที่สร้าง' : 'BUILD CHECK'} question={isThai ? 'App ทำงานจาก Public URL และมี Repository ที่กลับมาแก้ไขต่อได้หรือยัง?' : 'Does the app work from its public URL, with a repository you can continue editing?'} actions={<ArcadeButton disabled={!ready || completion.isPending} onClick={() => completion.mutate()}>{isThai ? 'ทดสอบแอป' : 'TEST THE BUILD'} <ArrowRight size={18} /></ArcadeButton>}>
         <p>{isThai ? 'ต้องยืนยันว่า App ใช้งานได้ และบันทึกทั้ง Public URL กับ Repository URL ก่อนเข้าสู่ Feedback' : 'Confirm the working app and record both the public and repository URLs before feedback.'}</p>
         {completion.isError ? <p className="field-error" role="alert">บันทึก Build ไม่สำเร็จ กรุณาลองอีกครั้ง</p> : null}
       </ReviewGate>
