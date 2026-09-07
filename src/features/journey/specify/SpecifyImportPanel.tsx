@@ -57,9 +57,9 @@ export function SpecifyImportPanel({ onApplyImport }: Props) {
     <section className="spec-import" aria-labelledby="spec-import-title">
       <header className="spec-import__header">
         <div>
-          <span>{isThai ? 'เมื่อคุยจบ — นำงานจาก Chat กลับมา' : 'AFTER CHAT — BRING THE WORK BACK'}</span>
+          <span>{isThai ? 'หลังตรวจและยืนยันร่าง — นำงานกลับมา' : 'AFTER REVIEW AND APPROVAL — BRING THE WORK BACK'}</span>
           <h3 id="spec-import-title">{isThai ? 'อัปโหลดไฟล์ CODESIGN_SPEC.md' : 'Upload CODESIGN_SPEC.md'}</h3>
-          <p>{isThai ? 'ไฟล์เดียวช่วยเติมข้อมูล S1–S4 ให้คุณตรวจและแก้ไขต่อ' : 'One file populates S1–S4 for you to review and edit.'}</p>
+          <p>{isThai ? 'สร้างไฟล์หลังยืนยันร่างแล้ว ไฟล์เดียวจะช่วยเติมข้อมูล S1–S4 ให้ตรวจและแก้ไขต่อ' : 'Create the file only after approving the draft. One file populates S1–S4 for review and editing.'}</p>
         </div>
         <button className="spec-import__upload" type="button" onClick={() => fileRef.current?.click()}><FileUp size={18} /> {isThai ? 'เลือกไฟล์ .MD' : 'CHOOSE .MD FILE'}</button>
         <input

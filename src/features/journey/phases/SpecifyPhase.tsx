@@ -173,12 +173,12 @@ export function SpecifyPhase({ project }: { project: ProjectRow }) {
     <JourneyLayout project={project} phase="S" phaseName="SPECIFY" chatContext={draft.values} saveState={draft.saveState}>
       <section className="specify-intro">
         <span>{isThai ? 'ขั้นตอนการทำภารกิจนี้' : 'HOW THIS MISSION WORKS'}</span>
-        <h2>{isThai ? 'คุยให้จบครั้งเดียว แล้วนำไฟล์กลับมาตรวจใน CODESIGN' : 'Finish the conversation once, then review the file in CODESIGN.'}</h2>
+        <h2>{isThai ? 'เลือกแนวทาง ตรวจร่าง แล้วค่อยสร้างไฟล์กลับมา CODESIGN' : 'Choose a direction, review the draft, then create the file for CODESIGN.'}</h2>
         <ol>
-          <li><strong>01</strong>{isThai ? 'คัดลอก Prompt Kit ไปคุยกับ AI ภายนอก' : 'Copy the Prompt Kit into an external AI.'}</li>
-          <li><strong>02</strong>{isThai ? 'ตอบคำถามและตัดสินใจจนจบ แล้วพิมพ์ FINALIZE' : 'Answer and decide, then type FINALIZE.'}</li>
-          <li><strong>03</strong>{isThai ? 'ดาวน์โหลด CODESIGN_SPEC.md แล้วอัปโหลดที่นี่' : 'Download CODESIGN_SPEC.md and upload it here.'}</li>
-          <li><strong>04</strong>{isThai ? 'ตรวจ แก้ และยืนยันข้อมูลที่ระบบเติมให้' : 'Review, edit, and confirm the imported work.'}</li>
+          <li><strong>01</strong>{isThai ? 'ให้ AI เสนอ 3 แนวทางก่อน แล้วคุณเป็นคนเลือก' : 'Ask AI for three directions, then make the choice.'}</li>
+          <li><strong>02</strong>{isThai ? 'ตรวจร่างเนื้อหาทีละ 7 วัน และขอแก้จนเข้าใจตรงกัน' : 'Review content in seven-day batches and revise it together.'}</li>
+          <li><strong>03</strong>{isThai ? 'ยืนยันร่างทั้งหมด แล้วจึงสั่งสร้าง CODESIGN_SPEC.md' : 'Approve the complete draft, then request CODESIGN_SPEC.md.'}</li>
+          <li><strong>04</strong>{isThai ? 'อัปโหลดไฟล์ ตรวจ แก้ และยืนยันใน CODESIGN' : 'Upload, review, edit, and confirm it in CODESIGN.'}</li>
         </ol>
         <p>{isThai ? 'CODESIGN ไม่ได้ส่งข้อมูลไปหา AI และจะไม่เลือกแทนคุณ' : 'CODESIGN does not send data to AI and will not choose for you.'}</p>
       </section>

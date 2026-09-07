@@ -366,13 +366,40 @@ DAILY CONTENT PATTERN: ${text(current.contentPattern)}
 DAILY EXERCISE PATTERN: ${text(current.exercisePattern)}
 DAILY RECORD PATTERN: ${text(current.recordPattern)}
 
-วิธีทำงาน:
-1. ตรวจเฉพาะความกำกวมที่เปลี่ยน Product behavior, เนื้อหาหลัก หรือผลลัพธ์ของผู้ใช้
-2. หากต้องถาม ให้ถามทีละคำถาม และไม่เกิน 5 คำถามสำคัญ
-3. รายละเอียดมาตรฐานที่ย้อนแก้ได้ ให้เสนอค่าแนะนำพร้อมระบุว่า AI RECOMMENDATION
-4. ห้ามตัดสินใจแทน Product Owner และห้ามเพิ่ม Feature นอก Scope
-5. หลังแต่ละคำตอบ ให้จำเฉพาะข้อสรุปที่ Product Owner ยอมรับแล้ว ไม่ใช้ Recommendation ที่ยังไม่ได้รับการยืนยัน
-6. เมื่อผมตอบคำถามครบหรือพิมพ์ FINALIZE ให้สร้าง Markdown สามส่วนตาม Template ด้านล่าง ห้ามเปลี่ยนชื่อหัวข้อหรือชื่อ Field
+วิธีทำงาน — ต้องทำตามลำดับและห้ามข้ามขั้น:
+
+ขั้นที่ 1 — เสนอทางเลือกก่อนสร้างเนื้อหา
+1. ยังไม่ต้องเขียนเนื้อหา 21 วัน และยังไม่ต้องสร้าง Markdown หรือไฟล์
+2. เสนอ CONTENT EXPERIENCE DIRECTION จำนวน 3 แบบที่ต่างกันจริง แต่ละแบบต้องระบุ:
+   - บทบาทหรือความสัมพันธ์กับผู้ใช้ เช่น เพื่อนร่วมทาง นักสำรวจ หรือโค้ชสะท้อนคิด โดยไม่จำเป็นต้องใช้อาจารย์
+   - น้ำเสียงและความรู้สึก
+   - จังหวะกิจกรรมประจำวัน
+   - เหตุผลที่เข้ากับ Locked Direction
+   - ข้อดีและ Trade-off
+3. แนะนำได้ว่าแบบใดเหมาะที่สุดพร้อมเหตุผล แต่ห้ามเลือกแทน Product Owner
+4. ถามให้ผมเลือกหนึ่งแบบ ผสมหลายแบบ หรือขอทางเลือกใหม่ แล้วรอคำตอบ
+
+ขั้นที่ 2 — ปิดคำถามสำคัญ
+5. หลังเลือก Direction แล้ว ตรวจเฉพาะความกำกวมที่เปลี่ยน Product behavior, เนื้อหาหลัก หรือผลลัพธ์ของผู้ใช้
+6. หากต้องถาม ให้ถามทีละคำถาม ไม่เกิน 5 คำถามสำคัญ รายละเอียดมาตรฐานที่ย้อนแก้ได้ให้เสนอค่าแนะนำพร้อมป้าย AI RECOMMENDATION
+7. หลังแต่ละคำตอบ ให้จำเฉพาะข้อสรุปที่ผมยอมรับแล้ว ห้ามถือว่า Recommendation ที่ยังไม่ยืนยันเป็นการตัดสินใจ
+
+ขั้นที่ 3 — แสดงร่างให้อ่านและทำความเข้าใจก่อน
+8. สรุป Owner Specification, Direction ที่เลือก, Content Arcs และ Daily Pattern เป็นภาษาคนอ่านก่อน
+9. ร่างเนื้อหา 21 วันให้ตรวจทีละช่วง: DAY 01–07, DAY 08–14 และ DAY 15–21
+10. ในแต่ละวันแสดง TITLE, OBJECTIVE, ใจความ CONTENT, EXERCISE, REFLECTION, RECORD, COMPLETION และ DURATION แบบอ่านง่าย ไม่ใช้ Code Block
+11. หลังจบแต่ละช่วง ให้หยุดถามว่าต้องแก้อะไรก่อนทำช่วงถัดไป หากผมยังไม่ยืนยัน ห้ามถือว่าร่างผ่าน
+12. จากนั้นเสนอ Experience/Theme 3 แบบที่ต่างกันจริง พร้อมสีที่มองเห็นเป็น Hex, Mood, Typography, Interaction, Rationale และ Trade-off แล้วให้ผมเลือกหรือแก้
+
+ขั้นที่ 4 — ยืนยันร่างทั้งหมด
+13. แสดง FINAL REVIEW สรุปสิ่งที่จะใส่ในไฟล์ ได้แก่ Owner Specification, เนื้อหา 21 วัน และ Theme ที่เลือก พร้อมรายการจุดที่ยังไม่ยืนยัน
+14. ถ้ายังมีจุดที่ไม่ยืนยัน ให้ถามต่อและห้ามสร้างไฟล์
+15. เมื่อทุกส่วนพร้อม ให้ขอให้ผมพิมพ์ “ยืนยันร่างทั้งหมด” ก่อน เมื่อผมยืนยันแล้ว ให้บอกว่าร่างพร้อมสร้างไฟล์ แต่ยังไม่ต้องสร้างไฟล์จนกว่าจะได้รับคำสั่งในขั้นที่ 5
+
+ขั้นที่ 5 — สร้างไฟล์หลังได้รับคำสั่งเท่านั้น
+16. สร้าง Markdown ตาม Template ด้านล่างเฉพาะเมื่อผมยืนยันร่างทั้งหมดแล้ว และพิมพ์ “สร้างไฟล์ CODESIGN_SPEC.md”
+17. ห้ามสร้างไฟล์, Markdown Template ที่กรอกแล้ว หรือ Code Block ก่อนครบทั้งสองเงื่อนไข
+18. ตอนสร้าง Markdown ห้ามเปลี่ยนชื่อหัวข้อหรือชื่อ Field
 
 OWNER SPECIFICATION TEMPLATE — สรุปการตัดสินใจจากบทสนทนาเพื่อให้ CODESIGN เติมช่อง S1–S2:
 <!-- CODESIGN:OWNER_SPEC:v1 -->
@@ -424,9 +451,9 @@ TRADEOFF:
 
 เนื้อหาต้องพร้อมใช้จริง ไม่ใส่ TODO และไม่ใช้ JSON
 
-หลังสร้างครบทั้งสามส่วน ให้สร้างไฟล์ชื่อ CODESIGN_SPEC.md สำหรับดาวน์โหลด หากระบบนี้สร้างไฟล์ไม่ได้ ให้แสดง Markdown ทั้งหมดใน Code Block เดียวเพื่อให้ผมคัดลอกกลับไปยัง CODESIGN`,
-        followUps: ['คำถามใดถ้าไม่ตอบแล้วจะเปลี่ยน Product behavior จริง?', 'ช่วยรักษาเนื้อหาแต่ละวันให้อยู่ในเวลาที่กำหนด', 'ตรวจว่าแต่ละวันมีเนื้อหา แบบฝึก แบบบันทึก และเกณฑ์สำเร็จครบ', 'เสนอ Theme ที่ต่างกันทั้ง Mood และ Visual approach ไม่ใช่เพียงเปลี่ยนสี'],
-        bringBack: 'พิมพ์ FINALIZE แล้วดาวน์โหลด CODESIGN_SPEC.md กลับมาอัปโหลดใน CODESIGN หาก Chat สร้างไฟล์ไม่ได้ ให้คัดลอก Markdown ทั้ง Code Block มาวางแทน',
+เมื่อได้รับคำสั่งสร้างไฟล์และสร้างครบทั้งสามส่วนแล้ว ให้สร้างไฟล์ชื่อ CODESIGN_SPEC.md สำหรับดาวน์โหลด หากระบบนี้สร้างไฟล์ไม่ได้ ให้แสดง Markdown ทั้งหมดใน Code Block เดียวเพื่อให้ผมคัดลอกกลับไปยัง CODESIGN`,
+        followUps: ['เสนอ Content Experience Direction 3 แบบก่อน โดยยังไม่ต้องร่างเนื้อหา', 'แสดงร่างทีละ 7 วันและหยุดรอให้ฉันตรวจแต่ละช่วง', 'สรุปจุดที่ยังไม่ยืนยันก่อนขอให้ฉันยืนยันร่างทั้งหมด', 'หลังฉันยืนยันแล้ว รอคำสั่ง “สร้างไฟล์ CODESIGN_SPEC.md” ก่อนสร้างไฟล์'],
+        bringBack: 'เลือก Direction และตรวจร่างทีละ 7 วันให้ครบ จากนั้นพิมพ์ “ยืนยันร่างทั้งหมด” และ “สร้างไฟล์ CODESIGN_SPEC.md” ตามลำดับ แล้วจึงนำไฟล์กลับมาอัปโหลดใน CODESIGN',
       },
       en: {
         headline: 'MAKE IT BUILDABLE.',
@@ -468,13 +495,40 @@ DAILY CONTENT PATTERN: ${text(current.contentPattern)}
 DAILY EXERCISE PATTERN: ${text(current.exercisePattern)}
 DAILY RECORD PATTERN: ${text(current.recordPattern)}
 
-Working method:
-1. Ask only about ambiguity that materially changes product behavior, core content, or the user outcome.
-2. Ask one question at a time, with no more than five high-impact questions.
-3. For reversible standard detail, provide a sensible default labeled AI RECOMMENDATION.
-4. Never decide for the Product Owner or add features outside scope.
-5. After each answer, retain only decisions the Product Owner has accepted. Do not treat an unaccepted recommendation as a decision.
-6. When I answer the questions or type FINALIZE, output three Markdown sections using the exact headings and fields below.
+Working method — follow these stages in order and never skip a stage:
+
+STAGE 1 — OFFER DIRECTIONS BEFORE WRITING CONTENT
+1. Do not write the 21-day content and do not generate Markdown or a file yet.
+2. Offer three meaningfully different CONTENT EXPERIENCE DIRECTIONS. For each, explain:
+   - the product's role or relationship with the user, such as companion, pathfinder, or reflective coach; it does not need to be a teacher
+   - voice and feeling
+   - daily activity rhythm
+   - why it fits the Locked Direction
+   - strengths and trade-offs
+3. You may recommend one with reasons, but never choose for the Product Owner.
+4. Ask me to select one, combine directions, or request new options. Wait for my answer.
+
+STAGE 2 — RESOLVE HIGH-IMPACT QUESTIONS
+5. After I choose a direction, ask only about ambiguity that materially changes product behavior, core content, or user outcomes.
+6. Ask one question at a time, with no more than five high-impact questions. For reversible standard detail, offer a sensible default labeled AI RECOMMENDATION.
+7. Retain only decisions I explicitly accept. Never treat an unaccepted recommendation as a decision.
+
+STAGE 3 — SHOW A HUMAN-READABLE DRAFT FIRST
+8. Summarize the Owner Specification, selected direction, Content Arcs, and Daily Pattern in plain language.
+9. Draft the 21 days for review in three batches: DAY 01–07, DAY 08–14, and DAY 15–21.
+10. For every day show TITLE, OBJECTIVE, CONTENT summary, EXERCISE, REFLECTION, RECORD, COMPLETION, and DURATION in a readable format without a code block.
+11. After each batch, stop and ask what I want to change before continuing. Do not treat a batch as approved until I confirm it.
+12. Then offer three meaningfully different Experience/Theme options with visible Hex colors, Mood, Typography, Interaction, Rationale, and Trade-off. Ask me to select or revise one.
+
+STAGE 4 — CONFIRM THE COMPLETE DRAFT
+13. Show a FINAL REVIEW of the Owner Specification, all 21 days, and selected Theme, plus a list of anything not yet approved.
+14. If anything remains unapproved, continue the discussion and do not generate a file.
+15. When everything is ready, ask me to type “APPROVE COMPLETE DRAFT”. After I approve, say the draft is ready for file creation, but do not create it until Stage 5.
+
+STAGE 5 — CREATE THE FILE ONLY ON COMMAND
+16. Generate the Markdown below only after I have approved the complete draft and typed “CREATE CODESIGN_SPEC.md”.
+17. Do not produce the filled Markdown, a file, or a code block before both conditions are met.
+18. When generating Markdown, preserve every heading and field name exactly.
 
 OWNER SPECIFICATION TEMPLATE — summarize accepted decisions so CODESIGN can populate S1–S2:
 <!-- CODESIGN:OWNER_SPEC:v1 -->
@@ -526,9 +580,9 @@ TRADEOFF:
 
 The content must be implementation-ready, contain no TODO markers, and must not use JSON.
 
-After completing all three sections, create a downloadable file named CODESIGN_SPEC.md. If this system cannot create files, return the entire Markdown in one code block so I can paste it into CODESIGN.`,
-        followUps: ['Which unanswered question would materially change product behavior?', 'Keep every day within the defined time limit.', 'Check that every day has content, an exercise, a record, and a completion rule.', 'Make the themes differ in mood and visual approach, not color alone.'],
-        bringBack: 'Type FINALIZE, then upload CODESIGN_SPEC.md into CODESIGN. If Chat cannot create a file, paste the entire Markdown code block instead.',
+After receiving the file-creation command and completing all three sections, create a downloadable file named CODESIGN_SPEC.md. If this system cannot create files, return the entire Markdown in one code block so I can paste it into CODESIGN.`,
+        followUps: ['Offer three Content Experience Directions before drafting any content.', 'Show the draft in seven-day batches and pause for my review.', 'List anything not yet approved before asking me to approve the complete draft.', 'After approval, wait for “CREATE CODESIGN_SPEC.md” before generating the file.'],
+        bringBack: 'Choose a direction and review all three seven-day batches. Then type “APPROVE COMPLETE DRAFT” and “CREATE CODESIGN_SPEC.md” in order before uploading the file into CODESIGN.',
       },
     },
     PRD: {
