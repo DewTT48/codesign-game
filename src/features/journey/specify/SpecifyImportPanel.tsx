@@ -59,6 +59,7 @@ export function SpecifyImportPanel({ onApplyImport }: Props) {
         <div>
           <span>{isThai ? 'เมื่อคุยจบ — นำงานจาก Chat กลับมา' : 'AFTER CHAT — BRING THE WORK BACK'}</span>
           <h3 id="spec-import-title">{isThai ? 'อัปโหลดไฟล์ CODESIGN_SPEC.md' : 'Upload CODESIGN_SPEC.md'}</h3>
+          <p>{isThai ? 'ไฟล์เดียวช่วยเติมข้อมูล S1–S4 ให้คุณตรวจและแก้ไขต่อ' : 'One file populates S1–S4 for you to review and edit.'}</p>
         </div>
         <button className="spec-import__upload" type="button" onClick={() => fileRef.current?.click()}><FileUp size={18} /> {isThai ? 'เลือกไฟล์ .MD' : 'CHOOSE .MD FILE'}</button>
         <input
@@ -69,12 +70,6 @@ export function SpecifyImportPanel({ onApplyImport }: Props) {
           onChange={(event) => void loadFile(event.target.files?.[0])}
         />
       </header>
-      <ol className="spec-import__flow">
-        <li>{isThai ? 'คุยกับ Chat จนตัดสินใจครบ' : 'Finish the decisions with Chat'}</li>
-        <li>{isThai ? 'พิมพ์ FINALIZE และดาวน์โหลดไฟล์' : 'Type FINALIZE and download the file'}</li>
-        <li>{isThai ? 'อัปโหลดแล้วตรวจข้อมูลก่อนนำเข้า' : 'Upload and preview before import'}</li>
-        <li>{isThai ? 'ตรวจ แก้ และยืนยันใน CODESIGN' : 'Review, edit, and confirm in CODESIGN'}</li>
-      </ol>
       <p className="privacy-reminder">
         {isThai
           ? 'ก่อนส่งข้อมูลให้ AI ภายนอก โปรดนำข้อมูลส่วนบุคคล ข้อมูลลูกค้า และข้อมูลลับขององค์กรออก ไฟล์ที่อัปโหลดจะถูกอ่านเพื่อเติมแบบฟอร์มนี้'

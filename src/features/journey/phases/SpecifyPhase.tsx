@@ -205,10 +205,10 @@ export function SpecifyPhase({ project }: { project: ProjectRow }) {
           <FormField label={isThai ? 'เวลาต่อวัน' : 'TIME PER DAY'} required hint={isThai ? 'เวลาที่เหมาะกับบริบทของผู้ใช้' : 'A duration that fits the user context'}><input value={String(draft.values.dailyDuration)} onChange={(event) => draft.setField('dailyDuration', event.target.value)} /></FormField>
         </div>
         <FormField label={isThai ? 'เส้นทางหลักของผู้ใช้' : 'PRIMARY JOURNEY'} required hint={isThai ? 'เขียนเป็นเส้นทางสั้น ๆ ตั้งแต่เปิด App จนเห็นความคืบหน้า' : 'Describe the short path from opening the app to seeing progress'}>
-          <textarea rows={4} value={String(draft.values.journeySummary) || legacyFlow.join(' → ')} onChange={(event) => draft.setField('journeySummary', event.target.value)} />
+          <textarea rows={3} value={String(draft.values.journeySummary) || legacyFlow.join(' → ')} onChange={(event) => draft.setField('journeySummary', event.target.value)} />
         </FormField>
         <FormField label={isThai ? 'หนึ่งวันถือว่าสำเร็จเมื่อ…' : 'ONE DAY IS COMPLETE WHEN…'} required hint={isThai ? 'ระบุการกระทำที่สังเกตและตรวจได้' : 'Use an observable, testable action'}>
-          <textarea rows={3} value={String(draft.values.dailyCompletionRule)} onChange={(event) => draft.setField('dailyCompletionRule', event.target.value)} />
+          <textarea rows={2} value={String(draft.values.dailyCompletionRule)} onChange={(event) => draft.setField('dailyCompletionRule', event.target.value)} />
         </FormField>
         <div className="form-grid form-grid--three rule-select-grid">
           <label><span>{isThai ? 'ย้อนกลับมาแก้คำตอบ' : 'RETURN TO EARLIER DAYS'}</span><select value={String(draft.values.returnRule)} onChange={(event) => draft.setField('returnRule', event.target.value)}><option value="allow-edit">{isThai ? 'กลับมาอ่านและแก้ได้' : 'READ AND EDIT'}</option><option value="read-only">{isThai ? 'กลับมาอ่านได้อย่างเดียว' : 'READ ONLY'}</option><option value="no-revisit">{isThai ? 'ย้อนกลับไม่ได้' : 'NO REVISIT'}</option></select></label>
@@ -228,9 +228,9 @@ export function SpecifyPhase({ project }: { project: ProjectRow }) {
           ))}
         </div>
         <div className="form-grid form-grid--three content-pattern-grid">
-          <FormField label={isThai ? 'เนื้อหาประจำวัน' : 'DAILY CONTENT'} required hint={isThai ? 'เนื้อหาประจำวันควรสั้นและมีรูปแบบอย่างไร' : 'How short daily content should work'}><textarea rows={4} value={String(draft.values.contentPattern)} onChange={(event) => draft.setField('contentPattern', event.target.value)} /></FormField>
-          <FormField label={isThai ? 'แบบฝึกประจำวัน' : 'DAILY EXERCISE'} required hint={isThai ? 'ผู้ใช้จะคิด เลือก หรือทำอะไร' : 'What the user will think, choose, or do'}><textarea rows={4} value={String(draft.values.exercisePattern)} onChange={(event) => draft.setField('exercisePattern', event.target.value)} /></FormField>
-          <FormField label={isThai ? 'สิ่งที่บันทึกประจำวัน' : 'DAILY RECORD'} required hint={isThai ? 'แต่ละวันต้องบันทึกคำตอบหรือหลักฐานอะไร' : 'What answer or evidence is saved each day'}><textarea rows={4} value={String(draft.values.recordPattern)} onChange={(event) => draft.setField('recordPattern', event.target.value)} /></FormField>
+          <FormField label={isThai ? 'เนื้อหาประจำวัน' : 'DAILY CONTENT'} required hint={isThai ? 'เนื้อหาประจำวันควรสั้นและมีรูปแบบอย่างไร' : 'How short daily content should work'}><textarea rows={3} value={String(draft.values.contentPattern)} onChange={(event) => draft.setField('contentPattern', event.target.value)} /></FormField>
+          <FormField label={isThai ? 'แบบฝึกประจำวัน' : 'DAILY EXERCISE'} required hint={isThai ? 'ผู้ใช้จะคิด เลือก หรือทำอะไร' : 'What the user will think, choose, or do'}><textarea rows={3} value={String(draft.values.exercisePattern)} onChange={(event) => draft.setField('exercisePattern', event.target.value)} /></FormField>
+          <FormField label={isThai ? 'สิ่งที่บันทึกประจำวัน' : 'DAILY RECORD'} required hint={isThai ? 'แต่ละวันต้องบันทึกคำตอบหรือหลักฐานอะไร' : 'What answer or evidence is saved each day'}><textarea rows={3} value={String(draft.values.recordPattern)} onChange={(event) => draft.setField('recordPattern', event.target.value)} /></FormField>
         </div>
       </PhaseSection>
 

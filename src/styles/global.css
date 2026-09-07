@@ -55,6 +55,19 @@
   box-sizing: border-box;
 }
 
+.visually-hidden {
+  width: 1px !important;
+  height: 1px !important;
+  position: absolute !important;
+  overflow: hidden !important;
+  clip: rect(0 0 0 0) !important;
+  clip-path: inset(50%) !important;
+  margin: -1px !important;
+  padding: 0 !important;
+  border: 0 !important;
+  white-space: nowrap !important;
+}
+
 html {
   min-width: 320px;
   min-height: 100%;
@@ -2427,6 +2440,14 @@ main {
   line-height: 1.5;
 }
 
+:lang(th) .phase-section h2 {
+  font-family: var(--font-body);
+  font-size: clamp(22px, 2.2vw, 28px);
+  font-weight: 700;
+  line-height: 1.45;
+  text-wrap: pretty;
+}
+
 .phase-section > header p {
   margin: 10px 0 0;
   color: var(--muted);
@@ -2435,6 +2456,12 @@ main {
 
 .phase-section__body {
   padding: clamp(22px, 4vw, 36px);
+}
+
+.phase-section__body > .form-field + .form-field,
+.phase-section__body > .form-grid + .form-field,
+.phase-section__body > .form-field + .form-grid {
+  margin-top: 28px;
 }
 
 .form-grid {
@@ -3805,8 +3832,10 @@ main {
 
 .specify-intro h2 {
   margin: 12px 0 20px;
-  font-size: clamp(24px, 3vw, 38px);
+  max-width: 1100px;
+  font-size: clamp(24px, 2.4vw, 32px);
   line-height: 1.35;
+  text-wrap: pretty;
 }
 
 .specify-intro ol {
@@ -3929,8 +3958,15 @@ main {
 
 .spec-import__header h3 {
   margin: 8px 0 0;
-  font-size: 22px;
+  font-size: clamp(21px, 2vw, 26px);
   line-height: 1.45;
+}
+
+.spec-import__header p {
+  margin: 8px 0 0;
+  color: #385369;
+  font-size: 16px;
+  line-height: 1.55;
 }
 
 .spec-import button,
@@ -3964,37 +4000,6 @@ main {
   border-left: 6px solid var(--accent);
   font-size: 16px;
   font-weight: 700;
-}
-
-.spec-import__flow {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 10px;
-  margin: 0 0 16px;
-  padding: 0;
-  counter-reset: import-step;
-  list-style: none;
-}
-
-.spec-import__flow li {
-  min-width: 0;
-  padding: 12px;
-  color: var(--ink);
-  background: color-mix(in srgb, var(--line) 15%, var(--white));
-  border: 2px solid var(--line);
-  font-size: 15px;
-  font-weight: 600;
-  line-height: 1.5;
-  counter-increment: import-step;
-}
-
-.spec-import__flow li::before {
-  display: block;
-  margin-bottom: 6px;
-  color: var(--accent-dark);
-  content: '0' counter(import-step);
-  font-family: var(--font-display);
-  font-size: 10px;
 }
 
 .spec-import__file,
@@ -4642,7 +4647,7 @@ main {
 .form-field__control > span,
 .phase-next-row p {
   font-family: var(--font-body);
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 700;
   line-height: 1.5;
 }
@@ -4653,8 +4658,8 @@ main {
 
 .form-field__control > small,
 .choice-card small {
-  font-size: 14px;
-  line-height: 1.5;
+  font-size: 15px;
+  line-height: 1.55;
 }
 
 .form-field__question,
@@ -4671,6 +4676,30 @@ main {
 .field-guide p strong {
   font-size: 12px;
   line-height: 1.6;
+}
+
+/* Thai UI text uses one readable face and scale. Pixel type is reserved for
+   short codes and English arcade labels so mixed-language headings do not jump. */
+:lang(th) :is(
+  .specify-intro > span,
+  .spec-import__header > div > span,
+  .content-pack-progress > span,
+  .content-arc-grid label strong,
+  .day-editor-fields label strong,
+  .rule-select-grid > label > span,
+  .simple-choice
+) {
+  font-family: var(--font-body);
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.5;
+  letter-spacing: 0;
+}
+
+:lang(th) .day-editor-fields small {
+  min-height: 0;
+  font-size: 16px;
+  line-height: 1.55;
 }
 
 @container (max-width: 560px) {
@@ -4770,14 +4799,16 @@ main {
     grid-template-columns: minmax(0, 1fr);
   }
 
-  .specify-intro ol,
-  .spec-import__flow,
   .content-arc-grid,
   .content-pattern-grid,
   .experience-options,
   .day-editor-fields,
   .experience-detail__text {
     grid-template-columns: minmax(0, 1fr);
+  }
+
+  .specify-intro ol {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .rule-select-grid,
@@ -4879,6 +4910,10 @@ main {
   .day-editor-card,
   .experience-detail {
     padding: 16px;
+  }
+
+  .specify-intro ol {
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .spec-import__header,
