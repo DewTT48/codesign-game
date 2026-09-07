@@ -11,6 +11,7 @@ import { ReorderableList } from '../ReorderableList'
 import { DailyContentEditor } from '../specify/DailyContentEditor'
 import { ExperienceSelector } from '../specify/ExperienceSelector'
 import { SpecifyImportPanel } from '../specify/SpecifyImportPanel'
+import type { OwnerSpecificationImport, SpecifyMarkdownImport } from '../specify/markdownImport'
 import {
   countCompleteDays,
   createDailyContent,
@@ -127,20 +128,64 @@ export function SpecifyPhase({ project }: { project: ProjectRow }) {
     draft.setField('experienceOwnerConfirmed', false)
   }
 
+  const applyOwnerSpecification = (incoming: OwnerSpecificationImport, mode: 'empty' | 'replace') => {
+    const setText = (
+      key: 'productLanguage' | 'brandCopy' | 'journeySummary' | 'dailyCompletionRule' | 'returnRule' | 'sequenceRule' | 'storageRule' | 'dailyDuration' | 'contentPattern' | 'exercisePattern' | 'recordPattern',
+      value: string,
+    ) => {
+      if (value.trim() && (mode === 'replace' || !String(draft.values[key]).trim())) draft.setField(key, value)
+    }
+
+    setText('productLanguage', incoming.productLanguage)
+    setText('brandCopy', incoming.brandCopy)
+    setText('journeySummary', incoming.journeySummary)
+    setText('dailyCompletionRule', incoming.dailyCompletionRule)
+    setText('returnRule', incoming.returnRule)
+    setText('sequenceRule', incoming.sequenceRule)
+    setText('storageRule', incoming.storageRule)
+    setText('dailyDuration', incoming.dailyDuration)
+    setText('contentPattern', incoming.contentPattern)
+    setText('exercisePattern', incoming.exercisePattern)
+    setText('recordPattern', incoming.recordPattern)
+
+    const nextArcs = arcs.map((arc, index) => ({
+      ...arc,
+      title: mode === 'replace'
+        ? incoming.contentArcs[index]?.title.trim() || arc.title
+        : arc.title.trim() || incoming.contentArcs[index]?.title || '',
+      goal: mode === 'replace'
+        ? incoming.contentArcs[index]?.goal.trim() || arc.goal
+        : arc.goal.trim() || incoming.contentArcs[index]?.goal || '',
+    }))
+    if (nextArcs.some((arc) => arc.title.trim() || arc.goal.trim())) draft.setField('contentArcs', nextArcs as unknown as Json)
+  }
+
+  const applyImport = (incoming: SpecifyMarkdownImport, mode: 'empty' | 'replace') => {
+    if (incoming.ownerSpecification) applyOwnerSpecification(incoming.ownerSpecification, mode)
+    if (incoming.days.length) updateDays(mergeDailyContent(days, incoming.days, mode))
+    if (incoming.experienceOptions.length && (mode === 'replace' || experienceOptions.every((option) => option.source === 'starter'))) {
+      updateExperience(incoming.experienceOptions)
+      draft.setField('selectedExperience', '')
+    }
+  }
+
   return (
     <JourneyLayout project={project} phase="S" phaseName="SPECIFY" chatContext={draft.values} saveState={draft.saveState}>
       <section className="specify-intro">
         <span>{isThai ? 'ขั้นตอนการทำภารกิจนี้' : 'HOW THIS MISSION WORKS'}</span>
-        <h2>{isThai ? 'คุณกำหนดทิศทาง ส่วนรายละเอียดจำนวนมากให้ Chat ช่วยร่าง' : 'You set the direction. Let Chat draft the detail.'}</h2>
+        <h2>{isThai ? 'คุยให้จบครั้งเดียว แล้วนำไฟล์กลับมาตรวจใน CODESIGN' : 'Finish the conversation once, then review the file in CODESIGN.'}</h2>
         <ol>
-          <li><strong>01</strong>{isThai ? 'ตัดสินใจเฉพาะกติกาที่เปลี่ยน Product' : 'Decide only the rules that change the product.'}</li>
-          <li><strong>02</strong>{isThai ? 'ใช้ Prompt Kit คุยกับ AI ภายนอก' : 'Use the Prompt Kit with an external AI.'}</li>
-          <li><strong>03</strong>{isThai ? 'นำ Markdown กลับมาตรวจและยืนยันด้วยตัวเอง' : 'Bring Markdown back, review it, and decide.'}</li>
+          <li><strong>01</strong>{isThai ? 'คัดลอก Prompt Kit ไปคุยกับ AI ภายนอก' : 'Copy the Prompt Kit into an external AI.'}</li>
+          <li><strong>02</strong>{isThai ? 'ตอบคำถามและตัดสินใจจนจบ แล้วพิมพ์ FINALIZE' : 'Answer and decide, then type FINALIZE.'}</li>
+          <li><strong>03</strong>{isThai ? 'ดาวน์โหลด CODESIGN_SPEC.md แล้วอัปโหลดที่นี่' : 'Download CODESIGN_SPEC.md and upload it here.'}</li>
+          <li><strong>04</strong>{isThai ? 'ตรวจ แก้ และยืนยันข้อมูลที่ระบบเติมให้' : 'Review, edit, and confirm the imported work.'}</li>
         </ol>
         <p>{isThai ? 'CODESIGN ไม่ได้ส่งข้อมูลไปหา AI และจะไม่เลือกแทนคุณ' : 'CODESIGN does not send data to AI and will not choose for you.'}</p>
       </section>
 
-      <PhaseSection step="S1" title={isThai ? 'เส้นทางและกติกาของ Product' : 'JOURNEY & PRODUCT RULES'} description={isThai ? 'กำหนดเฉพาะกติกาที่มีผลต่อประสบการณ์จริง รายละเอียดเชิงเทคนิคให้ Codex ตัดสินใจได้' : 'Define only rules that change the real experience. Codex can decide implementation details.'}>
+      <SpecifyImportPanel onApplyImport={applyImport} />
+
+      <PhaseSection step="S1" title={isThai ? 'ตรวจเส้นทางและกติกาของ Product' : 'REVIEW JOURNEY & PRODUCT RULES'} description={isThai ? 'ตรวจสิ่งที่นำเข้าจาก Chat แล้วแก้เฉพาะจุดที่ไม่ตรงกับการตัดสินใจของคุณ' : 'Review the imported decisions and edit anything that does not match your intent.'}>
         <FormField label={isThai ? 'ภาษาของ Product' : 'PRODUCT LANGUAGE'} required hint={isThai ? 'ภาษาที่ผู้ใช้ปลายทางจะเห็นใน Product นี้' : 'The language shown in the product you are building'}>
           <div className="choice-grid choice-grid--three">
             {[
@@ -172,7 +217,7 @@ export function SpecifyPhase({ project }: { project: ProjectRow }) {
         </div>
       </PhaseSection>
 
-      <PhaseSection step="S2" title={isThai ? 'โครงสร้างเนื้อหา' : 'CONTENT BLUEPRINT'} description={isThai ? 'วางเส้นทางการเรียนรู้ก่อนให้ Chat ช่วยร่างเนื้อหา 21 วัน' : 'Set the learning progression before Chat drafts all 21 days.'}>
+      <PhaseSection step="S2" title={isThai ? 'ตรวจโครงสร้างเนื้อหา' : 'REVIEW CONTENT BLUEPRINT'} description={isThai ? 'ตรวจว่าเนื้อหา 3 ช่วง แบบฝึก และสิ่งที่บันทึกตรงกับข้อสรุปจากบทสนทนา' : 'Check that the three arcs, exercises, and records match the conversation.'}>
         <div className="content-arc-grid">
           {arcs.map((arc, index) => (
             <article key={arc.range}>
@@ -190,13 +235,6 @@ export function SpecifyPhase({ project }: { project: ProjectRow }) {
       </PhaseSection>
 
       <PhaseSection step="S3" title={isThai ? 'ชุดเนื้อหา 21 วัน' : 'DAILY CONTENT PACK'} description={isThai ? 'ใช้ชุดคำสั่งให้ AI ภายนอกร่าง จากนั้นนำไฟล์ Markdown กลับมาตรวจ เนื้อหาจะไม่ถูกส่งออกจาก CODESIGN อัตโนมัติ' : 'Let an external AI draft it with the Prompt Kit, then bring Markdown back for review. CODESIGN never sends it automatically.'}>
-        <SpecifyImportPanel
-          onApplyDays={(incoming, mode) => updateDays(mergeDailyContent(days, incoming, mode))}
-          onApplyExperience={(incoming) => {
-            updateExperience(incoming)
-            draft.setField('selectedExperience', '')
-          }}
-        />
         <div className="content-pack-progress"><span>{isThai ? 'เนื้อหาพร้อมแล้ว' : 'CONTENT READY'}</span><strong>{completeDays}/21</strong><div><i style={{ width: `${(completeDays / 21) * 100}%` }} /></div></div>
         <DailyContentEditor days={days} onChange={updateDays} />
         <label className={draft.values.contentOwnerConfirmed ? 'owner-confirm is-active' : 'owner-confirm'}>

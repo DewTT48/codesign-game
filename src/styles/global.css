@@ -3811,7 +3811,7 @@ main {
 
 .specify-intro ol {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 12px;
   margin: 0;
   padding: 0;
@@ -3919,7 +3919,7 @@ main {
   box-shadow: 6px 6px 0 var(--magenta);
 }
 
-.spec-import header {
+.spec-import__header {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -3927,7 +3927,7 @@ main {
   margin-bottom: 14px;
 }
 
-.spec-import header h3 {
+.spec-import__header h3 {
   margin: 8px 0 0;
   font-size: 22px;
   line-height: 1.45;
@@ -3966,6 +3966,65 @@ main {
   font-weight: 700;
 }
 
+.spec-import__flow {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  margin: 0 0 16px;
+  padding: 0;
+  counter-reset: import-step;
+  list-style: none;
+}
+
+.spec-import__flow li {
+  min-width: 0;
+  padding: 12px;
+  color: var(--ink);
+  background: color-mix(in srgb, var(--line) 15%, var(--white));
+  border: 2px solid var(--line);
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.5;
+  counter-increment: import-step;
+}
+
+.spec-import__flow li::before {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--accent-dark);
+  content: '0' counter(import-step);
+  font-family: var(--font-display);
+  font-size: 10px;
+}
+
+.spec-import__file,
+.spec-import__applied {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 14px 0 0;
+  font-size: 16px;
+}
+
+.spec-import__paste {
+  margin-top: 16px;
+  padding: 14px;
+  border: 2px solid var(--line);
+}
+
+.spec-import__paste summary,
+.spec-import__owner-preview summary {
+  font-family: var(--font-body);
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.5;
+  cursor: pointer;
+}
+
+.spec-import__paste textarea {
+  margin-top: 14px;
+}
+
 .spec-import textarea {
   min-height: 190px;
   resize: vertical;
@@ -3983,10 +4042,52 @@ main {
   border: 3px solid var(--line);
 }
 
-.spec-import__preview > div:first-child {
+.spec-import__counts {
   display: flex;
   flex-wrap: wrap;
   gap: 18px;
+}
+
+.spec-import__counts strong {
+  padding: 8px 10px;
+  color: var(--muted);
+  border: 2px solid var(--line);
+}
+
+.spec-import__counts strong.is-found {
+  color: var(--ink);
+  background: var(--positive);
+  border-color: var(--white);
+}
+
+.spec-import__owner-preview {
+  margin-top: 16px;
+  padding: 14px;
+  border: 2px solid var(--line);
+}
+
+.spec-import__owner-preview dl {
+  display: grid;
+  gap: 10px;
+  margin: 14px 0 0;
+}
+
+.spec-import__owner-preview dl div {
+  display: grid;
+  grid-template-columns: minmax(150px, 0.3fr) minmax(0, 1fr);
+  gap: 14px;
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
+}
+
+.spec-import__owner-preview dt {
+  color: var(--positive);
+  font-weight: 700;
+}
+
+.spec-import__owner-preview dd {
+  margin: 0;
+  color: var(--white);
 }
 
 .spec-import__preview ul {
@@ -3999,6 +4100,17 @@ main {
   flex-wrap: wrap;
   gap: 10px;
   margin-top: 14px;
+}
+
+.spec-import__actions button:first-child {
+  color: var(--ink);
+  background: var(--accent);
+  border-color: var(--white);
+}
+
+.spec-import__applied {
+  color: var(--positive);
+  font-weight: 700;
 }
 
 .content-pack-progress {
@@ -4659,6 +4771,7 @@ main {
   }
 
   .specify-intro ol,
+  .spec-import__flow,
   .content-arc-grid,
   .content-pattern-grid,
   .experience-options,
@@ -4781,6 +4894,11 @@ main {
   .spec-import__upload {
     width: 100%;
     justify-content: center;
+  }
+
+  .spec-import__owner-preview dl div {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 5px;
   }
 
   .day-picker {

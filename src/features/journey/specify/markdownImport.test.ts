@@ -1,8 +1,34 @@
 import { describe, expect, it } from 'vitest'
-import { parseSpecifyMarkdown, serializeContentPack, serializeExperienceDraft } from './markdownImport'
+import { parseSpecifyMarkdown, serializeContentPack, serializeExperienceDraft, serializeOwnerSpecification } from './markdownImport'
 import { contrastRatio, createDailyContent, starterExperienceOptions } from './specifyModel'
 
 describe('Specify Markdown import', () => {
+  const ownerSpecification = {
+    productLanguage: 'th' as const,
+    brandCopy: '21 DAYS OF',
+    journeySummary: 'เปิด App → รับภารกิจ → บันทึกผล',
+    dailyCompletionRule: 'ลงมือทำและบันทึกผล',
+    returnRule: 'allow-edit' as const,
+    sequenceRule: 'sequential' as const,
+    storageRule: 'browser-device' as const,
+    dailyDuration: '5–10 นาที',
+    contentArcs: [
+      { range: 'DAY 01–07', title: 'เห็นความเป็นไปได้', goal: 'ฝึกสังเกต' },
+      { range: 'DAY 08–14', title: 'สร้างความเป็นไปได้', goal: 'เริ่มทดลอง' },
+      { range: 'DAY 15–21', title: 'เป็นเจ้าของการเติบโต', goal: 'รวบรวมหลักฐาน' },
+    ],
+    contentPattern: 'แนวคิดสั้นหนึ่งเรื่อง',
+    exercisePattern: 'ลงมือทำหนึ่งอย่าง',
+    recordPattern: 'สิ่งที่เกิดขึ้น สิ่งที่เปลี่ยน และหลักฐาน',
+  }
+
+  it('parses the owner specification used to populate S1–S2', () => {
+    const result = parseSpecifyMarkdown(serializeOwnerSpecification(ownerSpecification))
+
+    expect(result.ownerSpecification).toEqual(ownerSpecification)
+    expect(result.warnings).toEqual([])
+  })
+
   it('parses daily content without exposing Markdown control text', () => {
     const markdown = `<!-- CODESIGN:CONTENT_PACK:v1 -->
 
@@ -61,12 +87,15 @@ TRADEOFF: Less playful`
       duration: '10 minutes',
       reviewed: true,
     }
-    const markdown = `${serializeContentPack(days)}\n\n${serializeExperienceDraft(starterExperienceOptions)}`
+    const markdown = `${serializeOwnerSpecification(ownerSpecification)}\n\n${serializeContentPack(days)}\n\n${serializeExperienceDraft(starterExperienceOptions)}`
     const result = parseSpecifyMarkdown(markdown)
 
+    expect(result.ownerSpecification).toEqual(ownerSpecification)
     expect(result.days).toHaveLength(21)
     expect(result.experienceOptions).toHaveLength(3)
     expect(result.days[0].reviewed).toBe(false)
+    expect(result.ownerSpecification?.recordPattern).not.toContain('CODESIGN:')
+    expect(result.days[20].duration).not.toContain('CODESIGN:')
   })
 
   it('keeps every starter theme readable on its named palette', () => {

@@ -95,8 +95,12 @@ describe('guided content', () => {
 
     expect(guide.prompt).toContain('1. Daily activity')
     expect(guide.prompt).toContain('PRIMARY JOURNEY: Open app → Complete activity → See progress')
+    expect(guide.prompt).toContain('<!-- CODESIGN:OWNER_SPEC:v1 -->')
+    expect(guide.prompt).toContain('## OWNER SPECIFICATION')
     expect(guide.prompt).toContain('## DAY 01')
     expect(guide.prompt).toContain('## THEME OPTION 1')
+    expect(guide.prompt).toContain('output three Markdown sections')
+    expect(guide.prompt).toContain('CODESIGN_SPEC.md')
     expect(guide.prompt).toContain('must not use JSON')
     expect(guide.prompt).not.toContain('["Daily activity"')
   })

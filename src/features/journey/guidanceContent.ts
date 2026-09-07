@@ -371,7 +371,29 @@ DAILY RECORD PATTERN: ${text(current.recordPattern)}
 2. หากต้องถาม ให้ถามทีละคำถาม และไม่เกิน 5 คำถามสำคัญ
 3. รายละเอียดมาตรฐานที่ย้อนแก้ได้ ให้เสนอค่าแนะนำพร้อมระบุว่า AI RECOMMENDATION
 4. ห้ามตัดสินใจแทน Product Owner และห้ามเพิ่ม Feature นอก Scope
-5. เมื่อผมตอบคำถามครบหรือพิมพ์ FINALIZE ให้สร้าง Markdown สองส่วนตาม Template ด้านล่าง ห้ามเปลี่ยนชื่อหัวข้อหรือชื่อ Field
+5. หลังแต่ละคำตอบ ให้จำเฉพาะข้อสรุปที่ Product Owner ยอมรับแล้ว ไม่ใช้ Recommendation ที่ยังไม่ได้รับการยืนยัน
+6. เมื่อผมตอบคำถามครบหรือพิมพ์ FINALIZE ให้สร้าง Markdown สามส่วนตาม Template ด้านล่าง ห้ามเปลี่ยนชื่อหัวข้อหรือชื่อ Field
+
+OWNER SPECIFICATION TEMPLATE — สรุปการตัดสินใจจากบทสนทนาเพื่อให้ CODESIGN เติมช่อง S1–S2:
+<!-- CODESIGN:OWNER_SPEC:v1 -->
+## OWNER SPECIFICATION
+PRODUCT_LANGUAGE: th | en | bilingual
+BRAND_COPY:
+PRIMARY_JOURNEY:
+ONE_DAY_COMPLETE_WHEN:
+RETURN_RULE: allow-edit | read-only | no-revisit
+DAY_SEQUENCE: sequential | allow-skip
+SAVE_BEHAVIOR: browser-device | session-only
+TIME_PER_DAY:
+ARC_1_TITLE:
+ARC_1_GOAL:
+ARC_2_TITLE:
+ARC_2_GOAL:
+ARC_3_TITLE:
+ARC_3_GOAL:
+DAILY_CONTENT_PATTERN:
+DAILY_EXERCISE_PATTERN:
+DAILY_RECORD_PATTERN:
 
 CONTENT PACK TEMPLATE — ทำให้ครบ DAY 01 ถึง DAY 21:
 <!-- CODESIGN:CONTENT_PACK:v1 -->
@@ -400,9 +422,11 @@ INTERACTION:
 RATIONALE:
 TRADEOFF:
 
-เนื้อหาต้องพร้อมใช้จริง ไม่ใส่ TODO และไม่ใช้ JSON`,
+เนื้อหาต้องพร้อมใช้จริง ไม่ใส่ TODO และไม่ใช้ JSON
+
+หลังสร้างครบทั้งสามส่วน ให้สร้างไฟล์ชื่อ CODESIGN_SPEC.md สำหรับดาวน์โหลด หากระบบนี้สร้างไฟล์ไม่ได้ ให้แสดง Markdown ทั้งหมดใน Code Block เดียวเพื่อให้ผมคัดลอกกลับไปยัง CODESIGN`,
         followUps: ['คำถามใดถ้าไม่ตอบแล้วจะเปลี่ยน Product behavior จริง?', 'ช่วยรักษาเนื้อหาแต่ละวันให้อยู่ในเวลาที่กำหนด', 'ตรวจว่าแต่ละวันมีเนื้อหา แบบฝึก แบบบันทึก และเกณฑ์สำเร็จครบ', 'เสนอ Theme ที่ต่างกันทั้ง Mood และ Visual approach ไม่ใช่เพียงเปลี่ยนสี'],
-        bringBack: 'พิมพ์ FINALIZE แล้วนำ Markdown ที่มี CONTENT_PACK และ EXPERIENCE_DRAFT กลับมาวางหรืออัปโหลดใน CODESIGN',
+        bringBack: 'พิมพ์ FINALIZE แล้วดาวน์โหลด CODESIGN_SPEC.md กลับมาอัปโหลดใน CODESIGN หาก Chat สร้างไฟล์ไม่ได้ ให้คัดลอก Markdown ทั้ง Code Block มาวางแทน',
       },
       en: {
         headline: 'MAKE IT BUILDABLE.',
@@ -449,7 +473,29 @@ Working method:
 2. Ask one question at a time, with no more than five high-impact questions.
 3. For reversible standard detail, provide a sensible default labeled AI RECOMMENDATION.
 4. Never decide for the Product Owner or add features outside scope.
-5. When I answer the questions or type FINALIZE, output two Markdown sections using the exact headings and fields below.
+5. After each answer, retain only decisions the Product Owner has accepted. Do not treat an unaccepted recommendation as a decision.
+6. When I answer the questions or type FINALIZE, output three Markdown sections using the exact headings and fields below.
+
+OWNER SPECIFICATION TEMPLATE — summarize accepted decisions so CODESIGN can populate S1–S2:
+<!-- CODESIGN:OWNER_SPEC:v1 -->
+## OWNER SPECIFICATION
+PRODUCT_LANGUAGE: th | en | bilingual
+BRAND_COPY:
+PRIMARY_JOURNEY:
+ONE_DAY_COMPLETE_WHEN:
+RETURN_RULE: allow-edit | read-only | no-revisit
+DAY_SEQUENCE: sequential | allow-skip
+SAVE_BEHAVIOR: browser-device | session-only
+TIME_PER_DAY:
+ARC_1_TITLE:
+ARC_1_GOAL:
+ARC_2_TITLE:
+ARC_2_GOAL:
+ARC_3_TITLE:
+ARC_3_GOAL:
+DAILY_CONTENT_PATTERN:
+DAILY_EXERCISE_PATTERN:
+DAILY_RECORD_PATTERN:
 
 CONTENT PACK TEMPLATE — repeat for DAY 01 through DAY 21:
 <!-- CODESIGN:CONTENT_PACK:v1 -->
@@ -478,9 +524,11 @@ INTERACTION:
 RATIONALE:
 TRADEOFF:
 
-The content must be implementation-ready, contain no TODO markers, and must not use JSON.`,
+The content must be implementation-ready, contain no TODO markers, and must not use JSON.
+
+After completing all three sections, create a downloadable file named CODESIGN_SPEC.md. If this system cannot create files, return the entire Markdown in one code block so I can paste it into CODESIGN.`,
         followUps: ['Which unanswered question would materially change product behavior?', 'Keep every day within the defined time limit.', 'Check that every day has content, an exercise, a record, and a completion rule.', 'Make the themes differ in mood and visual approach, not color alone.'],
-        bringBack: 'Type FINALIZE, then paste or upload the Markdown containing CONTENT_PACK and EXPERIENCE_DRAFT into CODESIGN.',
+        bringBack: 'Type FINALIZE, then upload CODESIGN_SPEC.md into CODESIGN. If Chat cannot create a file, paste the entire Markdown code block instead.',
       },
     },
     PRD: {
