@@ -58,7 +58,7 @@ export function JourneyLayout({
   }
 
   return (
-    <div className="content-page journey-page">
+    <div className={`content-page journey-page journey-page--${phase.toLowerCase()}`}>
       <div className="journey-utility-row">
         <Link className="back-link" to="/dashboard">
           <ArrowLeft aria-hidden="true" size={18} /> {isThai ? 'แดชบอร์ด' : 'DASHBOARD'}
@@ -66,7 +66,7 @@ export function JourneyLayout({
         <SaveIndicator state={saveState} isThai={isThai} />
       </div>
       <header className="journey-heading">
-        <div className="phase-token" aria-hidden="true">{phase}</div>
+        <div className={`phase-token${phase.length > 1 ? ' phase-token--wide' : ''}`} aria-hidden="true">{phase}</div>
         <div>
           <span className="chapter-code">{phase} — {isThai ? (thaiPhaseNames[phase] ?? phaseName) : phaseName}</span>
           <h1>{guide.headline}</h1>
