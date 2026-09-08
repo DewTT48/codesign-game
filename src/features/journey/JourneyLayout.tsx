@@ -120,6 +120,7 @@ export function JourneyLayout({
                 <strong>{isThai ? 'Prompt นี้มีข้อมูลพร้อมแล้ว' : 'THIS PROMPT IS READY'}</strong>
                 <p>{isThai ? 'รวมการตัดสินใจที่ Lock แล้วและไฟล์ร่าง CODESIGN_HANDOFF.md, CONTENT_PACK.md และ EXPERIENCE_DIRECTION.md คุณไม่ต้องแนบไฟล์เพิ่มในรอบตรวจนี้' : 'It includes the locked decisions and drafts of CODESIGN_HANDOFF.md, CONTENT_PACK.md, and EXPERIENCE_DIRECTION.md. No separate attachment is needed for this review.'}</p>
               </section> : null}
+              <pre>{guide.prompt}</pre>
               <button className="prompt-copy" type="button" onClick={copyPrompt}>
                 {copyState === 'copied' ? <Check size={17} /> : <Copy size={17} />}
                 {copyState === 'copied'
@@ -128,7 +129,6 @@ export function JourneyLayout({
                     ? (isThai ? 'คัดลอกไม่สำเร็จ' : 'COPY FAILED')
                     : (isThai ? 'คัดลอก Prompt' : 'COPY PROMPT')}
               </button>
-              <pre>{guide.prompt}</pre>
               <section>
                 <strong>{phase === 'PRD' ? (isThai ? 'สถานะที่ Chat ต้องเลือก' : 'EXPECTED CHAT STATUS') : (isThai ? 'คำถามต่อยอด' : 'GO DEEPER')}</strong>
                 <ul>{guide.followUps.map((item) => <li key={item}>{item}</li>)}</ul>
