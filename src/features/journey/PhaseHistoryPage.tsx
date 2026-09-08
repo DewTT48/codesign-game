@@ -57,6 +57,7 @@ const codeLabels: Record<string, { th: string; en: string }> = {
 }
 
 const markdownFields = new Set(['markdownDraft', 'contentPackDraft', 'experienceDirectionDraft'])
+const patternFields = new Set(['contentPattern', 'exercisePattern', 'recordPattern'])
 
 function fieldLabel(key: string, isThai: boolean) {
   if (isThai && thaiLabels[key]) return thaiLabels[key]
@@ -146,7 +147,13 @@ export function PhaseHistoryPage({ project, phase }: { project: ProjectRow; phas
     <section className="phase-history__results" aria-labelledby="history-results-title">
       <header><Eye size={22} /><div><span>{isThai ? 'ข้อมูลที่ยืนยันแล้ว' : 'CONFIRMED OUTPUT'}</span><h2 id="history-results-title">{isThai ? `สิ่งที่ได้จาก Step ${phase}` : `STEP ${phase} OUTPUT`}</h2></div></header>
       {displayed.length ? <div className="phase-history__fields">{displayed.map((entry) => (
-        <article key={entry.fieldKey} className={markdownFields.has(entry.fieldKey) ? 'is-markdown' : ''}>
+        <article
+          key={entry.fieldKey}
+          className={[
+            markdownFields.has(entry.fieldKey) ? 'is-markdown' : '',
+            patternFields.has(entry.fieldKey) ? 'is-pattern' : '',
+          ].filter(Boolean).join(' ')}
+        >
           <h3>{fieldLabel(entry.fieldKey, isThai)}</h3>
           {markdownFields.has(entry.fieldKey) && typeof entry.content === 'string'
             ? <details><summary><FileCode2 size={17} /> {isThai ? 'เปิดดูไฟล์' : 'OPEN FILE'}</summary><MarkdownPreview markdown={entry.content} /></details>
