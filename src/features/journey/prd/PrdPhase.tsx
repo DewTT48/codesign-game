@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Check, Clipboard, Download, FileCode2, Github, LockKeyhole, Printer } from 'lucide-react'
+import { Check, Clipboard, Download, Eye, FileCode2, Github, LockKeyhole, PencilLine } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ArcadeButton } from '../../../components/ui/ArcadeButton'
@@ -20,15 +20,36 @@ import {
   assembleExperienceDirection,
   assembleStartWithCodex,
 } from './handoffFiles'
+import { MarkdownPreview } from './MarkdownPreview'
+
+type HandoffFileKey = 'handoff' | 'contentPack' | 'experienceDirection' | 'startWithCodex'
+
+type HandoffDrafts = Record<HandoffFileKey, string>
+
+const fileFieldKeys: Record<HandoffFileKey, string> = {
+  handoff: 'markdownDraft',
+  contentPack: 'contentPackDraft',
+  experienceDirection: 'experienceDirectionDraft',
+  startWithCodex: 'startWithCodexDraft',
+}
+
+const emptyDrafts: HandoffDrafts = {
+  handoff: '',
+  contentPack: '',
+  experienceDirection: '',
+  startWithCodex: '',
+}
 
 export function PrdPhase({ project }: { project: ProjectRow }) {
   const { isThai } = useLanguage()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const editorRef = useRef<HTMLTextAreaElement>(null)
-  const timerRef = useRef<number | null>(null)
+  const timerRefs = useRef<Partial<Record<HandoffFileKey, number>>>({})
   const hydratedRef = useRef(false)
-  const [markdown, setMarkdown] = useState('')
+  const [files, setFiles] = useState<HandoffDrafts>(emptyDrafts)
+  const [selectedFile, setSelectedFile] = useState<HandoffFileKey>('handoff')
+  const [viewMode, setViewMode] = useState<'preview' | 'edit'>('preview')
   const [saveState, setSaveState] = useState<SaveState>('idle')
   const [feedback, setFeedback] = useState('')
 
@@ -44,39 +65,52 @@ export function PrdPhase({ project }: { project: ProjectRow }) {
   useEffect(() => {
     if (hydratedRef.current || !source.data || !draft.data) return
     hydratedRef.current = true
-    const saved = draft.data.find((entry) => entry.fieldKey === 'markdownDraft')
-    const initial = typeof saved?.content === 'string'
-      ? saved.content
-      : assemblePrd(project, source.data)
-    setMarkdown(initial)
+    const specify = source.data.S ?? {}
+    const generated: HandoffDrafts = {
+      handoff: assemblePrd(project, source.data),
+      contentPack: assembleContentPack(specify),
+      experienceDirection: assembleExperienceDirection(specify),
+      startWithCodex: assembleStartWithCodex(project),
+    }
+    const initial = (Object.keys(generated) as HandoffFileKey[]).reduce<HandoffDrafts>((result, key) => {
+      const saved = draft.data.find((entry) => entry.fieldKey === fileFieldKeys[key])
+      result[key] = typeof saved?.content === 'string' ? saved.content : generated[key]
+      return result
+    }, { ...emptyDrafts })
+    setFiles(initial)
 
-    if (!saved) {
+    const missing = (Object.keys(generated) as HandoffFileKey[]).filter((key) => (
+      !draft.data.some((entry) => entry.fieldKey === fileFieldKeys[key])
+    ))
+    if (missing.length) {
       setSaveState('saving')
-      void savePhaseEntry({
-        projectId: project.id,
-        phase: 'PRD',
-        section: 'document',
-        fieldKey: 'markdownDraft',
-        content: initial,
-      }).then(() => setSaveState('saved')).catch(() => setSaveState('error'))
+      void Promise.all(missing.map((key) => savePhaseEntry({
+          projectId: project.id,
+          phase: 'PRD',
+          section: 'document',
+          fieldKey: fileFieldKeys[key],
+          content: initial[key],
+        })))
+        .then(() => setSaveState('saved'))
+        .catch(() => setSaveState('error'))
     } else {
       setSaveState('saved')
     }
   }, [draft.data, project, source.data])
 
   useEffect(() => () => {
-    if (timerRef.current) window.clearTimeout(timerRef.current)
+    Object.values(timerRefs.current).forEach((timer) => window.clearTimeout(timer))
   }, [])
 
-  const persist = async (nextMarkdown: string) => {
+  const persist = async (key: HandoffFileKey, content: string) => {
     setSaveState('saving')
     try {
       await savePhaseEntry({
         projectId: project.id,
         phase: 'PRD',
         section: 'document',
-        fieldKey: 'markdownDraft',
-        content: nextMarkdown,
+        fieldKey: fileFieldKeys[key],
+        content,
       })
       setSaveState('saved')
     } catch (error) {
@@ -85,22 +119,23 @@ export function PrdPhase({ project }: { project: ProjectRow }) {
     }
   }
 
-  const updateMarkdown = (nextMarkdown: string) => {
-    setMarkdown(nextMarkdown)
+  const updateFile = (key: HandoffFileKey, content: string) => {
+    setFiles((current) => ({ ...current, [key]: content }))
     setSaveState('idle')
-    if (timerRef.current) window.clearTimeout(timerRef.current)
-    timerRef.current = window.setTimeout(() => {
-      timerRef.current = null
-      void persist(nextMarkdown).catch(() => undefined)
+    const timer = timerRefs.current[key]
+    if (timer) window.clearTimeout(timer)
+    timerRefs.current[key] = window.setTimeout(() => {
+      delete timerRefs.current[key]
+      void persist(key, content).catch(() => undefined)
     }, 700)
   }
 
   const completion = useMutation({
     mutationFn: async () => {
-      if (timerRef.current) window.clearTimeout(timerRef.current)
-      timerRef.current = null
-      await persist(markdown)
-      return lockPrd(project.id, markdown)
+      Object.values(timerRefs.current).forEach((timer) => window.clearTimeout(timer))
+      timerRefs.current = {}
+      await Promise.all((Object.keys(files) as HandoffFileKey[]).map((key) => persist(key, files[key])))
+      return lockPrd(project.id, files.handoff)
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ['project', project.id] })
@@ -108,10 +143,10 @@ export function PrdPhase({ project }: { project: ProjectRow }) {
     },
   })
 
-  const copyMarkdown = async () => {
+  const copyFile = async (fileName: string, content: string) => {
     try {
-      await navigator.clipboard.writeText(markdown)
-      setFeedback(isThai ? 'คัดลอก PRD แล้ว' : 'PRD COPIED')
+      await navigator.clipboard.writeText(content)
+      setFeedback(isThai ? `คัดลอก ${fileName} แล้ว` : `${fileName} COPIED`)
     } catch {
       setFeedback(isThai ? 'คัดลอกไม่สำเร็จ — กรุณาเลือกและคัดลอกข้อความเอง' : 'COPY FAILED — SELECT THE TEXT MANUALLY')
     }
@@ -136,10 +171,14 @@ export function PrdPhase({ project }: { project: ProjectRow }) {
     return <div className="route-loading" role="status">{isThai ? 'กำลังประกอบชุดส่งต่องาน…' : 'ASSEMBLING PRD…'}</div>
   }
 
-  const specify = source.data?.S ?? {}
-  const contentPack = assembleContentPack(specify)
-  const experienceDirection = assembleExperienceDirection(specify)
-  const startWithCodex = assembleStartWithCodex(project)
+  const fileOptions: Array<{ key: HandoffFileKey; fileName: string; description: string }> = [
+    { key: 'handoff', fileName: 'CODESIGN_HANDOFF.md', description: isThai ? 'การตัดสินใจเกี่ยวกับ Product และขอบเขตงาน' : 'Product decisions and scope' },
+    { key: 'contentPack', fileName: 'CONTENT_PACK.md', description: isThai ? 'เนื้อหา แบบฝึก และการบันทึกครบ 21 วัน' : 'All 21 days of content and exercises' },
+    { key: 'experienceDirection', fileName: 'EXPERIENCE_DIRECTION.md', description: isThai ? 'Theme ที่เลือกและแนวทางกำกับการออกแบบ' : 'Selected theme and design guardrails' },
+    { key: 'startWithCodex', fileName: 'START_WITH_CODEX.md', description: isThai ? 'คำสั่งเริ่มสร้างและคำแนะนำ GitHub' : 'Build brief and GitHub guidance' },
+  ]
+  const activeFile = fileOptions.find((file) => file.key === selectedFile) ?? fileOptions[0]
+  const activeContent = files[selectedFile]
   const checklist = isThai ? [
     'เข้าใจบริบทแล้ว',
     'สำรวจทางเลือกแล้ว',
@@ -165,7 +204,7 @@ export function PrdPhase({ project }: { project: ProjectRow }) {
       project={project}
       phase="PRD"
       phaseName="FINAL HANDOFF"
-      chatContext={{ markdown }}
+      chatContext={files}
       saveState={saveState}
     >
       <PhaseSection
@@ -188,24 +227,46 @@ export function PrdPhase({ project }: { project: ProjectRow }) {
         </div>
       </PhaseSection>
 
-      <PhaseSection step="03" title={isThai ? 'ดาวน์โหลดชุดส่งต่องาน' : 'DOWNLOAD THE HANDOFF'} description={isThai ? 'ดาวน์โหลดทั้ง 4 ไฟล์ไว้ใน Folder เดียวกัน แล้วส่งให้ Codex ในขั้นถัดไป' : 'Download all four files into one folder, then give them to Codex in the next step.'}>
-        <div className="handoff-file-grid">
-          <button type="button" onClick={() => downloadFile('CODESIGN_HANDOFF.md', markdown, isThai ? 'ดาวน์โหลดไฟล์ส่งต่องานแล้ว' : 'HANDOFF DOWNLOADED')}><FileCode2 size={21} /><span><strong>CODESIGN_HANDOFF.md</strong><small>{isThai ? 'การตัดสินใจเกี่ยวกับ Product และขอบเขตงาน' : 'Product decisions and scope'}</small></span><Download size={18} /></button>
-          <button type="button" onClick={() => downloadFile('CONTENT_PACK.md', contentPack, isThai ? 'ดาวน์โหลดชุดเนื้อหาแล้ว' : 'CONTENT PACK DOWNLOADED')}><FileCode2 size={21} /><span><strong>CONTENT_PACK.md</strong><small>{isThai ? 'เนื้อหา แบบฝึก และการบันทึกครบ 21 วัน' : 'All 21 days of content and exercises'}</small></span><Download size={18} /></button>
-          <button type="button" onClick={() => downloadFile('EXPERIENCE_DIRECTION.md', experienceDirection, isThai ? 'ดาวน์โหลดทิศทางประสบการณ์แล้ว' : 'EXPERIENCE DOWNLOADED')}><FileCode2 size={21} /><span><strong>EXPERIENCE_DIRECTION.md</strong><small>{isThai ? 'Theme ที่เลือกและแนวทางกำกับการออกแบบ' : 'Selected theme and design guardrails'}</small></span><Download size={18} /></button>
-          <button type="button" onClick={() => downloadFile('START_WITH_CODEX.md', startWithCodex, isThai ? 'ดาวน์โหลดคู่มือเริ่มงานกับ Codex แล้ว' : 'CODEX GUIDE DOWNLOADED')}><FileCode2 size={21} /><span><strong>START_WITH_CODEX.md</strong><small>{isThai ? 'คำสั่งเริ่มสร้างและคำแนะนำ GitHub' : 'Build brief and GitHub guidance'}</small></span><Download size={18} /></button>
+      <PhaseSection step="03" title={isThai ? 'ตรวจและดาวน์โหลดชุดส่งต่องาน' : 'REVIEW AND DOWNLOAD THE HANDOFF'} description={isThai ? 'เปิดดูและแก้ไขไฟล์แต่ละฉบับให้สอดคล้องกัน จากนั้นดาวน์โหลดทั้ง 4 ไฟล์ไว้ใน Folder เดียวกันเพื่อส่งให้ Codex' : 'Preview and edit each file for consistency, then download all four into one folder for Codex.'}>
+        <div className="handoff-file-grid" aria-label={isThai ? 'เลือกไฟล์เพื่อตรวจสอบ' : 'Choose a file to review'}>
+          {fileOptions.map((file) => (
+            <button
+              type="button"
+              className={selectedFile === file.key ? 'is-active' : ''}
+              aria-pressed={selectedFile === file.key}
+              key={file.key}
+              onClick={() => {
+                setSelectedFile(file.key)
+                setViewMode('preview')
+              }}
+            >
+              <FileCode2 size={21} />
+              <span><strong>{file.fileName}</strong><small>{file.description}</small></span>
+              <Eye size={18} />
+            </button>
+          ))}
         </div>
+        <section className="prd-file-workspace" aria-labelledby="active-handoff-file">
+          <header>
+            <div>
+              <span>{isThai ? 'ไฟล์ที่กำลังตรวจ' : 'REVIEWING FILE'}</span>
+              <h3 id="active-handoff-file">{activeFile.fileName}</h3>
+              <p>{isThai ? 'Preview เพื่ออ่านภาพรวม หรือเลือกแก้ไขเมื่อต้องปรับการตัดสินใจ ข้อความจะบันทึกอัตโนมัติ' : 'Preview the file or edit decisions that need correction. Changes autosave.'}</p>
+            </div>
+            <div className="prd-view-switch" role="group" aria-label={isThai ? 'เลือกโหมดดูไฟล์' : 'File view mode'}>
+              <button type="button" className={viewMode === 'preview' ? 'is-active' : ''} aria-pressed={viewMode === 'preview'} onClick={() => setViewMode('preview')}><Eye size={17} /> {isThai ? 'ดูตัวอย่าง' : 'PREVIEW'}</button>
+              <button type="button" className={viewMode === 'edit' ? 'is-active' : ''} aria-pressed={viewMode === 'edit'} onClick={() => setViewMode('edit')}><PencilLine size={17} /> {isThai ? 'แก้ไข' : 'EDIT'}</button>
+            </div>
+          </header>
+          {viewMode === 'preview'
+            ? <MarkdownPreview markdown={activeContent} />
+            : <textarea ref={editorRef} className="prd-editor" aria-label={`${isThai ? 'แก้ไข' : 'Edit'} ${activeFile.fileName}`} spellCheck="false" value={activeContent} onChange={(event) => updateFile(selectedFile, event.target.value)} />}
+        </section>
         <div className="prd-toolbar">
-          <button type="button" onClick={() => void copyMarkdown()}><Clipboard size={17} /> {isThai ? 'คัดลอกชุดส่งต่องาน' : 'COPY HANDOFF'}</button>
-          <button type="button" onClick={() => window.print()}><Printer size={17} /> {isThai ? 'พิมพ์ / บันทึก PDF' : 'PRINT / PDF'}</button>
+          <button type="button" onClick={() => void copyFile(activeFile.fileName, activeContent)}><Clipboard size={17} /> {isThai ? 'คัดลอกไฟล์นี้' : 'COPY THIS FILE'}</button>
+          <button type="button" onClick={() => downloadFile(activeFile.fileName, activeContent, isThai ? `ดาวน์โหลด ${activeFile.fileName} แล้ว` : `${activeFile.fileName} DOWNLOADED`)}><Download size={17} /> {isThai ? 'ดาวน์โหลดไฟล์นี้' : 'DOWNLOAD THIS FILE'}</button>
           {feedback ? <span role="status">{feedback}</span> : null}
         </div>
-        <details className="prd-source-editor">
-          <summary>{isThai ? 'รายละเอียดเพิ่มเติม — ตรวจหรือแก้ CODESIGN_HANDOFF.md' : 'ADVANCED — REVIEW OR EDIT CODESIGN_HANDOFF.md'}</summary>
-          <p>{isThai ? 'แก้เฉพาะเมื่อ Product decision ในเอกสารไม่ตรงกับสิ่งที่คุณตั้งใจ ระบบจะ Autosave จนกว่าจะ Lock' : 'Edit only when a product decision does not match your intent. Changes autosave until locked.'}</p>
-          <textarea ref={editorRef} className="prd-editor" aria-label={isThai ? 'แก้ไขไฟล์ Markdown สำหรับส่งต่องานจาก CODESIGN' : 'Editable CODESIGN handoff Markdown'} spellCheck="false" value={markdown} onChange={(event) => updateMarkdown(event.target.value)} />
-        </details>
-        <pre className="prd-print-preview" aria-hidden="true">{markdown}</pre>
       </PhaseSection>
 
       <ReviewGate
@@ -217,13 +278,15 @@ export function PrdPhase({ project }: { project: ProjectRow }) {
               variant="secondary"
               onClick={() => {
                 setFeedback(isThai ? 'ตรวจร่างอีกครั้ง — ลบหรืออธิบายการตัดสินใจที่ไม่ได้มาจากคุณให้ชัด' : 'REVIEW THE DRAFT — REMOVE OR CLARIFY ANY INVENTED DECISION')
-                editorRef.current?.focus()
+                setSelectedFile('handoff')
+                setViewMode('edit')
+                window.requestAnimationFrame(() => editorRef.current?.focus())
               }}
             >
               {isThai ? 'ยัง — ตรวจอีกครั้ง' : 'NOT YET — REVIEW'}
             </ArcadeButton>
             <ArcadeButton
-              disabled={!markdown.trim() || completion.isPending || saveState === 'saving'}
+              disabled={Object.values(files).some((content) => !content.trim()) || completion.isPending || saveState === 'saving'}
               onClick={() => completion.mutate()}
             >
               <LockKeyhole size={18} /> {completion.isPending ? (isThai ? 'กำลังยืนยัน…' : 'SOLIDIFYING…') : (isThai ? 'พร้อม — ยืนยันชุดส่งต่องาน' : 'READY — LOCK HANDOFF')}
@@ -231,7 +294,7 @@ export function PrdPhase({ project }: { project: ProjectRow }) {
           </>
         )}
       >
-        <p>{isThai ? 'เมื่อ Lock ระบบจะเก็บ Snapshot ของ CODESIGN_HANDOFF.md และพาไปเตรียมทำงานกับ Codex และ GitHub' : 'Locking saves a snapshot of CODESIGN_HANDOFF.md and moves to Codex and GitHub preparation.'}</p>
+        <p>{isThai ? 'ก่อนยืนยัน ควรเปิดตรวจทั้ง 4 ไฟล์ เพราะไฟล์เหล่านี้ทำหน้าที่ต่างกันแต่ต้องสอดคล้องกัน เมื่อ Lock ระบบจะบันทึกฉบับล่าสุดและพาไปเตรียมทำงานกับ Codex และ GitHub' : 'Review all four files before locking. They serve different purposes but must agree. Locking saves the latest drafts and moves to Codex and GitHub preparation.'}</p>
         {completion.isError ? <p className="field-error" role="alert">Lock PRD ไม่สำเร็จ ข้อมูลยังคงเป็น Draft</p> : null}
       </ReviewGate>
     </JourneyLayout>

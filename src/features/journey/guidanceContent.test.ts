@@ -128,4 +128,21 @@ describe('guided content', () => {
     expect(guide.prompt).toContain('เป็นเกณฑ์ตรวจ')
     expect(guide.prompt).toContain('ห้ามเพิ่ม Feature ใหม่และห้ามตัดสินใจแทนผม')
   })
+
+  it('reviews the complete PRD handoff package instead of one generated file', () => {
+    const guide = getPhaseGuide('th', 'PRD', {}, {
+      handoff: 'HANDOFF CONTENT',
+      contentPack: 'CONTENT PACK CONTENT',
+      experienceDirection: 'EXPERIENCE CONTENT',
+      startWithCodex: 'CODEX START CONTENT',
+    }, 'CAREER GROWTH')
+
+    expect(guide.prompt).toContain('===== CODESIGN_HANDOFF.md =====')
+    expect(guide.prompt).toContain('CONTENT PACK CONTENT')
+    expect(guide.prompt).toContain('EXPERIENCE CONTENT')
+    expect(guide.prompt).toContain('CODEX START CONTENT')
+    expect(guide.prompt).toContain('ASSEMBLY MISMATCH')
+    expect(guide.prompt).toContain('ถามผมทีละหนึ่งคำถาม')
+    expect(guide.prompt).not.toContain('undefined')
+  })
 })
