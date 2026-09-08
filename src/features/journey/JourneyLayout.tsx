@@ -75,7 +75,7 @@ export function JourneyLayout({
       </header>
 
       <div className="journey-status-grid">
-        <MissionMap activeMission={phase} compact />
+        <MissionMap activeMission={project.current_phase} viewedMission={phase} projectId={project.id} compact />
         <SolidificationMeter current={project.solidification_stage.replace('_', ' ') as 'IDEA'} />
       </div>
 

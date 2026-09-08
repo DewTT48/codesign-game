@@ -50,7 +50,7 @@ export function CompletionPage({ project }: { project: ProjectRow }) {
         <p>{isThai ? 'ตอนนี้คุณมี Product, PRD และบันทึกการตัดสินใจที่อธิบายได้ว่า Product นี้เกิดขึ้นอย่างไร' : 'You now have a product, a PRD, and a decision trail that explains how this product came to be.'}</p>
       </header>
 
-      <MissionMap activeMission="N" compact />
+      <MissionMap activeMission="COMPLETE" projectId={project.id} compact />
       <SolidificationMeter current="BUILD READY" />
 
       <section className="completion-artifacts" aria-label={isThai ? 'ผลงานที่เสร็จแล้ว' : 'Completed artifacts'}>

@@ -14,6 +14,8 @@ import { NextPhase } from './phases/NextPhase'
 import { CompletionPage } from './CompletionPage'
 import { ProjectPlaceholderPage } from '../projects/ProjectPlaceholderPage'
 import { useLanguage } from '../i18n/LanguageContext'
+import { PhaseHistoryPage } from './PhaseHistoryPage'
+import { isCompletedPhase } from './phaseNavigation'
 
 const supportedPhases = new Set<PhaseCode>(['C', 'O', 'D', 'E', 'S', 'PRD', 'I', 'G', 'N'])
 
@@ -45,12 +47,16 @@ export function ProjectWorkspacePage() {
   }
 
   const currentPhase = project.data.current_phase
+  const requestedPhase = supportedPhases.has(phase as PhaseCode) ? phase as PhaseCode : null
+  if (requestedPhase && isCompletedPhase(requestedPhase, currentPhase)) {
+    return <PhaseHistoryPage project={project.data} phase={requestedPhase} />
+  }
   if (currentPhase === 'COMPLETE') return <CompletionPage project={project.data} />
-  if (!phase || !supportedPhases.has(phase as PhaseCode) || phase !== currentPhase) {
+  if (!requestedPhase || requestedPhase !== currentPhase) {
     return <Navigate to={`/projects/${projectId}/${currentPhase}`} replace />
   }
 
-  switch (phase) {
+  switch (requestedPhase) {
     case 'C': return <ContextPhase project={project.data} />
     case 'O': return <OptionsPhase project={project.data} />
     case 'D': return <DebatePhase project={project.data} />
