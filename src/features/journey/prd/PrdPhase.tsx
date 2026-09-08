@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Check, Clipboard, Download, Eye, FileCode2, LockKeyhole, PencilLine, Save } from 'lucide-react'
+import { ArrowRight, Check, Clipboard, Download, Eye, FileCode2, FileUp, LockKeyhole, PencilLine, RotateCcw, Save } from 'lucide-react'
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { ArcadeButton } from '../../../components/ui/ArcadeButton'
 import type { ProjectRow } from '../../../lib/supabase/database.types'
 import { useLanguage } from '../../i18n/LanguageContext'
@@ -38,6 +38,7 @@ export function PrdPhase({ project }: { project: ProjectRow }) {
   const [scrolledFiles, setScrolledFiles] = useState<PrdFileKey[]>([])
   const [dirtyFiles, setDirtyFiles] = useState<PrdFileKey[]>([])
   const [viewMode, setViewMode] = useState<'preview' | 'edit'>('preview')
+  const [reviewOutcome, setReviewOutcome] = useState<'ready' | 'files' | 'revision' | null>(null)
   const [saveState, setSaveState] = useState<SaveState>('idle')
   const [feedback, setFeedback] = useState('')
 
@@ -230,13 +231,39 @@ export function PrdPhase({ project }: { project: ProjectRow }) {
         <div className="prd-checklist" aria-label={isThai ? 'รายการตรวจความพร้อมของ Product' : 'Product definition checklist'}>{checklist.map((item) => <span key={item}><Check size={16} aria-hidden="true" /> {item}</span>)}</div>
       </PhaseSection>
 
-      <PhaseSection step="02" title={isThai ? 'ตรวจร่วมกับ Chat แล้วนำไฟล์กลับมา' : 'REVIEW WITH CHAT, THEN BRING THE FILES BACK'} description={isThai ? 'ใช้ชุดคำสั่งของขั้นนี้คุยกับ AI ภายนอกให้จบ ยืนยัน Exact edits แล้วให้ AI สร้างไฟล์ฉบับเต็มตามชื่อเดิมทั้ง 3 ไฟล์' : 'Finish the external AI review, approve the exact edits, then ask it to return all three complete files with the exact filenames.'}>
+      <PhaseSection step="02" title={isThai ? 'ให้ Chat ตรวจ แล้วเลือกทางต่อที่ถูกต้อง' : 'LET CHAT REVIEW, THEN CHOOSE THE RIGHT PATH'} description={isThai ? 'Prompt มีการตัดสินใจที่ Lock แล้วและไฟล์ร่างทั้ง 3 ฉบับอยู่แล้ว Chat ต้องบอกว่าพร้อมยืนยัน ต้องแก้เฉพาะไฟล์ หรือต้องกลับไป Revision' : 'The prompt already contains the locked decisions and all three drafts. Chat must say whether they are ready, need file-only corrections, or require a revision.'}>
         <div className="prd-chat-flow" aria-label={isThai ? 'ขั้นตอนตรวจไฟล์กับ Chat' : 'Chat review steps'}>
-          {(isThai ? ['คัดลอกชุดคำสั่งไปคุยกับ Chat', 'ตอบคำถามทีละข้อและยืนยันสิ่งที่แก้', 'สั่ง UPDATE HANDOFF FILES เพื่อรับไฟล์เต็ม 3 ไฟล์', 'อัปโหลดพร้อมกันเพื่อตรวจ Preview ก่อนแทนที่'] : ['Copy the prompt into Chat', 'Answer one question at a time and approve edits', 'Say UPDATE HANDOFF FILES to receive three full files', 'Upload them together and preview before replacing']).map((item, index) => <span key={item}><strong>{String(index + 1).padStart(2, '0')}</strong>{item}</span>)}
+          {(isThai ? ['คัดลอก Prompt ซึ่งรวมข้อมูลและไฟล์แล้ว', 'ให้ Chat เลือกสถานะจาก 3 แบบ', 'ตอบเฉพาะคำถามที่เปลี่ยน Product จริง', 'กลับมาเลือกสถานะเดียวกันใน CODESIGN'] : ['Copy the prompt with all inputs included', 'Have Chat choose one of three statuses', 'Answer only material product questions', 'Choose the same status in CODESIGN']).map((item, index) => <span key={item}><strong>{String(index + 1).padStart(2, '0')}</strong>{item}</span>)}
         </div>
-        <PrdPackageImport current={files} onApply={applyImportedPackage} />
+
+        <div className="prd-review-outcomes" role="group" aria-label={isThai ? 'เลือกผลการตรวจจาก Chat' : 'Choose the Chat review result'}>
+          <button type="button" className={reviewOutcome === 'ready' ? 'is-active is-ready' : ''} aria-pressed={reviewOutcome === 'ready'} onClick={() => setReviewOutcome('ready')}>
+            <Check size={22} /><span><strong>READY TO LOCK</strong><small>{isThai ? 'ไม่พบจุดที่เปลี่ยนการสร้าง ใช้ไฟล์เดิมต่อได้' : 'No build-changing issue; continue with the current files.'}</small></span>
+          </button>
+          <button type="button" className={reviewOutcome === 'files' ? 'is-active is-files' : ''} aria-pressed={reviewOutcome === 'files'} onClick={() => setReviewOutcome('files')}>
+            <FileUp size={22} /><span><strong>FILE UPDATE REQUIRED</strong><small>{isThai ? 'แก้ให้ตรงกับการตัดสินใจเดิม โดยไม่เปลี่ยน Product' : 'Align the files to existing decisions without changing the product.'}</small></span>
+          </button>
+          <button type="button" className={reviewOutcome === 'revision' ? 'is-active is-revision' : ''} aria-pressed={reviewOutcome === 'revision'} onClick={() => setReviewOutcome('revision')}>
+            <RotateCcw size={22} /><span><strong>REVISION REQUIRED</strong><small>{isThai ? 'ต้องเปลี่ยนการตัดสินใจใน Step E หรือ S ก่อน' : 'A decision in Step E or S must change first.'}</small></span>
+          </button>
+        </div>
+
+        {!reviewOutcome ? <p className="prd-review-outcomes__hint">{isThai ? 'คุยกับ Chat ให้ได้ข้อสรุปก่อน แล้วเลือกหนึ่งสถานะด้านบน' : 'Finish the Chat review, then choose one status above.'}</p> : null}
+        {reviewOutcome === 'ready' ? <div className="prd-review-route prd-review-route--ready">
+          <Check size={24} /><div><strong>{isThai ? 'ใช้ไฟล์เดิมต่อได้' : 'KEEP THE CURRENT FILES'}</strong><p>{isThai ? 'ไม่ต้องดาวน์โหลดหรืออัปโหลดไฟล์ใหม่ ไปอ่าน Preview และยืนยันไฟล์เดิมทั้ง 3 ฉบับในขั้นถัดไป' : 'No download or upload is needed. Read and confirm all three current files in the next section.'}</p><a href="#prd-file-review">{isThai ? 'ไปตรวจไฟล์ทั้ง 3 ฉบับ' : 'REVIEW THE THREE FILES'} <ArrowRight size={16} /></a></div>
+        </div> : null}
+        {reviewOutcome === 'files' ? <PrdPackageImport current={files} onApply={applyImportedPackage} /> : null}
+        {reviewOutcome === 'revision' ? <div className="prd-review-route prd-review-route--revision">
+          <RotateCcw size={24} /><div><strong>{isThai ? 'กลับไปแก้ข้อมูลต้นทางก่อน' : 'REVISE THE SOURCE DECISION FIRST'}</strong><p>{isThai ? 'อย่าอัปโหลดไฟล์ที่ Chat เปลี่ยน Product decision ให้เลือก Step ที่เป็นเจ้าของข้อมูลนั้น ระบบจะเก็บฉบับเดิมและให้ตรวจ Step ถัดไปใหม่' : 'Do not upload files that silently change a product decision. Choose the step that owns that decision; CODESIGN preserves the prior version and reopens downstream review.'}</p>
+            <div className="prd-revision-links">
+              <Link to={`/projects/${project.id}/E`}><span><strong>{isThai ? 'Step E — ขอบเขต Product' : 'STEP E — PRODUCT SCOPE'}</strong><small>{isThai ? 'ผู้ใช้ Goal Direction Must Have และ Non-goal' : 'User, goal, direction, must-haves, and non-goals'}</small></span><ArrowRight size={17} /></Link>
+              <Link to={`/projects/${project.id}/S`}><span><strong>{isThai ? 'Step S — รายละเอียด Product' : 'STEP S — PRODUCT SPECIFICATION'}</strong><small>{isThai ? 'Journey กติกา เนื้อหา แบบฝึก การบันทึก และ Theme' : 'Journey, rules, content, exercises, records, and theme'}</small></span><ArrowRight size={17} /></Link>
+            </div>
+          </div>
+        </div> : null}
       </PhaseSection>
 
+      <div id="prd-file-review">
       <PhaseSection step="03" title={isThai ? 'ตรวจและแก้ไขไฟล์หลัก 3 ฉบับ' : 'REVIEW THE THREE SOURCE FILES'} description={isThai ? 'เลือกไฟล์ อ่าน Preview จนถึงด้านล่าง แล้วกดยืนยันทีละไฟล์ หากแก้ไขต้องกดบันทึกก่อนตรวจฉบับล่าสุดอีกครั้ง' : 'Choose a file, read its preview to the end, then confirm it. Save any edits before reviewing the latest version again.'}>
         <div className="handoff-file-grid" aria-label={isThai ? 'เลือกไฟล์เพื่อตรวจสอบ' : 'Choose a file to review'}>
           {prdFiles.map((file) => <button type="button" className={selectedFile === file.key ? 'is-active' : ''} aria-pressed={selectedFile === file.key} key={file.key} onClick={() => openFile(file.key)}>
@@ -269,6 +296,7 @@ export function PrdPhase({ project }: { project: ProjectRow }) {
           {feedback ? <span role="status">{feedback}</span> : null}
         </div>
       </PhaseSection>
+      </div>
 
       <ReviewGate title={isThai ? 'ยืนยันชุดส่งต่องานฉบับหลัก' : 'LOCK THE SOURCE PACKAGE'} question={isThai ? 'ไฟล์หลักทั้ง 3 ฉบับสะท้อนสิ่งที่คุณตัดสินใจ ตรงกัน และพร้อมนำไปประกอบชุดสำหรับ Codex แล้วหรือยัง?' : 'Do all three source files reflect your decisions, agree with each other, and feel ready for the Codex package?'} actions={<>
         <ArcadeButton variant="secondary" onClick={() => { setFeedback(isThai ? 'เปิดไฟล์ที่ยังไม่ยืนยัน อ่านถึงด้านล่าง หรือแก้ข้อความที่ไม่ตรงกับการตัดสินใจของคุณ' : 'OPEN AN UNCONFIRMED FILE, READ TO THE END, OR CORRECT IT.'); const first = prdFiles.find(({ key }) => !reviewedFiles.includes(key) || !documentChecks[key].valid); openFile(first?.key ?? 'handoff') }}>{isThai ? 'ยัง — ตรวจอีกครั้ง' : 'NOT YET — REVIEW'}</ArcadeButton>
