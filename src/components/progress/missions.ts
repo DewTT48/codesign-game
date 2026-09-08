@@ -4,6 +4,7 @@ export const missions = [
   { key: 'D', name: 'Debate' },
   { key: 'E', name: 'Establish' },
   { key: 'S', name: 'Specify' },
+  { key: 'PRD', name: 'Handoff' },
   { key: 'I', name: 'Implement' },
   { key: 'G', name: 'Feedback' },
   { key: 'N', name: 'Next' },

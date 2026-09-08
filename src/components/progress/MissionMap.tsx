@@ -14,11 +14,8 @@ type MissionMapProps = {
 
 export function MissionMap({ activeMission = 'C', compact, projectId, viewedMission }: MissionMapProps) {
   const { isThai } = useLanguage()
-  // PRD is the handoff produced at the end of Specify, not a ninth CODESIGN
-  // mission. Keep the map on S until the owner locks the handoff and enters I.
-  const requestedMission = activeMission === 'PRD' ? 'S' : activeMission
   const journeyComplete = activeMission === 'COMPLETE'
-  const mapMission = missions.some((item) => item.key === requestedMission) ? requestedMission : ''
+  const mapMission = missions.some((item) => item.key === activeMission) ? activeMission : ''
   const activeIndex = missions.findIndex((item) => item.key === mapMission)
   const thaiMissionNames: Record<string, string> = {
     C: 'บริบท',
@@ -26,6 +23,7 @@ export function MissionMap({ activeMission = 'C', compact, projectId, viewedMiss
     D: 'ท้าทาย',
     E: 'ขอบเขต',
     S: 'รายละเอียด',
+    PRD: 'ชุดส่งต่องาน',
     I: 'สร้างแอป',
     G: 'ข้อเสนอแนะ',
     N: 'รอบถัดไป',
@@ -46,8 +44,15 @@ export function MissionMap({ activeMission = 'C', compact, projectId, viewedMiss
           const complete = journeyComplete || index < activeIndex
           const viewing = viewedMission === mission.key && !active
           const locked = !journeyComplete && index > activeIndex
+          const viewingHistory = Boolean(viewedMission && viewedMission !== activeMission)
+          const linksToCurrent = Boolean(projectId && active && viewingHistory)
+          const linksToHistory = Boolean(projectId && reviewable && !active)
+          const linkTarget = linksToCurrent ? activeMission : mission.key
+          const linkLabel = linksToCurrent
+            ? (isThai ? 'กลับไป Step ปัจจุบัน' : 'Return to current step')
+            : (isThai ? 'ดูย้อนหลัง' : 'Review')
           const content = <>
-            <span className="mission-key" aria-hidden="true">
+            <span className={`mission-key ${mission.key.length > 1 ? 'mission-key--wide' : ''}`} aria-hidden="true">
               {locked ? <LockKeyhole size={14} /> : mission.key}
             </span>
             <span className="mission-name">
@@ -65,8 +70,8 @@ export function MissionMap({ activeMission = 'C', compact, projectId, viewedMiss
               key={mission.key}
             >
               <span className="mission-connector" aria-hidden="true" />
-              {projectId && reviewable
-                ? <Link className="mission-node__content" to={`/projects/${projectId}/${mission.key}`} aria-label={`${isThai ? 'ดูย้อนหลัง' : 'Review'} ${isThai ? (thaiMissionNames[mission.key] ?? mission.name) : mission.name}`}>{content}</Link>
+              {projectId && (linksToCurrent || linksToHistory)
+                ? <Link className="mission-node__content" to={`/projects/${projectId}/${linkTarget}`} aria-label={`${linkLabel} ${isThai ? (thaiMissionNames[mission.key] ?? mission.name) : mission.name}`}>{content}</Link>
                 : <div className="mission-node__content">{content}</div>}
             </li>
           )

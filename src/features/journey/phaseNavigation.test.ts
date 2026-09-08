@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { currentPhasePath, isCompletedPhase } from './phaseNavigation'
+import { currentPhasePath, isCompletedPhase, resolvePhaseRoute } from './phaseNavigation'
 
 describe('phaseNavigation', () => {
   it('treats only earlier phases as completed', () => {
@@ -22,5 +22,17 @@ describe('phaseNavigation', () => {
   it('builds the path back to the current phase', () => {
     expect(currentPhasePath('project-123', 'PRD')).toBe('/projects/project-123/PRD')
     expect(currentPhasePath('project-123', 'COMPLETE')).toBe('/projects/project-123/COMPLETE')
+  })
+
+  it('always keeps the actual current phase editable', () => {
+    expect(resolvePhaseRoute('S', 'S')).toBe('current')
+    expect(resolvePhaseRoute('PRD', 'PRD')).toBe('current')
+    expect(resolvePhaseRoute('E', 'S')).toBe('history')
+    expect(resolvePhaseRoute('PRD', 'S')).toBe('redirect')
+  })
+
+  it('shows the summary by default and history only when requested after completion', () => {
+    expect(resolvePhaseRoute(null, 'COMPLETE')).toBe('completion')
+    expect(resolvePhaseRoute('N', 'COMPLETE')).toBe('history')
   })
 })

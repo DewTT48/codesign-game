@@ -15,7 +15,7 @@ import { CompletionPage } from './CompletionPage'
 import { ProjectPlaceholderPage } from '../projects/ProjectPlaceholderPage'
 import { useLanguage } from '../i18n/LanguageContext'
 import { PhaseHistoryPage } from './PhaseHistoryPage'
-import { isCompletedPhase } from './phaseNavigation'
+import { resolvePhaseRoute } from './phaseNavigation'
 
 const supportedPhases = new Set<PhaseCode>(['C', 'O', 'D', 'E', 'S', 'PRD', 'I', 'G', 'N'])
 
@@ -48,11 +48,12 @@ export function ProjectWorkspacePage() {
 
   const currentPhase = project.data.current_phase
   const requestedPhase = supportedPhases.has(phase as PhaseCode) ? phase as PhaseCode : null
-  if (requestedPhase && isCompletedPhase(requestedPhase, currentPhase)) {
+  const routeMode = resolvePhaseRoute(requestedPhase, currentPhase)
+  if (routeMode === 'history' && requestedPhase) {
     return <PhaseHistoryPage project={project.data} phase={requestedPhase} />
   }
-  if (currentPhase === 'COMPLETE') return <CompletionPage project={project.data} />
-  if (!requestedPhase || requestedPhase !== currentPhase) {
+  if (routeMode === 'completion') return <CompletionPage project={project.data} />
+  if (routeMode === 'redirect' || !requestedPhase) {
     return <Navigate to={`/projects/${projectId}/${currentPhase}`} replace />
   }
 

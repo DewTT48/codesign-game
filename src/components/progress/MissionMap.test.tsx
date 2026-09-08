@@ -5,7 +5,7 @@ import { LanguageProvider } from '../../features/i18n/LanguageContext'
 import { MissionMap } from './MissionMap'
 
 describe('MissionMap', () => {
-  it('shows PRD as the completed Specify handoff instead of locking every mission', () => {
+  it('shows PRD as its own active step after Specify', () => {
     const { container } = render(
       <LanguageProvider>
         <MissionMap activeMission="PRD" compact />
@@ -13,12 +13,12 @@ describe('MissionMap', () => {
     )
 
     const nodes = [...container.querySelectorAll('.mission-node')]
-    expect(nodes).toHaveLength(8)
-    expect(nodes.slice(0, 5).every((node) => !node.classList.contains('is-locked'))).toBe(true)
-    expect(nodes.slice(0, 4).every((node) => node.classList.contains('is-complete'))).toBe(true)
-    expect(nodes[4]).toHaveClass('is-active')
-    expect(nodes[4]).not.toHaveClass('is-complete')
-    expect(nodes.slice(5).every((node) => node.classList.contains('is-locked'))).toBe(true)
+    expect(nodes).toHaveLength(9)
+    expect(nodes.slice(0, 6).every((node) => !node.classList.contains('is-locked'))).toBe(true)
+    expect(nodes.slice(0, 5).every((node) => node.classList.contains('is-complete'))).toBe(true)
+    expect(nodes[5]).toHaveClass('is-active')
+    expect(nodes[5]).not.toHaveClass('is-complete')
+    expect(nodes.slice(6).every((node) => node.classList.contains('is-locked'))).toBe(true)
   })
 
   it('links only completed missions to their read-only history', () => {
@@ -46,7 +46,31 @@ describe('MissionMap', () => {
       </MemoryRouter>,
     )
 
-    expect(container.querySelectorAll('a.mission-node__content')).toHaveLength(8)
+    expect(container.querySelectorAll('a.mission-node__content')).toHaveLength(9)
     expect([...container.querySelectorAll('.mission-node')].every((node) => node.classList.contains('is-complete'))).toBe(true)
+  })
+
+  it('returns to the actual current step when the map is used from history', () => {
+    render(
+      <MemoryRouter>
+        <LanguageProvider>
+          <MissionMap activeMission="PRD" viewedMission="E" projectId="project-123" compact />
+        </LanguageProvider>
+      </MemoryRouter>,
+    )
+
+    expect(screen.getByRole('link', { name: /กลับไป Step ปัจจุบัน ชุดส่งต่องาน/i })).toHaveAttribute('href', '/projects/project-123/PRD')
+  })
+
+  it('does not turn the current PRD map position into a history link', () => {
+    const { container } = render(
+      <MemoryRouter>
+        <LanguageProvider>
+          <MissionMap activeMission="PRD" viewedMission="PRD" projectId="project-123" compact />
+        </LanguageProvider>
+      </MemoryRouter>,
+    )
+
+    expect(container.querySelector('.mission-node.is-active a')).not.toBeInTheDocument()
   })
 })
