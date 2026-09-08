@@ -1,4 +1,4 @@
-import { Fragment, type ReactNode } from 'react'
+import { forwardRef, Fragment, type ReactNode, type UIEventHandler } from 'react'
 
 function renderInline(text: string, keyPrefix: string): ReactNode[] {
   return text
@@ -16,7 +16,12 @@ function renderInline(text: string, keyPrefix: string): ReactNode[] {
     })
 }
 
-export function MarkdownPreview({ markdown }: { markdown: string }) {
+type MarkdownPreviewProps = {
+  markdown: string
+  onScroll?: UIEventHandler<HTMLElement>
+}
+
+export const MarkdownPreview = forwardRef<HTMLElement, MarkdownPreviewProps>(function MarkdownPreview({ markdown, onScroll }, ref) {
   const lines = markdown.replace(/\r\n/g, '\n').split('\n')
   const blocks: ReactNode[] = []
 
@@ -96,5 +101,5 @@ export function MarkdownPreview({ markdown }: { markdown: string }) {
     index += 1
   }
 
-  return <article className="prd-markdown-preview">{blocks}</article>
-}
+  return <article ref={ref} className="prd-markdown-preview" onScroll={onScroll}>{blocks}</article>
+})

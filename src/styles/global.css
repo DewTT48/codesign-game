@@ -3418,6 +3418,69 @@ main {
   outline-offset: 4px;
 }
 
+.prd-file-confirmation {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  margin-top: 18px;
+  padding: 16px 18px;
+  background: #153a53;
+  border: 2px solid var(--line);
+}
+
+.prd-file-confirmation p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 15px;
+  line-height: 1.55;
+}
+
+.prd-file-confirmation button {
+  flex: 0 0 auto;
+  min-height: 48px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  padding: 10px 16px;
+  color: var(--ink);
+  background: var(--positive);
+  border: 3px solid var(--white);
+  font-family: var(--font-display);
+  font-size: 7px;
+  cursor: pointer;
+}
+
+.prd-file-confirmation button:disabled,
+.prd-view-switch button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+:lang(th) .journey-page--prd .prd-file-confirmation button {
+  font-family: var(--font-body);
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+
+:lang(th) .journey-page--prd .prd-file-confirmation p {
+  font-size: 16px;
+}
+
+.prd-view-switch button.is-save {
+  color: var(--ink);
+  background: var(--positive);
+  border-color: var(--white);
+}
+
+.prd-view-switch button.is-save:hover,
+.prd-view-switch button.is-save:focus-visible {
+  background: #9be65b;
+  border-color: var(--white);
+}
+
 .implementation-steps {
   display: grid;
   gap: 10px;
@@ -5830,12 +5893,26 @@ main {
     flex-direction: column;
   }
 
+  .prd-file-confirmation {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .prd-file-confirmation button {
+    width: 100%;
+  }
+
   .prd-toolbar span {
     margin-left: 0;
   }
 
   .prd-view-switch {
     width: 100%;
+    flex-wrap: wrap;
+  }
+
+  .prd-view-switch button {
+    flex: 1 1 150px;
   }
 
   .prd-view-switch button {

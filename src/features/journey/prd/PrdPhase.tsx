@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Check, Clipboard, Download, Eye, FileCode2, LockKeyhole, PencilLine } from 'lucide-react'
-import { useEffect, useRef, useState } from 'react'
+import { Check, Clipboard, Download, Eye, FileCode2, LockKeyhole, PencilLine, Save } from 'lucide-react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ArcadeButton } from '../../../components/ui/ArcadeButton'
 import type { ProjectRow } from '../../../lib/supabase/database.types'
@@ -22,18 +22,21 @@ const fileFieldKeys: Record<PrdFileKey, string> = {
 }
 
 const emptyDrafts: PrdDrafts = { handoff: '', contentPack: '', experienceDirection: '' }
-const reviewFieldKey = 'reviewedFiles'
+// V2 deliberately ignores confirmations created by the old "open means reviewed" behavior.
+const reviewFieldKey = 'confirmedFilesV2'
 
 export function PrdPhase({ project }: { project: ProjectRow }) {
   const { isThai } = useLanguage()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const editorRef = useRef<HTMLTextAreaElement>(null)
-  const timerRefs = useRef<Partial<Record<PrdFileKey, number>>>({})
+  const previewRef = useRef<HTMLElement>(null)
   const hydratedRef = useRef(false)
   const [files, setFiles] = useState<PrdDrafts>(emptyDrafts)
   const [selectedFile, setSelectedFile] = useState<PrdFileKey>('handoff')
   const [reviewedFiles, setReviewedFiles] = useState<PrdFileKey[]>([])
+  const [scrolledFiles, setScrolledFiles] = useState<PrdFileKey[]>([])
+  const [dirtyFiles, setDirtyFiles] = useState<PrdFileKey[]>([])
   const [viewMode, setViewMode] = useState<'preview' | 'edit'>('preview')
   const [saveState, setSaveState] = useState<SaveState>('idle')
   const [feedback, setFeedback] = useState('')
@@ -58,7 +61,7 @@ export function PrdPhase({ project }: { project: ProjectRow }) {
     const savedReviewed = draft.data.find((entry) => entry.fieldKey === reviewFieldKey)?.content
     const initialReviewed: PrdFileKey[] = Array.isArray(savedReviewed)
       ? savedReviewed.filter((value): value is PrdFileKey => prdFiles.some((file) => file.key === value))
-      : ['handoff']
+      : []
     setFiles(initial)
     setReviewedFiles(initialReviewed)
 
@@ -72,10 +75,6 @@ export function PrdPhase({ project }: { project: ProjectRow }) {
       ]).then(() => setSaveState('saved')).catch(() => setSaveState('error'))
     } else setSaveState('saved')
   }, [draft.data, project, source.data])
-
-  useEffect(() => () => {
-    Object.values(timerRefs.current).forEach((timer) => window.clearTimeout(timer))
-  }, [])
 
   const persist = async (key: PrdFileKey, content: string) => {
     setSaveState('saving')
@@ -102,31 +101,68 @@ export function PrdPhase({ project }: { project: ProjectRow }) {
   const updateFile = (key: PrdFileKey, content: string) => {
     setFiles((current) => ({ ...current, [key]: content }))
     setSaveState('idle')
-    const timer = timerRefs.current[key]
-    if (timer) window.clearTimeout(timer)
-    timerRefs.current[key] = window.setTimeout(() => {
-      delete timerRefs.current[key]
-      void persist(key, content).catch(() => undefined)
-    }, 700)
+    setDirtyFiles((current) => current.includes(key) ? current : [...current, key])
+    setScrolledFiles((current) => current.filter((value) => value !== key))
+    if (reviewedFiles.includes(key)) {
+      const next = reviewedFiles.filter((value) => value !== key)
+      setReviewedFiles(next)
+      void persistReviewed(next).catch(() => undefined)
+    }
   }
 
-  const reviewFile = (key: PrdFileKey, mode: 'preview' | 'edit' = 'preview') => {
+  const openFile = (key: PrdFileKey, mode: 'preview' | 'edit' = 'preview') => {
     setSelectedFile(key)
     setViewMode(mode)
-    if (reviewedFiles.includes(key)) return
-    const next = [...reviewedFiles, key]
-    setReviewedFiles(next)
-    void persistReviewed(next).catch(() => undefined)
+    setFeedback('')
   }
 
+  const saveFile = async (key: PrdFileKey) => {
+    try {
+      await persist(key, files[key])
+      setDirtyFiles((current) => current.filter((value) => value !== key))
+      setFeedback(isThai ? `บันทึก ${prdFiles.find((file) => file.key === key)?.fileName} แล้ว กรุณาดูตัวอย่างและอ่านถึงท้ายไฟล์ก่อนยืนยัน` : 'FILE SAVED. PREVIEW AND READ TO THE END BEFORE CONFIRMING.')
+      setViewMode('preview')
+    } catch {
+      setFeedback(isThai ? 'บันทึกไฟล์ไม่สำเร็จ กรุณาลองอีกครั้ง' : 'FILE COULD NOT BE SAVED. TRY AGAIN.')
+    }
+  }
+
+  const confirmFile = async () => {
+    const key = selectedFile
+    if (reviewedFiles.includes(key) || dirtyFiles.includes(key) || !scrolledFiles.includes(key) || !validatePrdDocument(key, files[key]).valid) return
+    const next = [...reviewedFiles, key]
+    setReviewedFiles(next)
+    try {
+      await persistReviewed(next)
+      setFeedback(isThai ? `ยืนยัน ${prdFiles.find((file) => file.key === key)?.fileName} แล้ว` : 'FILE CONFIRMED')
+    } catch {
+      setReviewedFiles((current) => current.filter((value) => value !== key))
+      setFeedback(isThai ? 'ยืนยันไฟล์ไม่สำเร็จ กรุณาลองอีกครั้ง' : 'FILE COULD NOT BE CONFIRMED. TRY AGAIN.')
+    }
+  }
+
+  const markFileRead = (key: PrdFileKey) => {
+    setScrolledFiles((current) => current.includes(key) ? current : [...current, key])
+  }
+
+  const handlePreviewScroll = (key: PrdFileKey, element: HTMLElement) => {
+    if (element.scrollTop + element.clientHeight >= element.scrollHeight - 8) markFileRead(key)
+  }
+
+  useLayoutEffect(() => {
+    if (viewMode !== 'preview') return
+    const element = previewRef.current
+    if (!element) return
+    element.scrollTop = 0
+    if (element.scrollHeight <= element.clientHeight + 2) markFileRead(selectedFile)
+  }, [selectedFile, viewMode, files])
+
   const applyImportedPackage = (nextFiles: PrdDrafts) => {
-    Object.values(timerRefs.current).forEach((timer) => window.clearTimeout(timer))
-    timerRefs.current = {}
-    // The first imported file is shown immediately; the other two must still be opened
-    // before the owner can lock the package.
-    const reviewed: PrdFileKey[] = ['handoff']
+    const reviewed: PrdFileKey[] = []
     setFiles(nextFiles)
     setReviewedFiles(reviewed)
+    setScrolledFiles([])
+    setDirtyFiles([])
     setSelectedFile('handoff')
     setViewMode('preview')
     setSaveState('saving')
@@ -145,8 +181,6 @@ export function PrdPhase({ project }: { project: ProjectRow }) {
 
   const completion = useMutation({
     mutationFn: async () => {
-      Object.values(timerRefs.current).forEach((timer) => window.clearTimeout(timer))
-      timerRefs.current = {}
       await Promise.all(prdFiles.map(({ key }) => persist(key, files[key])))
       await persistReviewed(reviewedFiles)
       return lockPrd(project.id, files)
@@ -203,24 +237,31 @@ export function PrdPhase({ project }: { project: ProjectRow }) {
         <PrdPackageImport current={files} onApply={applyImportedPackage} />
       </PhaseSection>
 
-      <PhaseSection step="03" title={isThai ? 'ตรวจและแก้ไขไฟล์หลัก 3 ฉบับ' : 'REVIEW THE THREE SOURCE FILES'} description={isThai ? 'เปิดตรวจทุกไฟล์อย่างน้อยหนึ่งครั้ง คุณยังแก้ไขเองได้ และทุกการเปลี่ยนแปลงจะบันทึกอัตโนมัติ' : 'Open every file at least once. You can still edit manually, and changes autosave.'}>
+      <PhaseSection step="03" title={isThai ? 'ตรวจและแก้ไขไฟล์หลัก 3 ฉบับ' : 'REVIEW THE THREE SOURCE FILES'} description={isThai ? 'เลือกไฟล์ อ่าน Preview จนถึงด้านล่าง แล้วกดยืนยันทีละไฟล์ หากแก้ไขต้องกดบันทึกก่อนตรวจฉบับล่าสุดอีกครั้ง' : 'Choose a file, read its preview to the end, then confirm it. Save any edits before reviewing the latest version again.'}>
         <div className="handoff-file-grid" aria-label={isThai ? 'เลือกไฟล์เพื่อตรวจสอบ' : 'Choose a file to review'}>
-          {prdFiles.map((file) => <button type="button" className={selectedFile === file.key ? 'is-active' : ''} aria-pressed={selectedFile === file.key} key={file.key} onClick={() => reviewFile(file.key)}>
+          {prdFiles.map((file) => <button type="button" className={selectedFile === file.key ? 'is-active' : ''} aria-pressed={selectedFile === file.key} key={file.key} onClick={() => openFile(file.key)}>
             <FileCode2 size={21} />
-            <span><strong>{file.fileName}</strong><small>{descriptions[file.key]}</small><small className={documentChecks[file.key].valid ? 'file-status is-valid' : 'file-status is-error'}>{documentChecks[file.key].valid ? (reviewedFiles.includes(file.key) ? (isThai ? 'ตรวจแล้ว' : 'REVIEWED') : (isThai ? 'รอตรวจ' : 'NOT REVIEWED')) : (isThai ? 'โครงสร้างไม่ครบ' : 'STRUCTURE ERROR')}</small></span>
+            <span><strong>{file.fileName}</strong><small>{descriptions[file.key]}</small><small className={documentChecks[file.key].valid ? (reviewedFiles.includes(file.key) ? 'file-status is-valid' : 'file-status') : 'file-status is-error'}>{documentChecks[file.key].valid ? (reviewedFiles.includes(file.key) ? (isThai ? 'ยืนยันแล้ว' : 'CONFIRMED') : dirtyFiles.includes(file.key) ? (isThai ? 'มีการแก้ไขที่ยังไม่บันทึก' : 'UNSAVED CHANGES') : (isThai ? 'รอตรวจและยืนยัน' : 'REVIEW REQUIRED')) : (isThai ? 'โครงสร้างไม่ครบ' : 'STRUCTURE ERROR')}</small></span>
             <Eye size={18} />
           </button>)}
         </div>
         <section className="prd-file-workspace" aria-labelledby="active-handoff-file">
           <header>
-            <div><span>{isThai ? 'ไฟล์ที่กำลังตรวจ' : 'REVIEWING FILE'}</span><h3 id="active-handoff-file">{activeFile.fileName}</h3><p>{isThai ? 'ใช้ Preview อ่านภาพรวม หรือเลือกแก้ไขเมื่อต้องปรับการตัดสินใจ ข้อความจะบันทึกอัตโนมัติ' : 'Preview the file or edit decisions that need correction. Changes autosave.'}</p></div>
+            <div><span>{isThai ? 'ไฟล์ที่กำลังตรวจ' : 'REVIEWING FILE'}</span><h3 id="active-handoff-file">{activeFile.fileName}</h3><p>{isThai ? 'อ่าน Preview ให้ถึงด้านล่างก่อนยืนยัน หากเลือกแก้ไข กรุณากด “บันทึกไฟล์” เพื่อเก็บการเปลี่ยนแปลง' : 'Read the preview to the end before confirming. In edit mode, choose Save file to keep your changes.'}</p></div>
             <div className="prd-view-switch" role="group" aria-label={isThai ? 'เลือกโหมดดูไฟล์' : 'File view mode'}>
-              <button type="button" className={viewMode === 'preview' ? 'is-active' : ''} aria-pressed={viewMode === 'preview'} onClick={() => reviewFile(selectedFile, 'preview')}><Eye size={17} /> {isThai ? 'ดูตัวอย่าง' : 'PREVIEW'}</button>
-              <button type="button" className={viewMode === 'edit' ? 'is-active' : ''} aria-pressed={viewMode === 'edit'} onClick={() => reviewFile(selectedFile, 'edit')}><PencilLine size={17} /> {isThai ? 'แก้ไข' : 'EDIT'}</button>
+              <button type="button" className={viewMode === 'preview' ? 'is-active' : ''} aria-pressed={viewMode === 'preview'} onClick={() => openFile(selectedFile, 'preview')}><Eye size={17} /> {isThai ? 'ดูตัวอย่าง' : 'PREVIEW'}</button>
+              <button type="button" className={viewMode === 'edit' ? 'is-active' : ''} aria-pressed={viewMode === 'edit'} onClick={() => openFile(selectedFile, 'edit')}><PencilLine size={17} /> {isThai ? 'แก้ไข' : 'EDIT'}</button>
+              {viewMode === 'edit' ? <button type="button" className="is-save" disabled={!dirtyFiles.includes(selectedFile) || saveState === 'saving'} onClick={() => void saveFile(selectedFile)}><Save size={18} /> {saveState === 'saving' ? (isThai ? 'กำลังบันทึก…' : 'SAVING…') : (isThai ? 'บันทึกไฟล์' : 'SAVE FILE')}</button> : null}
             </div>
           </header>
           {documentChecks[selectedFile].errors.length ? <div className="prd-structure-errors" role="alert">{documentChecks[selectedFile].errors.map((error) => <span key={error}>{error}</span>)}</div> : null}
-          {viewMode === 'preview' ? <MarkdownPreview markdown={activeContent} /> : <textarea ref={editorRef} className="prd-editor" aria-label={`${isThai ? 'แก้ไข' : 'Edit'} ${activeFile.fileName}`} spellCheck="false" value={activeContent} onChange={(event) => updateFile(selectedFile, event.target.value)} />}
+          {viewMode === 'preview' ? <>
+            <MarkdownPreview ref={previewRef} markdown={activeContent} onScroll={(event) => handlePreviewScroll(selectedFile, event.currentTarget)} />
+            <div className="prd-file-confirmation">
+              <p>{reviewedFiles.includes(selectedFile) ? (isThai ? 'ไฟล์นี้ได้รับการยืนยันแล้ว' : 'THIS FILE IS CONFIRMED') : scrolledFiles.includes(selectedFile) ? (isThai ? 'อ่านถึงท้ายไฟล์แล้ว กรุณากดยืนยันเมื่อเนื้อหาถูกต้อง' : 'YOU REACHED THE END. CONFIRM WHEN THE CONTENT IS CORRECT.') : (isThai ? 'เลื่อนอ่าน Preview ไปจนถึงท้ายไฟล์เพื่อเปิดปุ่มยืนยัน' : 'SCROLL TO THE END OF THE PREVIEW TO ENABLE CONFIRMATION.')}</p>
+              <button type="button" disabled={reviewedFiles.includes(selectedFile) || !scrolledFiles.includes(selectedFile) || dirtyFiles.includes(selectedFile) || !documentChecks[selectedFile].valid || saveState === 'saving'} onClick={() => void confirmFile()}><Check size={18} /> {reviewedFiles.includes(selectedFile) ? (isThai ? 'ยืนยันไฟล์นี้แล้ว' : 'FILE CONFIRMED') : (isThai ? 'ยืนยันไฟล์นี้' : 'CONFIRM THIS FILE')}</button>
+            </div>
+          </> : <textarea ref={editorRef} className="prd-editor" aria-label={`${isThai ? 'แก้ไข' : 'Edit'} ${activeFile.fileName}`} spellCheck="false" value={activeContent} onChange={(event) => updateFile(selectedFile, event.target.value)} />}
         </section>
         <div className="prd-toolbar">
           <button type="button" onClick={() => void copyFile(activeFile.fileName, activeContent)}><Clipboard size={17} /> {isThai ? 'คัดลอกไฟล์นี้' : 'COPY THIS FILE'}</button>
@@ -230,11 +271,12 @@ export function PrdPhase({ project }: { project: ProjectRow }) {
       </PhaseSection>
 
       <ReviewGate title={isThai ? 'ยืนยันชุดส่งต่องานฉบับหลัก' : 'LOCK THE SOURCE PACKAGE'} question={isThai ? 'ไฟล์หลักทั้ง 3 ฉบับสะท้อนสิ่งที่คุณตัดสินใจ ตรงกัน และพร้อมนำไปประกอบชุดสำหรับ Codex แล้วหรือยัง?' : 'Do all three source files reflect your decisions, agree with each other, and feel ready for the Codex package?'} actions={<>
-        <ArcadeButton variant="secondary" onClick={() => { setFeedback(isThai ? 'เปิดตรวจไฟล์ที่ยังไม่ยืนยัน หรือแก้ข้อความที่ไม่ตรงกับการตัดสินใจของคุณ' : 'REVIEW UNCONFIRMED FILES OR CORRECT TEXT THAT DOES NOT MATCH YOUR DECISIONS'); const first = prdFiles.find(({ key }) => !reviewedFiles.includes(key) || !documentChecks[key].valid); reviewFile(first?.key ?? 'handoff') }}>{isThai ? 'ยัง — ตรวจอีกครั้ง' : 'NOT YET — REVIEW'}</ArcadeButton>
-        <ArcadeButton disabled={!allValid || !allReviewed || completion.isPending || saveState === 'saving'} onClick={() => completion.mutate()}><LockKeyhole size={18} /> {completion.isPending ? (isThai ? 'กำลังยืนยัน…' : 'LOCKING…') : (isThai ? 'พร้อม — Lock ทั้ง 3 ไฟล์' : 'READY — LOCK ALL THREE')}</ArcadeButton>
+        <ArcadeButton variant="secondary" onClick={() => { setFeedback(isThai ? 'เปิดไฟล์ที่ยังไม่ยืนยัน อ่านถึงด้านล่าง หรือแก้ข้อความที่ไม่ตรงกับการตัดสินใจของคุณ' : 'OPEN AN UNCONFIRMED FILE, READ TO THE END, OR CORRECT IT.'); const first = prdFiles.find(({ key }) => !reviewedFiles.includes(key) || !documentChecks[key].valid); openFile(first?.key ?? 'handoff') }}>{isThai ? 'ยัง — ตรวจอีกครั้ง' : 'NOT YET — REVIEW'}</ArcadeButton>
+        <ArcadeButton disabled={!allValid || !allReviewed || dirtyFiles.length > 0 || completion.isPending || saveState === 'saving'} onClick={() => completion.mutate()}><LockKeyhole size={18} /> {completion.isPending ? (isThai ? 'กำลังยืนยัน…' : 'LOCKING…') : (isThai ? 'พร้อม — Lock ทั้ง 3 ไฟล์' : 'READY — LOCK ALL THREE')}</ArcadeButton>
       </>}>
-        <p>{isThai ? `ตรวจแล้ว ${reviewedFiles.length}/3 ไฟล์ เมื่อ Lock ระบบจะเก็บทั้ง 3 ไฟล์เป็นชุด Version เดียวกัน จากนั้น Stage Implement จะสร้าง START_WITH_CODEX.md ตามความพร้อม GitHub ของคุณ` : `${reviewedFiles.length}/3 files reviewed. Locking stores all three as one version. Implement then creates START_WITH_CODEX.md from your GitHub readiness.`}</p>
+        <p>{isThai ? `ยืนยันแล้ว ${reviewedFiles.length}/3 ไฟล์ เมื่อ Lock ระบบจะเก็บทั้ง 3 ไฟล์เป็นชุด Version เดียวกัน จากนั้น Stage Implement จะสร้าง START_WITH_CODEX.md ตามความพร้อม GitHub ของคุณ` : `${reviewedFiles.length}/3 files confirmed. Locking stores all three as one version. Implement then creates START_WITH_CODEX.md from your GitHub readiness.`}</p>
         {!allValid ? <p className="field-error" role="alert">{isThai ? 'ยัง Lock ไม่ได้ เพราะมีไฟล์ที่โครงสร้างไม่ครบ' : 'LOCKING IS DISABLED UNTIL EVERY FILE PASSES STRUCTURE CHECKS.'}</p> : null}
+        {dirtyFiles.length > 0 ? <p className="field-error" role="alert">{isThai ? 'ยัง Lock ไม่ได้ เพราะมีไฟล์ที่แก้ไขแล้วแต่ยังไม่ได้กดบันทึก' : 'LOCKING IS DISABLED WHILE A FILE HAS UNSAVED CHANGES.'}</p> : null}
         {completion.isError ? <p className="field-error" role="alert">{isThai ? 'Lock PRD ไม่สำเร็จ ข้อมูลยังคงเป็น Draft' : 'PRD LOCK FAILED. YOUR FILES REMAIN DRAFTS.'}</p> : null}
       </ReviewGate>
     </JourneyLayout>
