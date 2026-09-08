@@ -173,7 +173,10 @@ export async function startPhaseRevision(input: {
     change_reason: reason,
   })
   if (!rpcResult.error) return rpcResult.data
-  if (!['PGRST202', '42883'].includes(rpcResult.error.code ?? '')) throw rpcResult.error
+  const isMissingFunction = ['PGRST202', '42883'].includes(rpcResult.error.code ?? '')
+  const isOlderRevisionFunction = rpcResult.error.code === 'P0001'
+    && /not available for revision/i.test(rpcResult.error.message)
+  if (!isMissingFunction && !isOlderRevisionFunction) throw rpcResult.error
 
   // Backward-compatible client transaction while the atomic database function is
   // being rolled out. Every original row remains available as a superseded version.
