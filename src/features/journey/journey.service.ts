@@ -8,6 +8,7 @@ import type {
   ProjectRow,
 } from '../../lib/supabase/database.types'
 import type { PrdDrafts } from './prd/prdPackage'
+import { affectedRevisionPhases, solidificationBeforePhase } from './phaseRevision'
 
 export type PhaseCode = 'C' | 'O' | 'D' | 'E' | 'S' | 'PRD' | 'I' | 'G' | 'N'
 
@@ -16,6 +17,24 @@ export type PhaseEntry = {
   fieldKey: string
   content: Json
   status: 'captured' | 'locked' | 'superseded'
+}
+
+export type PhaseEntryVersion = PhaseEntry & {
+  section: string
+  version: number
+  isCurrent: boolean
+  createdAt: string
+  updatedAt: string
+}
+
+export type PhaseRevisionRecord = {
+  id: string
+  version: number
+  targetPhase: PhaseCode
+  sourceCurrentPhase: ProjectRow['current_phase']
+  affectedPhases: readonly PhaseCode[]
+  reason: string | null
+  createdAt: string
 }
 
 export type PrdSource = Partial<
@@ -60,6 +79,219 @@ export async function getPhaseEntries(
     content: entry.content,
     status: entry.status,
   }))
+}
+
+export async function getPhaseEntryHistory(
+  projectId: string,
+  phase: PhaseCode,
+): Promise<PhaseEntryVersion[]> {
+  const client = requireSupabase()
+  const { data, error } = await client
+    .from('phase_entries')
+    .select('id, section, field_key, content, status, version, is_current, created_at, updated_at')
+    .eq('project_id', projectId)
+    .eq('phase', phase)
+    .eq('is_current', false)
+    .order('version', { ascending: false })
+
+  if (error) throw error
+  return data.map((entry) => ({
+    id: entry.id,
+    section: entry.section,
+    fieldKey: entry.field_key,
+    content: entry.content,
+    status: entry.status,
+    version: entry.version,
+    isCurrent: entry.is_current,
+    createdAt: entry.created_at,
+    updatedAt: entry.updated_at,
+  }))
+}
+
+function isPhaseCode(value: unknown): value is PhaseCode {
+  return typeof value === 'string' && ['C', 'O', 'D', 'E', 'S', 'PRD', 'I', 'G', 'N'].includes(value)
+}
+
+function parsePhaseRevision(decision: DecisionRow): PhaseRevisionRecord | null {
+  const content = decision.content
+  if (!content || typeof content !== 'object' || Array.isArray(content)) return null
+  const targetPhase = content.targetPhase
+  const sourceCurrentPhase = content.sourceCurrentPhase
+  const affectedPhases = content.affectedPhases
+  if (!isPhaseCode(targetPhase)) return null
+  if (sourceCurrentPhase !== 'COMPLETE' && !isPhaseCode(sourceCurrentPhase)) return null
+  if (!Array.isArray(affectedPhases) || !affectedPhases.every(isPhaseCode)) return null
+  return {
+    id: decision.id,
+    version: decision.version,
+    targetPhase,
+    sourceCurrentPhase,
+    affectedPhases,
+    reason: decision.reason_for_change,
+    createdAt: decision.created_at,
+  }
+}
+
+export async function getLatestPhaseRevision(projectId: string): Promise<PhaseRevisionRecord | null> {
+  const client = requireSupabase()
+  const { data, error } = await client
+    .from('decisions')
+    .select('*')
+    .eq('project_id', projectId)
+    .eq('decision_type', 'phase_revision')
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+  if (error) throw error
+  return data ? parsePhaseRevision(data) : null
+}
+
+export async function getPhaseRevisions(
+  projectId: string,
+  phase: PhaseCode,
+): Promise<PhaseRevisionRecord[]> {
+  const client = requireSupabase()
+  const { data, error } = await client
+    .from('decisions')
+    .select('*')
+    .eq('project_id', projectId)
+    .eq('phase', phase)
+    .eq('decision_type', 'phase_revision')
+    .order('created_at', { ascending: false })
+  if (error) throw error
+  return data.map(parsePhaseRevision).filter((revision): revision is PhaseRevisionRecord => Boolean(revision))
+}
+
+export async function startPhaseRevision(input: {
+  projectId: string
+  targetPhase: PhaseCode
+  reason: string
+}): Promise<ProjectRow> {
+  const reason = input.reason.trim()
+  if (!reason) throw new Error('Please explain why this revision is needed.')
+
+  const client = requireSupabase()
+  const rpcResult = await client.rpc('start_phase_revision', {
+    target_project_id: input.projectId,
+    target_phase: input.targetPhase,
+    change_reason: reason,
+  })
+  if (!rpcResult.error) return rpcResult.data
+  if (!['PGRST202', '42883'].includes(rpcResult.error.code ?? '')) throw rpcResult.error
+
+  // Backward-compatible client transaction while the atomic database function is
+  // being rolled out. Every original row remains available as a superseded version.
+  const project = await getProject(input.projectId)
+  const affectedPhases = affectedRevisionPhases(input.targetPhase, project.current_phase)
+  if (!affectedPhases.length) throw new Error('This step is not available for revision.')
+
+  const { data: originals, error: originalError } = await client
+    .from('phase_entries')
+    .select('*')
+    .eq('project_id', input.projectId)
+    .in('phase', affectedPhases)
+    .eq('is_current', true)
+  if (originalError) throw originalError
+
+  const originalIds = originals.map((entry) => entry.id)
+  if (!originals.some((entry) => entry.phase === input.targetPhase)) {
+    throw new Error('The target step has no saved answers to revise.')
+  }
+  let cloneIds: string[] = []
+  let deactivatedNextIterationIds: string[] = []
+  let projectUpdated = false
+
+  try {
+    if (originalIds.length) {
+      const { error } = await client
+        .from('phase_entries')
+        .update({ is_current: false, status: 'superseded' })
+        .in('id', originalIds)
+      if (error) throw error
+
+      const { data: clones, error: cloneError } = await client
+        .from('phase_entries')
+        .insert(originals.map((entry) => ({
+          project_id: entry.project_id,
+          phase: entry.phase,
+          section: entry.section,
+          field_key: entry.field_key,
+          content: entry.content,
+          status: 'captured' as const,
+          version: entry.version + 1,
+          is_current: true,
+        })))
+        .select('id')
+      if (cloneError) throw cloneError
+      cloneIds = clones.map((entry) => entry.id)
+    }
+
+    if (affectedPhases.includes('N')) {
+      const { data: nextIterationDecisions, error: nextIterationFindError } = await client
+        .from('decisions')
+        .select('id')
+        .eq('project_id', input.projectId)
+        .eq('phase', 'N')
+        .eq('decision_type', 'next_iteration')
+        .eq('is_current', true)
+      if (nextIterationFindError) throw nextIterationFindError
+      deactivatedNextIterationIds = nextIterationDecisions.map((decision) => decision.id)
+      const { error } = await client
+        .from('decisions')
+        .update({ is_current: false })
+        .eq('project_id', input.projectId)
+        .eq('phase', 'N')
+        .eq('decision_type', 'next_iteration')
+        .eq('is_current', true)
+      if (error) throw error
+    }
+
+    const { data: nextProject, error: projectError } = await client
+      .from('projects')
+      .update({
+        current_phase: input.targetPhase,
+        solidification_stage: solidificationBeforePhase(input.targetPhase),
+        status: 'in_progress',
+        completed_at: null,
+      })
+      .eq('id', input.projectId)
+      .select('*')
+      .single()
+    if (projectError) throw projectError
+    projectUpdated = true
+
+    const { error: decisionError } = await client.rpc('revise_decision', {
+      target_project_id: input.projectId,
+      target_phase: input.targetPhase,
+      target_decision_type: 'phase_revision',
+      next_content: {
+        targetPhase: input.targetPhase,
+        sourceCurrentPhase: project.current_phase,
+        affectedPhases,
+      },
+      change_reason: reason,
+    })
+    if (decisionError) throw decisionError
+    return nextProject
+  } catch (error) {
+    if (projectUpdated) {
+      await client.from('projects').update({
+        current_phase: project.current_phase,
+        solidification_stage: project.solidification_stage,
+        status: project.status,
+        completed_at: project.completed_at,
+      }).eq('id', input.projectId)
+    }
+    if (cloneIds.length) await client.from('phase_entries').delete().in('id', cloneIds)
+    if (deactivatedNextIterationIds.length) {
+      await client.from('decisions').update({ is_current: true }).in('id', deactivatedNextIterationIds)
+    }
+    await Promise.all(originals.map((entry) => client.from('phase_entries').update({
+      is_current: true,
+      status: entry.status,
+    }).eq('id', entry.id)))
+    throw error
+  }
 }
 
 export async function savePhaseEntry(input: {

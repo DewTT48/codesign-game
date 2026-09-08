@@ -1,12 +1,14 @@
-import { useQuery } from '@tanstack/react-query'
-import { ArrowLeft, ArrowRight, Check, Eye, FileCode2, LockKeyhole, X } from 'lucide-react'
-import { Link } from 'react-router-dom'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { AlertTriangle, ArrowLeft, ArrowRight, Check, Eye, FileCode2, History, LockKeyhole, PencilLine, RotateCcw, X } from 'lucide-react'
+import { useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
 import { MissionMap } from '../../components/progress/MissionMap'
 import { SolidificationMeter } from '../../components/progress/SolidificationMeter'
 import type { Json, ProjectRow } from '../../lib/supabase/database.types'
 import { useLanguage } from '../i18n/LanguageContext'
-import { getPhaseEntries, type PhaseCode, type PhaseEntry } from './journey.service'
+import { getPhaseEntries, getPhaseEntryHistory, startPhaseRevision, type PhaseCode, type PhaseEntry, type PhaseEntryVersion } from './journey.service'
 import { currentPhasePath, isCompletedPhase, phaseSequence } from './phaseNavigation'
+import { affectedRevisionPhases, revisionTargets } from './phaseRevision'
 import { MarkdownPreview } from './prd/MarkdownPreview'
 
 const phaseNames: Record<PhaseCode, { th: string; en: string }> = {
@@ -101,9 +103,33 @@ function visibleEntries(phase: PhaseCode, entries: PhaseEntry[]) {
 
 export function PhaseHistoryPage({ project, phase }: { project: ProjectRow; phase: PhaseCode }) {
   const { isThai } = useLanguage()
+  const navigate = useNavigate()
+  const queryClient = useQueryClient()
+  const [revisionOpen, setRevisionOpen] = useState(false)
+  const [reason, setReason] = useState('')
+  const [acknowledged, setAcknowledged] = useState(false)
   const entries = useQuery({ queryKey: ['phase-entries', project.id, phase], queryFn: () => getPhaseEntries(project.id, phase) })
+  const history = useQuery({
+    queryKey: ['phase-entry-history', project.id, phase],
+    queryFn: () => getPhaseEntryHistory(project.id, phase),
+    enabled: revisionTargets.includes(phase),
+  })
   const currentPath = currentPhasePath(project.id, project.current_phase)
   const name = isThai ? phaseNames[phase].th : phaseNames[phase].en
+  const affectedPhases = affectedRevisionPhases(phase, project.current_phase)
+  const revision = useMutation({
+    mutationFn: () => startPhaseRevision({ projectId: project.id, targetPhase: phase, reason }),
+    onSuccess: async (nextProject) => {
+      queryClient.setQueryData(['project', project.id], nextProject)
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['phase-entries', project.id] }),
+        queryClient.invalidateQueries({ queryKey: ['phase-entry-history', project.id] }),
+        queryClient.invalidateQueries({ queryKey: ['phase-revision', project.id] }),
+        queryClient.invalidateQueries({ queryKey: ['guidance-source', project.id] }),
+      ])
+      navigate(`/projects/${project.id}/${phase}`, { replace: true })
+    },
+  })
 
   if (entries.isLoading) return <div className="route-loading" role="status">{isThai ? 'กำลังโหลดข้อมูลย้อนหลัง…' : 'LOADING STEP HISTORY…'}</div>
   if (entries.isError) return <div className="route-loading" role="alert">{isThai ? 'โหลดข้อมูลย้อนหลังไม่สำเร็จ' : 'STEP HISTORY COULD NOT BE LOADED.'}</div>
@@ -111,6 +137,12 @@ export function PhaseHistoryPage({ project, phase }: { project: ProjectRow; phas
   const displayed = visibleEntries(phase, entries.data ?? [])
   const entryMap = new Map((entries.data ?? []).map((entry) => [entry.fieldKey, entry.content]))
   const reviewablePhases = phaseSequence.filter((item) => isCompletedPhase(item, project.current_phase))
+  const historyGroups = Array.from((history.data ?? []).reduce((groups, entry) => {
+    const group = groups.get(entry.version) ?? []
+    group.push(entry)
+    groups.set(entry.version, group)
+    return groups
+  }, new Map<number, PhaseEntryVersion[]>()))
 
   const displayContent = (entry: PhaseEntry) => {
     if (phase === 'O' && entry.fieldKey === 'favorite' && typeof entry.content === 'number') {
@@ -125,12 +157,12 @@ export function PhaseHistoryPage({ project, phase }: { project: ProjectRow; phas
   return <div className="content-page phase-history-page">
     <div className="journey-utility-row">
       <Link className="back-link" to="/dashboard"><ArrowLeft size={18} /> {isThai ? 'แดชบอร์ด' : 'DASHBOARD'}</Link>
-      <span className="phase-history__readonly"><LockKeyhole size={15} /> {isThai ? 'ดูย้อนหลัง · แก้ไขไม่ได้' : 'HISTORY · READ ONLY'}</span>
+      <span className="phase-history__readonly"><LockKeyhole size={15} /> {isThai ? 'ดูย้อนหลัง · ฉบับเดิมยังปลอดภัย' : 'HISTORY · ORIGINAL SAVED'}</span>
     </div>
 
     <header className="phase-history__hero">
       <div className={`phase-token ${phase.length > 1 ? 'phase-token--wide' : ''}`} aria-hidden="true">{phase}</div>
-      <div><span>{isThai ? 'ผลลัพธ์ที่ยืนยันแล้วจาก Step' : 'CONFIRMED STEP OUTPUT'}</span><h1>{name}</h1><p>{isThai ? 'หน้านี้ใช้สำหรับทบทวนข้อมูลเดิมเท่านั้น การเปิดดูจะไม่เปลี่ยนคำตอบหรือสร้าง Revision ใหม่' : 'This page is for reviewing prior work. Opening it never changes answers or creates a revision.'}</p></div>
+      <div><span>{isThai ? 'ผลลัพธ์ที่ยืนยันแล้วจาก Step' : 'CONFIRMED STEP OUTPUT'}</span><h1>{name}</h1><p>{isThai ? 'เปิดดูได้โดยไม่เปลี่ยนคำตอบ หากต้องการแก้ไขให้เริ่ม Revision ใหม่เพื่อเก็บฉบับเดิมไว้' : 'Review without changing answers. Start a new revision to edit while preserving this version.'}</p></div>
       <Link to={currentPath}>{isThai ? (project.current_phase === 'COMPLETE' ? 'กลับไปหน้าสรุป' : 'กลับไป Step ปัจจุบัน') : (project.current_phase === 'COMPLETE' ? 'RETURN TO SUMMARY' : 'RETURN TO CURRENT STEP')} <ArrowRight size={17} /></Link>
     </header>
 
@@ -162,6 +194,35 @@ export function PhaseHistoryPage({ project, phase }: { project: ProjectRow; phas
       ))}</div> : <p className="phase-history__empty-state">{isThai ? 'ยังไม่พบข้อมูลที่บันทึกไว้สำหรับ Step นี้' : 'NO SAVED OUTPUT WAS FOUND FOR THIS STEP.'}</p>}
     </section>
 
-    <aside className="phase-history__revision-note"><LockKeyhole size={20} /><div><strong>{isThai ? 'ยังไม่มีการแก้ไขในหน้านี้' : 'EDITING IS NOT ENABLED HERE'}</strong><p>{isThai ? 'การแก้ไข Step ที่ผ่านแล้วและการสร้าง Revision ใหม่จะเพิ่มในขั้นถัดไป เพื่อให้ข้อมูลฉบับเดิมยังคงปลอดภัย' : 'Editing completed steps and creating a new revision will be added next so the current version remains protected.'}</p></div></aside>
+    {historyGroups.length ? <section className="phase-revision-history" aria-labelledby="revision-history-title">
+      <header><History size={21} /><div><span>{isThai ? 'ฉบับเดิมที่เก็บไว้' : 'PRESERVED VERSIONS'}</span><h2 id="revision-history-title">{isThai ? 'ประวัติ Revision' : 'REVISION HISTORY'}</h2></div></header>
+      <div>{historyGroups.map(([version, versionEntries]) => {
+        const savedAt = versionEntries[0]?.updatedAt
+        return <details key={version}>
+          <summary><span>{isThai ? `ฉบับ v${version}` : `VERSION ${version}`}</span><small>{savedAt ? new Intl.DateTimeFormat(isThai ? 'th-TH' : 'en-GB', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(savedAt)) : ''}</small></summary>
+          <div className="phase-history__fields">{visibleEntries(phase, versionEntries).map((entry) => <article key={`${version}-${entry.fieldKey}`}>
+            <h3>{fieldLabel(entry.fieldKey, isThai)}</h3>
+            {markdownFields.has(entry.fieldKey) && typeof entry.content === 'string'
+              ? <details><summary><FileCode2 size={17} /> {isThai ? 'เปิดดูไฟล์ฉบับนี้' : 'OPEN THIS VERSION'}</summary><MarkdownPreview markdown={entry.content} /></details>
+              : <ReadOnlyValue value={entry.content} isThai={isThai} />}
+          </article>)}</div>
+        </details>
+      })}</div>
+    </section> : null}
+
+    {affectedPhases.length ? <aside className="phase-history__revision-note phase-history__revision-note--action">
+      <RotateCcw size={21} />
+      <div><strong>{isThai ? `ต้องการกลับไปแก้ Step ${phase}?` : `REVISE STEP ${phase}?`}</strong><p>{isThai ? 'ระบบจะเก็บข้อมูลฉบับนี้ไว้ แล้วสร้างฉบับใหม่ที่แก้ไขได้' : 'The app will preserve this version and create a new editable copy.'}</p></div>
+      <button type="button" onClick={() => setRevisionOpen(true)}><PencilLine size={17} /> {isThai ? 'สร้าง Revision เพื่อแก้ไข' : 'START A REVISION'}</button>
+    </aside> : <aside className="phase-history__revision-note"><LockKeyhole size={20} /><div><strong>{isThai ? 'Step นี้เปิดดูย้อนหลังได้' : 'THIS STEP IS AVAILABLE AS HISTORY'}</strong><p>{isThai ? 'รอบแรกของระบบ Revision รองรับ Step C–E ก่อน ส่วน Step นี้ยังคงเป็นข้อมูลแบบอ่านอย่างเดียว' : 'The first revision release supports Steps C–E. This step remains read-only for now.'}</p></div></aside>}
+
+    {revisionOpen ? <section className="phase-revision-panel" role="dialog" aria-modal="true" aria-labelledby="phase-revision-title">
+      <header><div><span>{isThai ? 'สร้างฉบับใหม่โดยไม่ลบฉบับเดิม' : 'CREATE A NEW VERSION'}</span><h2 id="phase-revision-title">{isThai ? `ย้อนกลับไปแก้ Step ${phase}` : `REVISE STEP ${phase}`}</h2></div><button type="button" aria-label={isThai ? 'ปิด' : 'Close'} onClick={() => setRevisionOpen(false)}><X size={20} /></button></header>
+      <div className="phase-revision-panel__warning"><AlertTriangle size={25} /><div><strong>{isThai ? 'การแก้ครั้งนี้มีผลต่อ Step ถัดไป' : 'THIS CHANGE AFFECTS LATER STEPS'}</strong><p>{isThai ? `Step ${affectedPhases.join(' → ')} จะต้องผ่านการตรวจและยืนยันใหม่ เพราะข้อมูลช่วงหลังอาจอ้างอิงคำตอบที่กำลังแก้` : `Steps ${affectedPhases.join(' → ')} must be reviewed and confirmed again because later work may depend on this answer.`}</p></div></div>
+      <label className="phase-revision-panel__reason"><span>{isThai ? 'เหตุผลที่ต้องการแก้ไข' : 'WHY IS THIS REVISION NEEDED?'}</span><textarea value={reason} onChange={(event) => setReason(event.target.value)} placeholder={isThai ? 'เช่น พบว่ากลุ่มผู้ใช้หลักยังไม่ตรงกับสิ่งที่ต้องการสร้าง' : 'For example: the primary user no longer matches the intended product.'} rows={3} /></label>
+      <label className="phase-revision-panel__ack"><input type="checkbox" checked={acknowledged} onChange={(event) => setAcknowledged(event.target.checked)} /><span>{isThai ? 'ฉันเข้าใจว่า Step ด้านบนต้องตรวจและยืนยันใหม่ แต่ข้อมูลฉบับเดิมจะยังถูกเก็บไว้' : 'I understand the listed steps must be reviewed again and the prior version will remain saved.'}</span></label>
+      {revision.isError ? <p className="phase-revision-panel__error" role="alert">{isThai ? 'ยังเริ่ม Revision ไม่สำเร็จ กรุณาลองอีกครั้ง' : 'THE REVISION COULD NOT BE STARTED. PLEASE TRY AGAIN.'}</p> : null}
+      <footer><button type="button" className="button-secondary" onClick={() => setRevisionOpen(false)} disabled={revision.isPending}>{isThai ? 'ยกเลิก' : 'CANCEL'}</button><button type="button" className="button-primary" onClick={() => revision.mutate()} disabled={!reason.trim() || !acknowledged || revision.isPending}><RotateCcw size={17} /> {revision.isPending ? (isThai ? 'กำลังสร้าง Revision…' : 'STARTING REVISION…') : (isThai ? 'ยืนยันและเริ่มแก้ไข' : 'CONFIRM AND START')}</button></footer>
+    </section> : null}
   </div>
 }

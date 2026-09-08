@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { ArrowLeft, Check, Copy, Lightbulb, MessageSquareText, X } from 'lucide-react'
+import { ArrowLeft, Check, Copy, Lightbulb, MessageSquareText, RotateCcw, X } from 'lucide-react'
 import { type PropsWithChildren, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { MissionMap } from '../../components/progress/MissionMap'
@@ -7,7 +7,8 @@ import { SolidificationMeter } from '../../components/progress/SolidificationMet
 import type { ProjectRow } from '../../lib/supabase/database.types'
 import { useLanguage } from '../i18n/LanguageContext'
 import { getPhaseGuide } from './guidanceContent'
-import { getPrdSource } from './journey.service'
+import { getLatestPhaseRevision, getPrdSource } from './journey.service'
+import { isActivePhaseRevision } from './phaseRevision'
 import type { SaveState } from './usePhaseDraft'
 
 type JourneyLayoutProps = PropsWithChildren<{
@@ -32,6 +33,11 @@ export function JourneyLayout({
   const source = useQuery({
     queryKey: ['guidance-source', project.id],
     queryFn: () => getPrdSource(project.id),
+    staleTime: 0,
+  })
+  const latestRevision = useQuery({
+    queryKey: ['phase-revision', project.id],
+    queryFn: () => getLatestPhaseRevision(project.id),
     staleTime: 0,
   })
   const guide = getPhaseGuide(language, phase, source.data ?? {}, chatContext, project.topic)
@@ -78,6 +84,16 @@ export function JourneyLayout({
         <MissionMap activeMission={project.current_phase} viewedMission={phase} projectId={project.id} compact />
         <SolidificationMeter current={project.solidification_stage.replace('_', ' ') as 'IDEA'} />
       </div>
+
+      {isActivePhaseRevision(latestRevision.data, project.current_phase) ? (
+        <aside className="active-revision-banner">
+          <RotateCcw aria-hidden="true" size={21} />
+          <div>
+            <strong>{isThai ? `REVISION v${latestRevision.data?.version} · กำลังทบทวนจาก Step ${latestRevision.data?.targetPhase}` : `REVISION v${latestRevision.data?.version} · REVIEWING FROM STEP ${latestRevision.data?.targetPhase}`}</strong>
+            <p>{isThai ? `ฉบับก่อนหน้ายังถูกเก็บไว้ และ Step ${latestRevision.data?.affectedPhases.join(' → ')} ต้องตรวจยืนยันใหม่` : `The prior version is preserved. Steps ${latestRevision.data?.affectedPhases.join(' → ')} must be reviewed again.`}</p>
+          </div>
+        </aside>
+      ) : null}
 
       <div className="guidance-actions">
         <button type="button" onClick={() => setOpenHelp('hint')}>

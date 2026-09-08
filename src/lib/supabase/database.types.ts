@@ -233,6 +233,14 @@ export type Database = {
         }
         Returns: Record<string, unknown>
       }
+      start_phase_revision: {
+        Args: {
+          target_project_id: string
+          target_phase: string
+          change_reason: string
+        }
+        Returns: ProjectRow
+      }
       lock_prd: {
         Args: {
           target_project_id: string
