@@ -122,7 +122,9 @@ export function PrdPhase({ project }: { project: ProjectRow }) {
   const applyImportedPackage = (nextFiles: PrdDrafts) => {
     Object.values(timerRefs.current).forEach((timer) => window.clearTimeout(timer))
     timerRefs.current = {}
-    const reviewed = prdFiles.map(({ key }) => key)
+    // The first imported file is shown immediately; the other two must still be opened
+    // before the owner can lock the package.
+    const reviewed: PrdFileKey[] = ['handoff']
     setFiles(nextFiles)
     setReviewedFiles(reviewed)
     setSelectedFile('handoff')
