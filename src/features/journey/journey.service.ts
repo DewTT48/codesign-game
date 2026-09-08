@@ -8,7 +8,7 @@ import type {
   ProjectRow,
 } from '../../lib/supabase/database.types'
 import type { PrdDrafts } from './prd/prdPackage'
-import { affectedRevisionPhases, solidificationBeforePhase } from './phaseRevision'
+import { affectedRevisionPhases, contentForRevision, solidificationBeforePhase } from './phaseRevision'
 
 export type PhaseCode = 'C' | 'O' | 'D' | 'E' | 'S' | 'PRD' | 'I' | 'G' | 'N'
 
@@ -146,16 +146,12 @@ export async function getLatestPhaseRevision(projectId: string): Promise<PhaseRe
   return data ? parsePhaseRevision(data) : null
 }
 
-export async function getPhaseRevisions(
-  projectId: string,
-  phase: PhaseCode,
-): Promise<PhaseRevisionRecord[]> {
+export async function getProjectPhaseRevisions(projectId: string): Promise<PhaseRevisionRecord[]> {
   const client = requireSupabase()
   const { data, error } = await client
     .from('decisions')
     .select('*')
     .eq('project_id', projectId)
-    .eq('phase', phase)
     .eq('decision_type', 'phase_revision')
     .order('created_at', { ascending: false })
   if (error) throw error
@@ -216,7 +212,7 @@ export async function startPhaseRevision(input: {
           phase: entry.phase,
           section: entry.section,
           field_key: entry.field_key,
-          content: entry.content,
+          content: contentForRevision(entry.phase as PhaseCode, entry.field_key, entry.content),
           status: 'captured' as const,
           version: entry.version + 1,
           is_current: true,

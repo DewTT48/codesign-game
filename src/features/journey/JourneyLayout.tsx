@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { ArrowLeft, Check, Copy, Lightbulb, MessageSquareText, RotateCcw, X } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Check, Copy, Lightbulb, MessageSquareText, RotateCcw, X } from 'lucide-react'
 import { type PropsWithChildren, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { MissionMap } from '../../components/progress/MissionMap'
@@ -91,6 +91,7 @@ export function JourneyLayout({
           <div>
             <strong>{isThai ? `REVISION v${latestRevision.data?.version} · กำลังทบทวนจาก Step ${latestRevision.data?.targetPhase}` : `REVISION v${latestRevision.data?.version} · REVIEWING FROM STEP ${latestRevision.data?.targetPhase}`}</strong>
             <p>{isThai ? `ฉบับก่อนหน้ายังถูกเก็บไว้ และ Step ${latestRevision.data?.affectedPhases.join(' → ')} ต้องตรวจยืนยันใหม่` : `The prior version is preserved. Steps ${latestRevision.data?.affectedPhases.join(' → ')} must be reviewed again.`}</p>
+            <Link to={`/projects/${project.id}/revisions`}>{isThai ? 'ดูประวัติ Revision' : 'VIEW REVISION HISTORY'} <ArrowRight size={15} /></Link>
           </div>
         </aside>
       ) : null}

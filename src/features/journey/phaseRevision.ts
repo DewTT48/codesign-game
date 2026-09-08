@@ -1,8 +1,38 @@
-import type { ProjectRow } from '../../lib/supabase/database.types'
+import type { Json, ProjectRow } from '../../lib/supabase/database.types'
 import type { PhaseCode, PhaseRevisionRecord } from './journey.service'
 import { phaseSequence } from './phaseNavigation'
 
-export const revisionTargets: PhaseCode[] = ['C', 'O', 'D', 'E']
+export const revisionTargets: PhaseCode[] = ['C', 'O', 'D', 'E', 'S', 'PRD']
+
+const booleanConfirmations = new Set([
+  'S:contentOwnerConfirmed',
+  'S:experienceOwnerConfirmed',
+  'I:workingApp',
+  'G:mobile',
+  'G:start',
+  'G:dailyFlow',
+  'G:saveData',
+  'G:reopen',
+  'G:persistence',
+  'G:navigation',
+  'G:prdRules',
+])
+
+const listConfirmations = new Set([
+  'PRD:confirmedFiles',
+  'PRD:confirmedFilesV2',
+])
+
+export function contentForRevision(
+  phase: PhaseCode,
+  fieldKey: string,
+  content: Json,
+): Json {
+  const key = `${phase}:${fieldKey}`
+  if (booleanConfirmations.has(key)) return false
+  if (listConfirmations.has(key)) return []
+  return content
+}
 
 function phasePosition(phase: ProjectRow['current_phase']) {
   return phase === 'COMPLETE' ? phaseSequence.length : phaseSequence.indexOf(phase)

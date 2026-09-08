@@ -12,6 +12,7 @@ import { PrivacyPage, TermsPage } from './features/legal/LegalPages'
 import { ScrollToTop } from './components/navigation/ScrollToTop'
 import { AdminPage } from './features/admin/AdminPage'
 import { AdminRoute } from './features/admin/AdminRoute'
+import { RevisionHistoryPage } from './features/journey/RevisionHistoryPage'
 
 export default function App() {
   return (
@@ -47,6 +48,14 @@ export default function App() {
           element={
             <ProtectedRoute>
               <CreateProjectPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/projects/:projectId/revisions"
+          element={
+            <ProtectedRoute>
+              <RevisionHistoryPage />
             </ProtectedRoute>
           }
         />

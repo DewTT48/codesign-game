@@ -125,7 +125,10 @@ export function PhaseHistoryPage({ project, phase }: { project: ProjectRow; phas
         queryClient.invalidateQueries({ queryKey: ['phase-entries', project.id] }),
         queryClient.invalidateQueries({ queryKey: ['phase-entry-history', project.id] }),
         queryClient.invalidateQueries({ queryKey: ['phase-revision', project.id] }),
+        queryClient.invalidateQueries({ queryKey: ['phase-revisions', project.id] }),
         queryClient.invalidateQueries({ queryKey: ['guidance-source', project.id] }),
+        queryClient.invalidateQueries({ queryKey: ['prd-source', project.id] }),
+        queryClient.invalidateQueries({ queryKey: ['journey-export', project.id] }),
       ])
       navigate(`/projects/${project.id}/${phase}`, { replace: true })
     },
@@ -137,6 +140,11 @@ export function PhaseHistoryPage({ project, phase }: { project: ProjectRow; phas
   const displayed = visibleEntries(phase, entries.data ?? [])
   const entryMap = new Map((entries.data ?? []).map((entry) => [entry.fieldKey, entry.content]))
   const reviewablePhases = phaseSequence.filter((item) => isCompletedPhase(item, project.current_phase))
+  const revisionImpact = phase === 'S'
+    ? (isThai ? 'การยืนยัน Content Pack และ Experience Direction จะถูกล้าง และไฟล์ PRD ทั้ง 3 ฉบับต้องตรวจใหม่' : 'Content Pack and Experience confirmations will reset, and all three PRD files must be reviewed again.')
+    : phase === 'PRD'
+      ? (isThai ? 'สถานะยืนยันไฟล์ทั้ง 3 ฉบับจะถูกล้าง คุณต้องอ่าน Preview ถึงท้ายไฟล์และยืนยันใหม่ทีละไฟล์' : 'All three file confirmations will reset. Read every preview to the end and confirm each file again.')
+      : (isThai ? 'คำตอบเดิมจะถูกนำมาเป็นจุดเริ่มต้น แต่ Step ที่ได้รับผลกระทบต้องตรวจยืนยันใหม่' : 'Existing answers remain as a starting point, but affected steps must be reconfirmed.')
   const historyGroups = Array.from((history.data ?? []).reduce((groups, entry) => {
     const group = groups.get(entry.version) ?? []
     group.push(entry)
@@ -173,7 +181,7 @@ export function PhaseHistoryPage({ project, phase }: { project: ProjectRow; phas
 
     <nav className="phase-history__nav" aria-label={isThai ? 'เลือก Step ที่ต้องการดูย้อนหลัง' : 'Choose a completed step to review'}>
       <span>{isThai ? 'ดูย้อนหลัง' : 'HISTORY'}</span>
-      <div>{reviewablePhases.map((item) => <Link className={item === phase ? 'is-active' : ''} key={item} to={`/projects/${project.id}/${item}`}>{item} · {isThai ? phaseNames[item].th : phaseNames[item].en}</Link>)}</div>
+      <div>{reviewablePhases.map((item) => <Link className={item === phase ? 'is-active' : ''} key={item} to={`/projects/${project.id}/${item}`}>{item} · {isThai ? phaseNames[item].th : phaseNames[item].en}</Link>)}<Link className="phase-history__revision-link" to={`/projects/${project.id}/revisions`}><History size={15} /> {isThai ? 'ประวัติ Revision ทั้งหมด' : 'ALL REVISIONS'}</Link></div>
     </nav>
 
     <section className="phase-history__results" aria-labelledby="history-results-title">
@@ -214,11 +222,11 @@ export function PhaseHistoryPage({ project, phase }: { project: ProjectRow; phas
       <RotateCcw size={21} />
       <div><strong>{isThai ? `ต้องการกลับไปแก้ Step ${phase}?` : `REVISE STEP ${phase}?`}</strong><p>{isThai ? 'ระบบจะเก็บข้อมูลฉบับนี้ไว้ แล้วสร้างฉบับใหม่ที่แก้ไขได้' : 'The app will preserve this version and create a new editable copy.'}</p></div>
       <button type="button" onClick={() => setRevisionOpen(true)}><PencilLine size={17} /> {isThai ? 'สร้าง Revision เพื่อแก้ไข' : 'START A REVISION'}</button>
-    </aside> : <aside className="phase-history__revision-note"><LockKeyhole size={20} /><div><strong>{isThai ? 'Step นี้เปิดดูย้อนหลังได้' : 'THIS STEP IS AVAILABLE AS HISTORY'}</strong><p>{isThai ? 'รอบแรกของระบบ Revision รองรับ Step C–E ก่อน ส่วน Step นี้ยังคงเป็นข้อมูลแบบอ่านอย่างเดียว' : 'The first revision release supports Steps C–E. This step remains read-only for now.'}</p></div></aside>}
+    </aside> : <aside className="phase-history__revision-note"><LockKeyhole size={20} /><div><strong>{isThai ? 'Step นี้เปิดดูย้อนหลังได้' : 'THIS STEP IS AVAILABLE AS HISTORY'}</strong><p>{isThai ? 'ระบบ Revision รองรับช่วงนิยาม Product ตั้งแต่ Step C ถึง PRD ส่วน Step หลังจากนั้นยังคงเป็นข้อมูลแบบอ่านอย่างเดียว' : 'Revision is available for product-definition Steps C through PRD. Later steps remain read-only for now.'}</p></div></aside>}
 
     {revisionOpen ? <section className="phase-revision-panel" role="dialog" aria-modal="true" aria-labelledby="phase-revision-title">
       <header><div><span>{isThai ? 'สร้างฉบับใหม่โดยไม่ลบฉบับเดิม' : 'CREATE A NEW VERSION'}</span><h2 id="phase-revision-title">{isThai ? `ย้อนกลับไปแก้ Step ${phase}` : `REVISE STEP ${phase}`}</h2></div><button type="button" aria-label={isThai ? 'ปิด' : 'Close'} onClick={() => setRevisionOpen(false)}><X size={20} /></button></header>
-      <div className="phase-revision-panel__warning"><AlertTriangle size={25} /><div><strong>{isThai ? 'การแก้ครั้งนี้มีผลต่อ Step ถัดไป' : 'THIS CHANGE AFFECTS LATER STEPS'}</strong><p>{isThai ? `Step ${affectedPhases.join(' → ')} จะต้องผ่านการตรวจและยืนยันใหม่ เพราะข้อมูลช่วงหลังอาจอ้างอิงคำตอบที่กำลังแก้` : `Steps ${affectedPhases.join(' → ')} must be reviewed and confirmed again because later work may depend on this answer.`}</p></div></div>
+      <div className="phase-revision-panel__warning"><AlertTriangle size={25} /><div><strong>{isThai ? 'การแก้ครั้งนี้มีผลต่อ Step ถัดไป' : 'THIS CHANGE AFFECTS LATER STEPS'}</strong><p>{isThai ? `Step ${affectedPhases.join(' → ')} จะต้องผ่านการตรวจและยืนยันใหม่ เพราะข้อมูลช่วงหลังอาจอ้างอิงคำตอบที่กำลังแก้` : `Steps ${affectedPhases.join(' → ')} must be reviewed and confirmed again because later work may depend on this answer.`}</p><p>{revisionImpact}</p></div></div>
       <label className="phase-revision-panel__reason"><span>{isThai ? 'เหตุผลที่ต้องการแก้ไข' : 'WHY IS THIS REVISION NEEDED?'}</span><textarea value={reason} onChange={(event) => setReason(event.target.value)} placeholder={isThai ? 'เช่น พบว่ากลุ่มผู้ใช้หลักยังไม่ตรงกับสิ่งที่ต้องการสร้าง' : 'For example: the primary user no longer matches the intended product.'} rows={3} /></label>
       <label className="phase-revision-panel__ack"><input type="checkbox" checked={acknowledged} onChange={(event) => setAcknowledged(event.target.checked)} /><span>{isThai ? 'ฉันเข้าใจว่า Step ด้านบนต้องตรวจและยืนยันใหม่ แต่ข้อมูลฉบับเดิมจะยังถูกเก็บไว้' : 'I understand the listed steps must be reviewed again and the prior version will remain saved.'}</span></label>
       {revision.isError ? <p className="phase-revision-panel__error" role="alert">{isThai ? 'ยังเริ่ม Revision ไม่สำเร็จ กรุณาลองอีกครั้ง' : 'THE REVISION COULD NOT BE STARTED. PLEASE TRY AGAIN.'}</p> : null}

@@ -2,16 +2,27 @@ import { describe, expect, it } from 'vitest'
 import {
   affectedRevisionPhases,
   canStartPhaseRevision,
+  contentForRevision,
   isActivePhaseRevision,
   solidificationBeforePhase,
 } from './phaseRevision'
 
 describe('phaseRevision', () => {
-  it('allows a completed C–E phase to start a revision', () => {
+  it('allows a completed definition phase through PRD to start a revision', () => {
     expect(canStartPhaseRevision('C', 'O')).toBe(true)
     expect(canStartPhaseRevision('E', 'PRD')).toBe(true)
     expect(canStartPhaseRevision('E', 'E')).toBe(false)
-    expect(canStartPhaseRevision('S', 'PRD')).toBe(false)
+    expect(canStartPhaseRevision('S', 'PRD')).toBe(true)
+    expect(canStartPhaseRevision('PRD', 'I')).toBe(true)
+    expect(canStartPhaseRevision('I', 'G')).toBe(false)
+  })
+
+  it('preserves content while clearing confirmations that must be reviewed again', () => {
+    expect(contentForRevision('S', 'dailyContent', [{ day: 1, title: 'Day one' }])).toEqual([{ day: 1, title: 'Day one' }])
+    expect(contentForRevision('S', 'contentOwnerConfirmed', true)).toBe(false)
+    expect(contentForRevision('PRD', 'confirmedFilesV2', ['handoff', 'contentPack'])).toEqual([])
+    expect(contentForRevision('I', 'workingApp', true)).toBe(false)
+    expect(contentForRevision('G', 'mobile', true)).toBe(false)
   })
 
   it('includes every phase that must be reviewed again', () => {

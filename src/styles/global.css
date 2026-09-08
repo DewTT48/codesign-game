@@ -942,6 +942,12 @@ a.mission-node__content:focus-visible {
   text-decoration: none;
 }
 
+.phase-history__nav a.phase-history__revision-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
 .phase-history__nav a:hover,
 .phase-history__nav a:focus-visible,
 .phase-history__nav a.is-active {
@@ -1336,6 +1342,205 @@ a.mission-node__content:focus-visible {
   cursor: not-allowed;
 }
 
+.revision-history-page {
+  padding-top: 42px;
+  padding-bottom: 80px;
+}
+
+.revision-history-page__current {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--accent);
+  font-size: 15px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.revision-history-page__current:hover,
+.revision-history-page__current:focus-visible {
+  color: var(--white);
+}
+
+.revision-history-page__hero {
+  display: flex;
+  gap: 22px;
+  align-items: center;
+  margin: 28px 0 34px;
+  padding: clamp(26px, 4vw, 42px);
+  background: var(--panel);
+  border: 4px solid var(--white);
+  box-shadow: 10px 10px 0 var(--magenta);
+}
+
+.revision-history-page__hero > svg {
+  flex: 0 0 auto;
+  color: var(--positive);
+}
+
+.revision-history-page__hero span,
+.revision-timeline > header span,
+.revision-timeline article > header span {
+  color: var(--accent);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.revision-history-page__hero h1 {
+  margin: 6px 0 8px;
+  font-family: var(--font-body);
+  font-size: clamp(32px, 5vw, 52px);
+  line-height: 1.25;
+}
+
+.revision-history-page__hero p {
+  max-width: 920px;
+  margin: 0;
+  color: var(--muted);
+  font-size: 17px;
+  line-height: 1.65;
+}
+
+.revision-timeline {
+  margin-top: 32px;
+  padding: clamp(22px, 4vw, 38px);
+  background: var(--panel);
+  border: 3px solid var(--line);
+  box-shadow: 7px 7px 0 rgba(0, 0, 0, 0.26);
+}
+
+.revision-timeline > header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 26px;
+  padding-bottom: 20px;
+  border-bottom: 2px solid var(--line);
+}
+
+.revision-timeline > header > svg {
+  color: var(--positive);
+}
+
+.revision-timeline h2 {
+  margin: 4px 0 0;
+  font-family: var(--font-body);
+  font-size: 27px;
+}
+
+.revision-timeline ol {
+  display: grid;
+  gap: 18px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.revision-timeline li {
+  display: grid;
+  grid-template-columns: 64px minmax(0, 1fr);
+  gap: 18px;
+  align-items: start;
+}
+
+.revision-timeline__marker {
+  min-height: 54px;
+  display: grid;
+  place-items: center;
+  padding: 8px;
+  color: var(--ink);
+  background: var(--positive);
+  border: 3px solid var(--white);
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.revision-timeline article {
+  min-width: 0;
+  padding: 20px;
+  background: var(--deep);
+  border: 2px solid var(--line);
+}
+
+.revision-timeline article > header {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  align-items: flex-start;
+}
+
+.revision-timeline h3 {
+  margin: 4px 0 0;
+  font-family: var(--font-body);
+  font-size: 21px;
+  line-height: 1.4;
+}
+
+.revision-timeline article > header small {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  flex: 0 0 auto;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.revision-timeline blockquote {
+  margin: 18px 0;
+  padding: 13px 16px;
+  color: var(--white);
+  background: #153a53;
+  border-left: 5px solid var(--accent);
+  font-size: 16px;
+  line-height: 1.65;
+}
+
+.revision-timeline article p {
+  margin: 7px 0;
+  color: var(--muted);
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.revision-timeline article p strong {
+  color: var(--white);
+}
+
+.revision-timeline article > a {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin-top: 14px;
+  color: #8dd8ff;
+  font-size: 15px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.revision-timeline__empty {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  padding: 34px 20px;
+  color: var(--muted);
+  background: var(--deep);
+  border: 2px solid var(--line);
+  text-align: center;
+}
+
+.revision-timeline__empty > svg,
+.revision-timeline__empty strong {
+  color: var(--positive);
+}
+
+.revision-timeline__empty p {
+  max-width: 680px;
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.6;
+}
+
 .active-revision-banner {
   display: flex;
   gap: 13px;
@@ -1365,6 +1570,17 @@ a.mission-node__content:focus-visible {
   color: var(--muted);
   font-size: 14px;
   line-height: 1.55;
+}
+
+.active-revision-banner a {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  color: #8dd8ff;
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: none;
 }
 
 .solid-meter__header {
@@ -4413,6 +4629,28 @@ a.mission-node__content:focus-visible {
   margin-top: 24px;
 }
 
+.completion-revision-link {
+  width: fit-content;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 24px auto 0;
+  padding: 10px 14px;
+  color: var(--white);
+  background: var(--panel);
+  border: 2px solid var(--line);
+  font-size: 15px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.completion-revision-link:hover,
+.completion-revision-link:focus-visible {
+  color: var(--ink);
+  background: var(--accent);
+  border-color: var(--white);
+}
+
 .completion-artifacts {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -6051,6 +6289,15 @@ a.mission-node__content:focus-visible {
     align-items: start;
   }
 
+  .revision-history-page__hero {
+    align-items: flex-start;
+  }
+
+  .revision-timeline article > header {
+    flex-direction: column;
+    gap: 8px;
+  }
+
   .phase-history__hero > a {
     width: 100%;
   }
@@ -6162,6 +6409,37 @@ a.mission-node__content:focus-visible {
 
   .phase-history-page {
     padding-top: 20px;
+  }
+
+  .revision-history-page {
+    padding-top: 20px;
+  }
+
+  .revision-history-page__hero {
+    align-items: flex-start;
+    gap: 16px;
+    margin-top: 20px;
+    box-shadow: 7px 7px 0 var(--magenta);
+  }
+
+  .revision-history-page__hero > svg {
+    width: 30px;
+    height: 30px;
+  }
+
+  .revision-history-page__hero h1 {
+    font-size: clamp(27px, 9vw, 38px);
+  }
+
+  .revision-timeline li {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 9px;
+  }
+
+  .revision-timeline__marker {
+    min-height: 42px;
+    width: fit-content;
+    min-width: 54px;
   }
 
   .phase-history__hero {

@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
-import { Clipboard, Download, ExternalLink, FileText, Home, Printer, Trophy } from 'lucide-react'
+import { Clipboard, Download, ExternalLink, FileText, History, Home, Printer, Trophy } from 'lucide-react'
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { ArcadeButton } from '../../components/ui/ArcadeButton'
 import { MissionMap } from '../../components/progress/MissionMap'
 import { SolidificationMeter } from '../../components/progress/SolidificationMeter'
@@ -52,6 +53,7 @@ export function CompletionPage({ project }: { project: ProjectRow }) {
 
       <MissionMap activeMission="COMPLETE" projectId={project.id} compact />
       <SolidificationMeter current="BUILD READY" />
+      <Link className="completion-revision-link" to={`/projects/${project.id}/revisions`}><History size={18} /> {isThai ? 'ดูประวัติ Revision ของ Project' : 'VIEW PROJECT REVISION HISTORY'}</Link>
 
       <section className="completion-artifacts" aria-label={isThai ? 'ผลงานที่เสร็จแล้ว' : 'Completed artifacts'}>
         <article><ExternalLink size={28} /><span>{isThai ? 'Product ที่สร้างเสร็จ' : 'A PRODUCT'}</span><h2>{project.title}</h2><p>{isThai ? 'App ที่ใช้งานได้และผ่านการทดสอบรอบแรก' : 'A working build that has completed its first test.'}</p>{exportData.data.build ? <a href={exportData.data.build.app_url} target="_blank" rel="noreferrer">{isThai ? 'เปิด App ของฉัน' : 'VIEW MY APP'} <ExternalLink size={16} /></a> : null}</article>
