@@ -7,6 +7,7 @@ import type {
   PrdSnapshotRow,
   ProjectRow,
 } from '../../lib/supabase/database.types'
+import type { PrdDrafts } from './prd/prdPackage'
 
 export type PhaseCode = 'C' | 'O' | 'D' | 'E' | 'S' | 'PRD' | 'I' | 'G' | 'N'
 
@@ -138,13 +139,38 @@ export async function getPrdSource(projectId: string): Promise<PrdSource> {
 
 export async function lockPrd(
   projectId: string,
-  markdown: string,
+  files: PrdDrafts,
 ): Promise<ProjectRow> {
   const client = requireSupabase()
-  const { data, error } = await client.rpc('lock_prd', {
+  const packageResult = await client.rpc('lock_prd_package', {
     target_project_id: projectId,
-    target_markdown: markdown,
+    target_markdown: files.handoff,
+    target_content_pack: files.contentPack,
+    target_experience_direction: files.experienceDirection,
   })
+  if (!packageResult.error) return packageResult.data
+  if (!['PGRST202', '42883'].includes(packageResult.error.code ?? '')) throw packageResult.error
+
+  // Backward-compatible path while the package-snapshot migration is being applied.
+  // complete_phase, called by lock_prd, still locks all three current PRD entries together.
+  const legacyResult = await client.rpc('lock_prd', {
+    target_project_id: projectId,
+    target_markdown: files.handoff,
+  })
+  if (legacyResult.error) throw legacyResult.error
+  return legacyResult.data
+}
+
+export async function getLatestPrdSnapshot(projectId: string): Promise<PrdSnapshotRow | null> {
+  const client = requireSupabase()
+  const { data, error } = await client
+    .from('prd_snapshots')
+    .select('*')
+    .eq('project_id', projectId)
+    .eq('status', 'locked')
+    .order('version', { ascending: false })
+    .limit(1)
+    .maybeSingle()
   if (error) throw error
   return data
 }

@@ -138,6 +138,14 @@ ${specificationSummary}
 
 ${data.prd?.markdown_content ?? 'No locked PRD snapshot found.'}
 
+## Content Pack Snapshot
+
+${data.prd?.content_pack ?? 'No locked Content Pack snapshot found.'}
+
+## Experience Direction Snapshot
+
+${data.prd?.experience_direction ?? 'No locked Experience Direction snapshot found.'}
+
 ## I — Implement
 
 - **GitHub readiness at handoff:** ${text(i.githubReadiness)}

@@ -1,14 +1,15 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { ArrowRight, Check, Clipboard, Download, ExternalLink, Github, ShieldCheck } from 'lucide-react'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { ArrowRight, Check, Clipboard, Download, ExternalLink, FileCode2, Github, ShieldCheck } from 'lucide-react'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ArcadeButton } from '../../../components/ui/ArcadeButton'
 import type { ProjectRow } from '../../../lib/supabase/database.types'
 import { useLanguage } from '../../i18n/LanguageContext'
-import { completeImplementation } from '../journey.service'
+import { completeImplementation, getLatestPrdSnapshot, getPhaseEntries } from '../journey.service'
 import { JourneyLayout } from '../JourneyLayout'
 import { FormField, PhaseSection, ReviewGate } from '../PhaseFormComponents'
 import { assembleStartWithCodex, type GitHubReadiness } from '../prd/handoffFiles'
+import { MarkdownPreview } from '../prd/MarkdownPreview'
 import { usePhaseDraft } from '../usePhaseDraft'
 
 const initialImplement = { githubReadiness: 'unsure', workingApp: false, appUrl: '', repositoryUrl: '' }
@@ -19,6 +20,9 @@ export function ImplementPhase({ project }: { project: ProjectRow }) {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const [feedback, setFeedback] = useState('')
+  const [selectedPackageFile, setSelectedPackageFile] = useState('START_WITH_CODEX.md')
+  const snapshot = useQuery({ queryKey: ['prd-snapshot', project.id], queryFn: () => getLatestPrdSnapshot(project.id) })
+  const prdEntries = useQuery({ queryKey: ['phase-entries', project.id, 'PRD'], queryFn: () => getPhaseEntries(project.id, 'PRD') })
   const readiness = String(draft.values.githubReadiness) as GitHubReadiness
   const startWithCodex = assembleStartWithCodex(project, readiness)
   const ready = Boolean(draft.values.workingApp && String(draft.values.appUrl).trim() && String(draft.values.repositoryUrl).trim())
@@ -37,14 +41,27 @@ export function ImplementPhase({ project }: { project: ProjectRow }) {
     },
   })
 
-  const downloadCodexGuide = () => {
-    const url = URL.createObjectURL(new Blob([startWithCodex], { type: 'text/markdown;charset=utf-8' }))
+  const fallbackEntry = (fieldKey: string) => {
+    const content = prdEntries.data?.find((entry) => entry.fieldKey === fieldKey)?.content
+    return typeof content === 'string' ? content : ''
+  }
+  const packageFiles = [
+    { fileName: 'CODESIGN_HANDOFF.md', description: isThai ? 'Product decisions และขอบเขตงานที่ Lock แล้ว' : 'Locked product decisions and scope', content: snapshot.data?.markdown_content || fallbackEntry('markdownDraft') },
+    { fileName: 'CONTENT_PACK.md', description: isThai ? 'เนื้อหา แบบฝึก และการบันทึกครบ 21 วัน' : 'All 21 days of content, exercises, and records', content: snapshot.data?.content_pack || fallbackEntry('contentPackDraft') },
+    { fileName: 'EXPERIENCE_DIRECTION.md', description: isThai ? 'Theme และแนวทางกำกับประสบการณ์' : 'Theme and experience guardrails', content: snapshot.data?.experience_direction || fallbackEntry('experienceDirectionDraft') },
+    { fileName: 'START_WITH_CODEX.md', description: isThai ? 'คำสั่งเริ่มงานที่ปรับตามความพร้อม GitHub ของคุณ' : 'Starting brief adapted to your GitHub readiness', content: startWithCodex },
+  ]
+  const activePackageFile = packageFiles.find((file) => file.fileName === selectedPackageFile) ?? packageFiles[3]
+  const packageReady = packageFiles.every((file) => file.content.trim())
+
+  const downloadPackageFile = (fileName: string, content: string) => {
+    const url = URL.createObjectURL(new Blob([content], { type: 'text/markdown;charset=utf-8' }))
     const anchor = document.createElement('a')
     anchor.href = url
-    anchor.download = 'START_WITH_CODEX.md'
+    anchor.download = fileName
     anchor.click()
     URL.revokeObjectURL(url)
-    setFeedback(isThai ? 'ดาวน์โหลด START_WITH_CODEX.md แล้ว' : 'START_WITH_CODEX.md DOWNLOADED')
+    setFeedback(isThai ? `ดาวน์โหลด ${fileName} แล้ว` : `${fileName} DOWNLOADED`)
   }
 
   const copyCodexGuide = async () => {
@@ -99,9 +116,20 @@ export function ImplementPhase({ project }: { project: ProjectRow }) {
         </div>
       </PhaseSection>
 
-      <PhaseSection step="I3" title={isThai ? 'ส่งต่องานให้ Codex' : 'HANDOFF TO CODEX'} description={isThai ? 'ไฟล์เริ่มงานจะปรับคำแนะนำ GitHub ตามความพร้อมที่คุณเลือก' : 'The starting brief adapts its GitHub guidance to your selected readiness.'}>
+      <PhaseSection step="I3" title={isThai ? 'ประกอบชุด 4 ไฟล์สำหรับ Codex' : 'ASSEMBLE THE FOUR-FILE CODEX PACKAGE'} description={isThai ? 'สามไฟล์แรกคือ Snapshot ที่ Lock จาก PRD ส่วน START_WITH_CODEX.md ถูกสร้างในขั้นนี้ตามความพร้อม GitHub ที่คุณเลือก' : 'The first three files are the locked PRD snapshot. START_WITH_CODEX.md is generated here from your GitHub readiness.'}>
+        {(snapshot.isLoading || prdEntries.isLoading) ? <p>{isThai ? 'กำลังโหลดไฟล์ที่ Lock ไว้…' : 'LOADING LOCKED FILES…'}</p> : null}
+        {(snapshot.isError || prdEntries.isError || !packageReady) ? <p className="field-error" role="alert">{isThai ? 'โหลดชุดไฟล์หลักไม่ครบ กรุณากลับไปตรวจ PRD ก่อนส่งต่อ' : 'THE LOCKED SOURCE PACKAGE COULD NOT BE LOADED COMPLETELY.'}</p> : null}
+        <div className="implement-package-grid" aria-label={isThai ? 'ชุดไฟล์สำหรับ Codex' : 'Codex package files'}>
+          {packageFiles.map((file) => <div key={file.fileName} className={selectedPackageFile === file.fileName ? 'is-active' : ''}>
+            <button type="button" className="implement-package-grid__preview" onClick={() => setSelectedPackageFile(file.fileName)}><FileCode2 size={20} /><span><strong>{file.fileName}</strong><small>{file.description}</small></span></button>
+            <button type="button" className="implement-package-grid__download" disabled={!file.content.trim()} aria-label={`${isThai ? 'ดาวน์โหลด' : 'Download'} ${file.fileName}`} onClick={() => downloadPackageFile(file.fileName, file.content)}><Download size={19} /></button>
+          </div>)}
+        </div>
+        <div className="implement-package-preview">
+          <h3>{activePackageFile.fileName}</h3>
+          <MarkdownPreview markdown={activePackageFile.content} />
+        </div>
         <div className="codex-handoff-actions">
-          <button type="button" onClick={downloadCodexGuide}><Download size={19} /> {isThai ? 'ดาวน์โหลด START_WITH_CODEX.md' : 'DOWNLOAD START_WITH_CODEX.md'}</button>
           <button type="button" onClick={() => void copyCodexGuide()}><Clipboard size={19} /> {isThai ? 'คัดลอกคำสั่งเริ่มงาน' : 'COPY STARTING BRIEF'}</button>
           {feedback ? <span role="status">{feedback}</span> : null}
         </div>

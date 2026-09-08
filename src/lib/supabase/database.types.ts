@@ -42,6 +42,8 @@ export type PrdSnapshotRow = {
   project_id: string
   version: number
   markdown_content: string
+  content_pack: string | null
+  experience_direction: string | null
   status: 'draft' | 'locked'
   created_at: string
 }
@@ -185,6 +187,8 @@ export type Database = {
           project_id: string
           version: number
           markdown_content: string
+          content_pack?: string | null
+          experience_direction?: string | null
           status?: PrdSnapshotRow['status']
           created_at?: string
         }
@@ -233,6 +237,15 @@ export type Database = {
         Args: {
           target_project_id: string
           target_markdown: string
+        }
+        Returns: ProjectRow
+      }
+      lock_prd_package: {
+        Args: {
+          target_project_id: string
+          target_markdown: string
+          target_content_pack: string
+          target_experience_direction: string
         }
         Returns: ProjectRow
       }

@@ -3232,6 +3232,173 @@ main {
   letter-spacing: 0;
 }
 
+.prd-chat-flow {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.prd-chat-flow span {
+  min-height: 104px;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 17px;
+  color: var(--ink);
+  background: #e8f5ff;
+  border: 3px solid var(--line);
+  font-size: 16px;
+  line-height: 1.55;
+}
+
+.prd-chat-flow strong {
+  color: var(--accent-dark);
+  font-family: var(--font-display);
+  font-size: 8px;
+  line-height: 1.7;
+}
+
+.prd-import {
+  padding: clamp(18px, 3vw, 26px);
+  color: var(--white);
+  background: var(--deep);
+  border: 3px solid var(--line);
+}
+
+.prd-import > header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 22px;
+}
+
+.prd-import > header span {
+  color: var(--accent);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.prd-import h3 {
+  margin: 7px 0 0;
+  font-family: var(--font-body);
+  font-size: 22px;
+  line-height: 1.45;
+}
+
+.prd-import > header p,
+.prd-import__empty {
+  margin: 8px 0 0;
+  color: var(--muted);
+  font-size: 16px;
+  line-height: 1.65;
+}
+
+.prd-import__picker,
+.prd-import footer button {
+  min-height: 48px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  padding: 11px 15px;
+  border: 3px solid var(--line);
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.4;
+  cursor: pointer;
+}
+
+.prd-import__picker {
+  flex: 0 0 auto;
+  color: var(--white);
+  background: var(--info);
+}
+
+.prd-import__picker input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+
+.prd-import__status-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 22px;
+}
+
+.prd-import__status-grid button {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 10px;
+  padding: 14px;
+  color: var(--white);
+  background: #123c5b;
+  border: 3px solid var(--line);
+  text-align: left;
+  cursor: pointer;
+}
+
+.prd-import__status-grid button.is-active { border-color: var(--accent); }
+.prd-import__status-grid button.is-changed svg,
+.prd-import__status-grid button.is-unchanged svg { color: var(--positive); }
+.prd-import__status-grid button.is-missing svg,
+.prd-import__status-grid button.is-error svg { color: var(--accent); }
+
+.prd-import__status-grid strong,
+.prd-import__status-grid small {
+  display: block;
+  overflow-wrap: anywhere;
+}
+
+.prd-import__status-grid strong { font-size: 15px; line-height: 1.45; }
+.prd-import__status-grid small { margin-top: 5px; color: var(--muted); font-size: 14px; line-height: 1.45; }
+
+.prd-import__warning,
+.prd-structure-errors {
+  display: flex;
+  gap: 10px;
+  margin-top: 14px;
+  padding: 13px 15px;
+  color: #2f1a08;
+  background: #ffe0bd;
+  border-left: 6px solid var(--accent);
+}
+
+.prd-import__warning p { margin: 0; font-size: 15px; line-height: 1.55; }
+.prd-structure-errors { flex-direction: column; margin: 0 0 14px; font-size: 15px; }
+
+.prd-import__compare { margin-top: 16px; }
+.prd-import__compare .prd-view-switch { justify-content: flex-end; margin-bottom: 10px; }
+.prd-import__compare .prd-markdown-preview { max-height: 420px; }
+
+.prd-import footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.prd-import__reset { color: var(--white); background: transparent; }
+.prd-import__apply { color: var(--ink); background: var(--positive); }
+.prd-import footer button:disabled { cursor: not-allowed; opacity: 0.45; }
+
+.handoff-file-grid .file-status {
+  width: fit-content;
+  margin-top: 10px;
+  padding: 3px 8px;
+  color: var(--ink);
+  background: #d4e2eb;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.handoff-file-grid .file-status.is-valid { background: var(--positive); }
+.handoff-file-grid .file-status.is-error { background: #ffb764; }
+
 .prd-editor {
   width: 100%;
   min-height: min(72vh, 920px);
@@ -3402,6 +3569,92 @@ main {
   color: var(--positive);
   font-family: var(--font-display);
   font-size: 7px;
+}
+
+.implement-package-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.implement-package-grid > div {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  background: var(--deep);
+  border: 3px solid var(--line);
+}
+
+.implement-package-grid > div.is-active {
+  border-color: var(--accent);
+  box-shadow: 4px 4px 0 var(--accent-dark);
+}
+
+.implement-package-grid button {
+  color: var(--white);
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+}
+
+.implement-package-grid__preview {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 11px;
+  align-items: center;
+  padding: 15px;
+  text-align: left;
+}
+
+.implement-package-grid__preview > svg { color: var(--positive); }
+.implement-package-grid__preview strong,
+.implement-package-grid__preview small { display: block; overflow-wrap: anywhere; }
+.implement-package-grid__preview strong { font-family: var(--font-display); font-size: 7px; line-height: 1.55; }
+.implement-package-grid__preview small { margin-top: 6px; color: var(--muted); font-size: 15px; line-height: 1.5; }
+
+.implement-package-grid__download {
+  min-width: 54px;
+  display: grid;
+  place-items: center;
+  border-left: 2px solid var(--line) !important;
+}
+
+.implement-package-grid__download:disabled { cursor: not-allowed; opacity: 0.35; }
+
+.implement-package-preview {
+  margin-bottom: 16px;
+  padding: 18px;
+  background: var(--deep);
+  border: 3px solid var(--line);
+}
+
+.implement-package-preview h3 {
+  margin: 0 0 12px;
+  overflow-wrap: anywhere;
+  font-family: var(--font-display);
+  font-size: 8px;
+  line-height: 1.55;
+}
+
+.implement-package-preview .prd-markdown-preview { max-height: 440px; }
+
+:lang(th) .journey-page--i .github-basics strong,
+:lang(th) .journey-page--i .github-readiness-options strong,
+:lang(th) .journey-page--i .codex-handoff-actions button,
+:lang(th) .journey-page--i .codex-handoff-actions > span,
+:lang(th) .journey-page--i .implement-package-grid__preview strong,
+:lang(th) .journey-page--i .implement-package-preview h3 {
+  font-family: var(--font-body);
+  letter-spacing: 0;
+}
+
+:lang(th) .journey-page--i .codex-handoff-actions button,
+:lang(th) .journey-page--i .implement-package-grid__preview strong,
+:lang(th) .journey-page--i .implement-package-preview h3 {
+  font-size: 16px;
+  font-weight: 700;
 }
 
 .implementation-steps li,
@@ -5139,7 +5392,17 @@ main {
     grid-template-columns: minmax(0, 1fr);
   }
 
+  .prd-chat-flow,
+  .prd-import__status-grid,
+  .implement-package-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
   .prd-file-workspace > header {
+    flex-direction: column;
+  }
+
+  .prd-import > header {
     flex-direction: column;
   }
 

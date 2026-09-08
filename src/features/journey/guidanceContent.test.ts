@@ -129,20 +129,22 @@ describe('guided content', () => {
     expect(guide.prompt).toContain('ห้ามเพิ่ม Feature ใหม่และห้ามตัดสินใจแทนผม')
   })
 
-  it('reviews the complete PRD handoff package instead of one generated file', () => {
-    const guide = getPhaseGuide('th', 'PRD', {}, {
+  it('reviews three source files against locked decisions and returns complete updates', () => {
+    const guide = getPhaseGuide('th', 'PRD', { C: { who: 'พนักงานใหม่', goal: 'เติบโตในงาน' } }, {
       handoff: 'HANDOFF CONTENT',
       contentPack: 'CONTENT PACK CONTENT',
       experienceDirection: 'EXPERIENCE CONTENT',
-      startWithCodex: 'CODEX START CONTENT',
     }, 'CAREER GROWTH')
 
     expect(guide.prompt).toContain('===== CODESIGN_HANDOFF.md =====')
     expect(guide.prompt).toContain('CONTENT PACK CONTENT')
     expect(guide.prompt).toContain('EXPERIENCE CONTENT')
-    expect(guide.prompt).toContain('CODEX START CONTENT')
+    expect(guide.prompt).toContain('LOCKED OWNER DECISIONS')
+    expect(guide.prompt).toContain('WHO: พนักงานใหม่')
     expect(guide.prompt).toContain('ASSEMBLY MISMATCH')
     expect(guide.prompt).toContain('ถามผมทีละหนึ่งคำถาม')
+    expect(guide.prompt).toContain('UPDATE HANDOFF FILES')
+    expect(guide.prompt).toContain('ห้ามสร้าง START_WITH_CODEX.md')
     expect(guide.prompt).not.toContain('undefined')
   })
 })
