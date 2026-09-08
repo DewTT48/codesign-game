@@ -128,9 +128,7 @@ export function JourneyLayout({
                     ? (isThai ? 'คัดลอกไม่สำเร็จ' : 'COPY FAILED')
                     : (isThai ? 'คัดลอก Prompt' : 'COPY PROMPT')}
               </button>
-              {phase === 'PRD'
-                ? <details className="prompt-kit__full"><summary>{isThai ? 'เปิดดู Prompt ฉบับเต็ม' : 'VIEW THE FULL PROMPT'}</summary><pre>{guide.prompt}</pre></details>
-                : <pre>{guide.prompt}</pre>}
+              <pre>{guide.prompt}</pre>
               <section>
                 <strong>{phase === 'PRD' ? (isThai ? 'สถานะที่ Chat ต้องเลือก' : 'EXPECTED CHAT STATUS') : (isThai ? 'คำถามต่อยอด' : 'GO DEEPER')}</strong>
                 <ul>{guide.followUps.map((item) => <li key={item}>{item}</li>)}</ul>

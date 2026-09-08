@@ -3193,7 +3193,7 @@ a.mission-node__content:focus-visible {
   background: var(--ink);
   border: 3px solid #263f52;
   font-family: 'Chakra Petch', system-ui, sans-serif;
-  font-size: 15px;
+  font-size: 16px;
   line-height: 1.65;
 }
 
@@ -3209,28 +3209,6 @@ a.mission-node__content:focus-visible {
   font-size: 16px;
   font-weight: 600;
   line-height: 1.6;
-}
-
-.prompt-kit__full {
-  margin-top: 16px;
-  border: 3px solid var(--ink);
-}
-
-.prompt-kit__full > summary {
-  padding: 13px 16px;
-  color: var(--ink);
-  background: #e8f5ff;
-  font-size: 16px;
-  font-weight: 700;
-  cursor: pointer;
-}
-
-.prompt-kit__full[open] > summary {
-  border-bottom: 3px solid var(--ink);
-}
-
-.prompt-kit__full > pre {
-  border: 0;
 }
 
 .prompt-copy {
@@ -3251,8 +3229,8 @@ a.mission-node__content:focus-visible {
 
 :lang(th) .help-panel__header > span,
 :lang(th) .prompt-copy,
-:lang(th) .prompt-kit__full > summary,
-:lang(th) .prompt-kit__included > strong {
+:lang(th) .prompt-kit__included > strong,
+:lang(th) .prompt-kit section > strong {
   font-family: var(--font-body);
   font-size: 16px;
   font-weight: 700;
@@ -3268,6 +3246,14 @@ a.mission-node__content:focus-visible {
 :lang(th) .prompt-copy {
   min-height: 48px;
   padding: 11px 16px;
+}
+
+:lang(th) .help-panel small {
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.6;
+  letter-spacing: 0;
 }
 
 .prompt-kit section {
