@@ -734,6 +734,21 @@ main {
   font-size: 12px;
 }
 
+.mission-node.is-complete .mission-key {
+  color: var(--ink);
+  background: var(--positive);
+  border-color: var(--white);
+}
+
+.mission-node.is-complete .mission-connector,
+.mission-node.is-active .mission-connector {
+  background: var(--positive);
+}
+
+.mission-node.is-complete .mission-name {
+  color: var(--white);
+}
+
 .mission-node.is-active .mission-key {
   color: var(--ink);
   background: var(--accent);
