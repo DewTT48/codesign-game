@@ -1,5 +1,5 @@
 import { useMutation, useQuery } from '@tanstack/react-query'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useId, useRef, useState } from 'react'
 import type { Json } from '../../lib/supabase/database.types'
 import {
   getPhaseEntries,
@@ -52,13 +52,17 @@ export function usePhaseDraft<T extends Record<string, Json>>(input: {
   const [saveState, setSaveState] = useState<SaveState>('idle')
   const hydrated = useRef(false)
   const pendingSaves = useRef(new Map<keyof T, { timer: number; value: Json }>())
+  const queryInstance = useId()
 
   const entries = useQuery({
-    queryKey: ['phase-entries', input.projectId, input.phase],
+    // A per-mount key prevents an old route instance from hydrating this form
+    // with its cached snapshot before the queued save and fresh fetch finish.
+    queryKey: ['phase-entries', input.projectId, input.phase, queryInstance],
     queryFn: async () => {
       await waitForQueuedPhaseSaves(input.projectId, input.phase)
       return getPhaseEntries(input.projectId, input.phase)
     },
+    gcTime: 0,
   })
 
   const saveEntry = useMutation({
@@ -76,10 +80,7 @@ export function usePhaseDraft<T extends Record<string, Json>>(input: {
   })
 
   useEffect(() => {
-    // A fast return to the same route can expose stale cached data while the
-    // queued unmount save is still settling. Hydrate only after the fresh query
-    // finishes so the form never paints that older snapshot as authoritative.
-    if (!entries.data || !entries.isFetchedAfterMount || hydrated.current) return
+    if (!entries.data || hydrated.current) return
     const restored = { ...input.initialValues }
     for (const entry of entries.data) {
       if (entry.fieldKey in restored) {
@@ -88,7 +89,7 @@ export function usePhaseDraft<T extends Record<string, Json>>(input: {
     }
     setValues(restored)
     hydrated.current = true
-  }, [entries.data, entries.isFetchedAfterMount, input.initialValues])
+  }, [entries.data, input.initialValues])
 
   useEffect(
     () => () => {
@@ -153,7 +154,7 @@ export function usePhaseDraft<T extends Record<string, Json>>(input: {
     setField,
     saveAll,
     saveState,
-    loading: entries.isLoading || !entries.isFetchedAfterMount,
+    loading: entries.isLoading,
     loadError: entries.isError,
   }
 }
