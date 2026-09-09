@@ -82,6 +82,7 @@ describe('usePhaseDraft', () => {
     }), { wrapper: sharedWrapper })
     await new Promise((resolve) => window.setTimeout(resolve, 20))
     expect(serviceMocks.getPhaseEntries).toHaveBeenCalledTimes(1)
+    expect(second.result.current.loading).toBe(true)
 
     finishSave?.()
     await waitFor(() => expect(serviceMocks.getPhaseEntries).toHaveBeenCalledTimes(2))

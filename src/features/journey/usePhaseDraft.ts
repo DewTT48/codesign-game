@@ -79,7 +79,7 @@ export function usePhaseDraft<T extends Record<string, Json>>(input: {
     // A fast return to the same route can expose stale cached data while the
     // queued unmount save is still settling. Hydrate only after the fresh query
     // finishes so the form never paints that older snapshot as authoritative.
-    if (!entries.data || entries.isFetching || hydrated.current) return
+    if (!entries.data || !entries.isFetchedAfterMount || hydrated.current) return
     const restored = { ...input.initialValues }
     for (const entry of entries.data) {
       if (entry.fieldKey in restored) {
@@ -88,7 +88,7 @@ export function usePhaseDraft<T extends Record<string, Json>>(input: {
     }
     setValues(restored)
     hydrated.current = true
-  }, [entries.data, entries.isFetching, input.initialValues])
+  }, [entries.data, entries.isFetchedAfterMount, input.initialValues])
 
   useEffect(
     () => () => {
@@ -153,7 +153,7 @@ export function usePhaseDraft<T extends Record<string, Json>>(input: {
     setField,
     saveAll,
     saveState,
-    loading: entries.isLoading || (!hydrated.current && entries.isFetching),
+    loading: entries.isLoading || !entries.isFetchedAfterMount,
     loadError: entries.isError,
   }
 }
