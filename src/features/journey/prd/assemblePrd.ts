@@ -32,6 +32,12 @@ const screens = (value: Json | undefined) =>
     (item): item is ScreenSpec => Boolean(item) && typeof item === 'object' && !Array.isArray(item),
   )
 
+const alignmentRecord = (sourceStep: string, targetStep: string, entry: Record<string, Json | undefined>) => `### Step ${sourceStep} → Step ${targetStep}
+
+- **Relationship:** ${text(entry.alignmentStatus, 'Not recorded')}
+- **Latest owner interpretation:** ${text(entry.alignmentNote, 'No clarification recorded.')}
+- **Owner reviewed both steps together:** ${entry.alignmentConfirmed ? 'YES' : 'NO'}`
+
 export function assemblePrd(project: ProjectRow, source: PrdSource): string {
   const specify = source.S ?? {}
   return Number(specify.specificationVersion) >= 2
@@ -153,11 +159,15 @@ Codex may decide component structure, spacing, responsive layout, code organizat
 
 ## 13. Cross-step Alignment Record
 
-- **Step E → Step S relationship:** ${text(specify.alignmentStatus)}
-- **Latest owner interpretation:** ${text(specify.alignmentNote, 'No clarification needed; Step S is aligned with Step E as written.')}
-- **Owner reviewed both steps together:** ${specify.alignmentConfirmed ? 'YES' : 'NO'}
+${alignmentRecord('C', 'O', options)}
 
-When the relationship is **clarifies**, the latest owner interpretation above governs how earlier broad wording is implemented. When it is **revision**, this package is not ready to lock and the relevant source step must be revised first.
+${alignmentRecord('O', 'D', debate)}
+
+${alignmentRecord('D', 'E', establish)}
+
+${alignmentRecord('E', 'S', specify)}
+
+When a relationship is **clarifies**, its latest owner interpretation governs how earlier broad wording is implemented. When it is **revision**, this package is not ready to lock and the relevant source step must be revised first. Records marked **Not recorded** belong to a legacy project created before cross-step alignment was introduced and must be checked during PRD review.
 `
 }
 

@@ -1,17 +1,25 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { ArrowRight, Check } from 'lucide-react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { ArcadeButton } from '../../../components/ui/ArcadeButton'
 import type { Json, ProjectRow } from '../../../lib/supabase/database.types'
 import { useLanguage } from '../../i18n/LanguageContext'
-import { completePhase } from '../journey.service'
+import { CrossStepAlignment } from '../CrossStepAlignment'
+import { alignmentIsReady, entriesToRecord, normalizeAlignmentStatus } from '../crossStepAlignmentModel'
+import { completePhase, getPhaseEntries } from '../journey.service'
 import { JourneyLayout } from '../JourneyLayout'
 import { FormField, PhaseSection, ReviewGate } from '../PhaseFormComponents'
 import { usePhaseDraft } from '../usePhaseDraft'
 
 type ProductOption = { name: string; coreIdea: string; like: string; tradeoff: string }
 const emptyOption = (): ProductOption => ({ name: '', coreIdea: '', like: '', tradeoff: '' })
-const initialOptions = { options: [emptyOption(), emptyOption(), emptyOption()] as unknown as Json, favorite: -1 }
+const initialOptions = {
+  options: [emptyOption(), emptyOption(), emptyOption()] as unknown as Json,
+  favorite: -1,
+  alignmentStatus: '',
+  alignmentNote: '',
+  alignmentConfirmed: false,
+}
 
 export function OptionsPhase({ project }: { project: ProjectRow }) {
   const { isThai } = useLanguage()
@@ -19,6 +27,11 @@ export function OptionsPhase({ project }: { project: ProjectRow }) {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const options = draft.values.options as unknown as ProductOption[]
+  const contextEntries = useQuery({ queryKey: ['phase-entries', project.id, 'C'], queryFn: () => getPhaseEntries(project.id, 'C') })
+  const context = entriesToRecord(contextEntries.data)
+  const alignmentStatus = normalizeAlignmentStatus(draft.values.alignmentStatus)
+  const alignmentNote = String(draft.values.alignmentNote)
+  const resetAlignment = () => draft.setField('alignmentConfirmed', false)
   const completion = useMutation({
     mutationFn: async () => { await draft.saveAll(); return completePhase(project.id, 'O') },
     onSuccess: async () => { await queryClient.invalidateQueries({ queryKey: ['project', project.id] }); navigate(`/projects/${project.id}/D`) },
@@ -27,9 +40,11 @@ export function OptionsPhase({ project }: { project: ProjectRow }) {
   function updateOption(index: number, key: keyof ProductOption, value: string) {
     const next = options.map((option, optionIndex) => optionIndex === index ? { ...option, [key]: value } : option)
     draft.setField('options', next as unknown as Json)
+    resetAlignment()
   }
 
-  const ready = options.length >= 3 && options.every((option) => Object.values(option).every((value) => value.trim())) && Number(draft.values.favorite) >= 0
+  const alignmentReady = alignmentIsReady({ status: alignmentStatus, note: alignmentNote, confirmed: Boolean(draft.values.alignmentConfirmed) })
+  const ready = options.length >= 3 && options.every((option) => Object.values(option).every((value) => value.trim())) && Number(draft.values.favorite) >= 0 && contextEntries.isSuccess && alignmentReady
 
   return (
     <JourneyLayout project={project} phase="O" phaseName="OPTIONS" chatContext={draft.values} saveState={draft.saveState}>
@@ -40,7 +55,7 @@ export function OptionsPhase({ project }: { project: ProjectRow }) {
         <div className="option-stack">
           {options.map((option, index) => (
             <article className="option-card" key={index}>
-              <header><span>{isThai ? 'ทางเลือก' : 'OPTION'} {String(index + 1).padStart(2, '0')}</span><label><input type="radio" name="favorite" checked={Number(draft.values.favorite) === index} onChange={() => draft.setField('favorite', index)} /> {isThai ? 'ตัวเลือกที่ชอบตอนนี้' : 'CURRENT FAVORITE'}</label></header>
+              <header><span>{isThai ? 'ทางเลือก' : 'OPTION'} {String(index + 1).padStart(2, '0')}</span><label><input type="radio" name="favorite" checked={Number(draft.values.favorite) === index} onChange={() => { draft.setField('favorite', index); resetAlignment() }} /> {isThai ? 'ตัวเลือกที่ชอบตอนนี้' : 'CURRENT FAVORITE'}</label></header>
               <div className="form-grid form-grid--two">
                 <FormField label={isThai ? 'ชื่อทางเลือก' : 'OPTION NAME'} guideKey="options.name" required><input value={option.name} onChange={(event) => updateOption(index, 'name', event.target.value)} /></FormField>
                 <FormField label={isThai ? 'แนวคิดหลัก' : 'CORE IDEA'} guideKey="options.coreIdea" required><textarea rows={3} value={option.coreIdea} onChange={(event) => updateOption(index, 'coreIdea', event.target.value)} /></FormField>
@@ -51,6 +66,25 @@ export function OptionsPhase({ project }: { project: ProjectRow }) {
           ))}
         </div>
       </PhaseSection>
+      <CrossStepAlignment
+        step="03"
+        sourceStep="C"
+        targetStep="O"
+        loading={contextEntries.isLoading}
+        loadError={contextEntries.isError}
+        items={[
+          { label: isThai ? 'ผู้ใช้หลัก' : 'WHO', value: String(context.who ?? '') },
+          { label: isThai ? 'เป้าหมายและภาพความสำเร็จ' : 'GOAL AND SUCCESS', value: [String(context.goal ?? ''), String(context.success ?? '')].filter(Boolean) },
+          { label: isThai ? 'บริบทและข้อจำกัด' : 'CONTEXT AND CONSTRAINTS', value: [String(context.importantContext ?? ''), String(context.constraints ?? '')].filter(Boolean) },
+        ]}
+        status={alignmentStatus}
+        note={alignmentNote}
+        confirmed={Boolean(draft.values.alignmentConfirmed)}
+        revisionAction={<Link to={`/projects/${project.id}/C`}>{isThai ? 'กลับไปตรวจ Step C' : 'REVIEW STEP C'}</Link>}
+        onStatusChange={(status) => { draft.setField('alignmentStatus', status); draft.setField('alignmentConfirmed', false) }}
+        onNoteChange={(note) => { draft.setField('alignmentNote', note); resetAlignment() }}
+        onConfirmedChange={(confirmed) => draft.setField('alignmentConfirmed', confirmed)}
+      />
       <ReviewGate title={isThai ? 'มนุษย์เป็นผู้ตัดสินใจ' : 'HUMAN REVIEW'} question={isThai ? 'ตัวเลือกไหนเหมาะกับ Context ที่ Lock ไว้ที่สุด ไม่ใช่แค่ตัวเลือกที่ดูน่าสนใจที่สุด?' : 'Which option best fits the locked context—not merely the most exciting one?'} actions={<ArcadeButton disabled={!ready || completion.isPending} onClick={() => completion.mutate()}>{completion.isPending ? (isThai ? 'กำลังบันทึก…' : 'SAVING…') : (isThai ? 'ไปท้าทายสมมติฐานต่อ' : 'CONTINUE TO DEBATE')} <ArrowRight aria-hidden="true" size={18} /></ArcadeButton>}>
         {Number(draft.values.favorite) >= 0 ? <div className="favorite-summary"><Check size={18} /> <span><small>{isThai ? 'ตัวเลือกที่ชอบตอนนี้ — ยังไม่ได้ยืนยัน' : 'CURRENT FAVORITE — NOT YET LOCKED'}</small><strong>{options[Number(draft.values.favorite)]?.name}</strong></span></div> : <p>{isThai ? 'เลือกตัวเลือกที่ชอบตอนนี้ หลังเปรียบเทียบสิ่งที่ต้องแลกครบแล้ว' : 'Choose a current favorite after comparing every trade-off.'}</p>}
         {completion.isError ? <p className="field-error" role="alert">{isThai ? 'บันทึก Options ไม่สำเร็จ กรุณาลองใหม่' : 'Could not save options. Please try again.'}</p> : null}

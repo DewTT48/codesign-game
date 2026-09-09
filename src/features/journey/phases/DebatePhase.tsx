@@ -1,10 +1,12 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { ArrowRight, Plus, X } from 'lucide-react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { ArcadeButton } from '../../../components/ui/ArcadeButton'
 import type { Json, ProjectRow } from '../../../lib/supabase/database.types'
 import { useLanguage } from '../../i18n/LanguageContext'
-import { completePhase } from '../journey.service'
+import { CrossStepAlignment } from '../CrossStepAlignment'
+import { alignmentIsReady, entriesToRecord, normalizeAlignmentStatus } from '../crossStepAlignmentModel'
+import { completePhase, getPhaseEntries } from '../journey.service'
 import { JourneyLayout } from '../JourneyLayout'
 import { FormField, PhaseSection, ReviewGate } from '../PhaseFormComponents'
 import { usePhaseDraft } from '../usePhaseDraft'
@@ -13,7 +15,14 @@ type Assumption = { text: string; stance: '' | 'agree' | 'challenge'; why: strin
 const MIN_ASSUMPTIONS = 2
 const MAX_ASSUMPTIONS = 5
 const blankAssumption = (): Assumption => ({ text: '', stance: '', why: '', change: '' })
-const initialDebate = { assumptions: [blankAssumption(), blankAssumption()] as unknown as Json, directionResult: '', whatChanged: '' }
+const initialDebate = {
+  assumptions: [blankAssumption(), blankAssumption()] as unknown as Json,
+  directionResult: '',
+  whatChanged: '',
+  alignmentStatus: '',
+  alignmentNote: '',
+  alignmentConfirmed: false,
+}
 
 const debateGuide = {
   th: {
@@ -77,17 +86,29 @@ export function DebatePhase({ project }: { project: ProjectRow }) {
   const queryClient = useQueryClient()
   const assumptions = draft.values.assumptions as unknown as Assumption[]
   const guide = debateGuide[isThai ? 'th' : 'en']
+  const optionEntries = useQuery({ queryKey: ['phase-entries', project.id, 'O'], queryFn: () => getPhaseEntries(project.id, 'O') })
+  const optionSource = entriesToRecord(optionEntries.data)
+  const sourceOptions = Array.isArray(optionSource.options) ? optionSource.options : []
+  const favoriteIndex = typeof optionSource.favorite === 'number' ? optionSource.favorite : -1
+  const favorite = sourceOptions[favoriteIndex]
+  const favoriteRecord = favorite && typeof favorite === 'object' && !Array.isArray(favorite) ? favorite : null
+  const alignmentStatus = normalizeAlignmentStatus(draft.values.alignmentStatus)
+  const alignmentNote = String(draft.values.alignmentNote)
+  const resetAlignment = () => draft.setField('alignmentConfirmed', false)
   const completion = useMutation({ mutationFn: async () => { await draft.saveAll(); return completePhase(project.id, 'D') }, onSuccess: async () => { await queryClient.invalidateQueries({ queryKey: ['project', project.id] }); navigate(`/projects/${project.id}/E`) } })
-  function updateAssumption(index: number, patch: Partial<Assumption>) { draft.setField('assumptions', assumptions.map((item, itemIndex) => itemIndex === index ? { ...item, ...patch } : item) as unknown as Json) }
+  function updateAssumption(index: number, patch: Partial<Assumption>) { draft.setField('assumptions', assumptions.map((item, itemIndex) => itemIndex === index ? { ...item, ...patch } : item) as unknown as Json); resetAlignment() }
   function addAssumption() {
     if (assumptions.length >= MAX_ASSUMPTIONS) return
     draft.setField('assumptions', [...assumptions, blankAssumption()] as unknown as Json)
+    resetAlignment()
   }
   function removeAssumption(index: number) {
     if (assumptions.length <= MIN_ASSUMPTIONS) return
     draft.setField('assumptions', assumptions.filter((_, itemIndex) => itemIndex !== index) as unknown as Json)
+    resetAlignment()
   }
-  const ready = assumptions.every((item) => item.text.trim() && item.stance && item.why.trim() && (item.stance !== 'challenge' || item.change.trim())) && Boolean(String(draft.values.directionResult)) && Boolean(String(draft.values.whatChanged).trim())
+  const alignmentReady = alignmentIsReady({ status: alignmentStatus, note: alignmentNote, confirmed: Boolean(draft.values.alignmentConfirmed) })
+  const ready = assumptions.every((item) => item.text.trim() && item.stance && item.why.trim() && (item.stance !== 'challenge' || item.change.trim())) && Boolean(String(draft.values.directionResult)) && Boolean(String(draft.values.whatChanged).trim()) && optionEntries.isSuccess && alignmentReady
 
   return (
     <JourneyLayout project={project} phase="D" phaseName="DEBATE" chatContext={draft.values} saveState={draft.saveState}>
@@ -134,10 +155,29 @@ export function DebatePhase({ project }: { project: ProjectRow }) {
       </PhaseSection>
       <PhaseSection step="02" title={isThai ? 'พิจารณา Direction อีกครั้งกับ Chat' : 'RECONSIDER WITH CHAT'} description={isThai ? 'ใช้บริบทที่ยืนยันแล้วและคำท้าทายของคุณพิจารณา Direction ใหม่' : 'Reconsider the direction using locked context and your challenges.'}>
         <div className="choice-grid choice-grid--two">
-          {['OUR DIRECTION STAYED THE SAME', 'WE CHANGED OUR DIRECTION'].map((option) => <label className={draft.values.directionResult === option ? 'simple-choice is-active' : 'simple-choice'} key={option}><input type="radio" name="direction-result" checked={draft.values.directionResult === option} onChange={() => draft.setField('directionResult', option)} />{isThai ? (option === 'OUR DIRECTION STAYED THE SAME' ? 'ใช้ Direction เดิมต่อ' : 'เปลี่ยน Direction') : option}</label>)}
+          {['OUR DIRECTION STAYED THE SAME', 'WE CHANGED OUR DIRECTION'].map((option) => <label className={draft.values.directionResult === option ? 'simple-choice is-active' : 'simple-choice'} key={option}><input type="radio" name="direction-result" checked={draft.values.directionResult === option} onChange={() => { draft.setField('directionResult', option); resetAlignment() }} />{isThai ? (option === 'OUR DIRECTION STAYED THE SAME' ? 'ใช้ Direction เดิมต่อ' : 'เปลี่ยน Direction') : option}</label>)}
         </div>
-        <FormField label={isThai ? 'อะไรเปลี่ยนไป และเพราะอะไร?' : 'WHAT CHANGED AND WHY?'} guideKey="debate.whatChanged" required><textarea rows={4} value={String(draft.values.whatChanged)} onChange={(event) => draft.setField('whatChanged', event.target.value)} /></FormField>
+        <FormField label={isThai ? 'อะไรเปลี่ยนไป และเพราะอะไร?' : 'WHAT CHANGED AND WHY?'} guideKey="debate.whatChanged" required><textarea rows={4} value={String(draft.values.whatChanged)} onChange={(event) => { draft.setField('whatChanged', event.target.value); resetAlignment() }} /></FormField>
       </PhaseSection>
+      <CrossStepAlignment
+        step="03"
+        sourceStep="O"
+        targetStep="D"
+        loading={optionEntries.isLoading}
+        loadError={optionEntries.isError}
+        items={[
+          { label: isThai ? 'ทางเลือกที่นำมาท้าทาย' : 'OPTION UNDER REVIEW', value: typeof favoriteRecord?.name === 'string' ? favoriteRecord.name : '' },
+          { label: isThai ? 'แนวคิดหลัก' : 'CORE IDEA', value: typeof favoriteRecord?.coreIdea === 'string' ? favoriteRecord.coreIdea : '' },
+          { label: isThai ? 'ประโยชน์ สิ่งที่ต้องแลก และการส่งต่อก่อนหน้า' : 'BENEFIT, TRADE-OFF, AND PRIOR HANDOFF', value: [typeof favoriteRecord?.like === 'string' ? favoriteRecord.like : '', typeof favoriteRecord?.tradeoff === 'string' ? favoriteRecord.tradeoff : '', [String(optionSource.alignmentStatus ?? ''), String(optionSource.alignmentNote ?? '')].filter(Boolean).join(' — ')].filter(Boolean) },
+        ]}
+        status={alignmentStatus}
+        note={alignmentNote}
+        confirmed={Boolean(draft.values.alignmentConfirmed)}
+        revisionAction={<div className="alignment-revision-links"><Link to={`/projects/${project.id}/O`}>{isThai ? 'กลับไปตรวจ Step O' : 'REVIEW STEP O'}</Link><Link to={`/projects/${project.id}/C`}>{isThai ? 'กลับไปตรวจ Step C' : 'REVIEW STEP C'}</Link></div>}
+        onStatusChange={(status) => { draft.setField('alignmentStatus', status); draft.setField('alignmentConfirmed', false) }}
+        onNoteChange={(note) => { draft.setField('alignmentNote', note); resetAlignment() }}
+        onConfirmedChange={(confirmed) => draft.setField('alignmentConfirmed', confirmed)}
+      />
       <ReviewGate title={isThai ? 'ตรวจความพร้อมหลังการท้าทาย' : 'DEBATE COMPLETE'} question={isThai ? 'คุณได้ท้าทายสิ่งที่ AI คาดไว้ และบันทึกเหตุผลของมนุษย์แล้วหรือยัง?' : 'Have you challenged AI assumptions and recorded the human reasoning?'} actions={<ArcadeButton disabled={!ready || completion.isPending} onClick={() => completion.mutate()}>{completion.isPending ? (isThai ? 'กำลังยืนยัน…' : 'LOCKING…') : (isThai ? 'กำหนด Direction' : 'ESTABLISH DIRECTION')} <ArrowRight aria-hidden="true" size={18} /></ArcadeButton>}>
         <p>{isThai ? 'ข้อเสนอเดิม สมมติฐาน เหตุผล และผลลัพธ์ใหม่จะอยู่ใน Journal โดยไม่เขียนทับกัน' : 'The original proposal, assumptions, reasoning, and revised result remain in the Journal.'}</p>
         {completion.isError ? <p className="field-error" role="alert">{isThai ? 'บันทึก Debate ไม่สำเร็จ กรุณาลองใหม่' : 'Could not save the debate. Please try again.'}</p> : null}

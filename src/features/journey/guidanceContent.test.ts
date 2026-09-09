@@ -26,6 +26,7 @@ describe('guided content', () => {
 
     expect(guide.prompt).toContain('New employees')
     expect(guide.prompt).toContain('Do not choose a winner for me')
+    expect(guide.prompt).toContain('C → O HANDOFF')
   })
 
   it('returns localized field guidance', () => {
@@ -65,6 +66,8 @@ describe('guided content', () => {
     expect(guide.prompt).toContain('ALTERNATIVES — ใช้เปรียบเทียบเท่านั้น')
     expect(guide.prompt).toContain('เลือก 2 ข้อที่เป็น ASSUMED หรือ UNKNOWN')
     expect(guide.prompt).toContain('DEBATE HANDOFF')
+    expect(guide.prompt).toContain('O → D HANDOFF')
+    expect(guide.prompt).toContain('C → O STATUS:')
     expect(guide.prompt).toContain('ฝึกมองหาโอกาส\nแล้วลงมือทำหนึ่งอย่าง')
     expect(guide.prompt).not.toContain('{"name"')
     expect(guide.prompt).not.toContain('\\n')
@@ -105,6 +108,7 @@ describe('guided content', () => {
     expect(guide.prompt).toContain('CREATE CODESIGN_SPEC.md')
     expect(guide.prompt).toContain('ALIGNMENT_WITH_STEP_E: aligned | clarifies | revision')
     expect(guide.prompt).toContain('never continue by silently changing the scope')
+    expect(guide.prompt).toContain('D → E STATUS:')
     expect(guide.prompt).not.toContain('type FINALIZE')
     expect(guide.prompt).toContain('CODESIGN_SPEC.md')
     expect(guide.prompt).toContain('must not use JSON')
@@ -129,6 +133,8 @@ describe('guided content', () => {
     expect(guide.prompt).toContain('ผู้ใช้ต้องทำอะไรใน Product นี้ จึงจะบรรลุ Goal หลัก?')
     expect(guide.prompt).toContain('เป็นเกณฑ์ตรวจ')
     expect(guide.prompt).toContain('ห้ามเพิ่ม Feature ใหม่และห้ามตัดสินใจแทนผม')
+    expect(guide.prompt).toContain('D → E HANDOFF')
+    expect(guide.prompt).toContain('O → D STATUS:')
   })
 
   it('reviews three source files against locked decisions and returns complete updates', () => {
@@ -152,5 +158,19 @@ describe('guided content', () => {
     expect(guide.prompt).toContain('UPDATE HANDOFF FILES')
     expect(guide.prompt).toContain('START_WITH_CODEX.md ยังไม่อยู่ในขั้นนี้และห้ามสร้าง')
     expect(guide.prompt).not.toContain('undefined')
+  })
+
+  it('extends build, feedback, and iteration prompts with explicit handoff ownership', () => {
+    const source = { C: { goal: 'Complete the practice', success: 'Finish 21 days' } }
+
+    const implement = getPhaseGuide('en', 'I', source, {}, 'CAREER GROWTH')
+    const feedback = getPhaseGuide('en', 'G', source, {}, 'CAREER GROWTH')
+    const next = getPhaseGuide('en', 'N', source, {}, 'CAREER GROWTH')
+
+    expect(implement.prompt).toContain('PRD → I HANDOFF')
+    expect(feedback.prompt).toContain('I → G HANDOFF')
+    expect(feedback.prompt).toContain('IMPLEMENTATION / PRD / STEP S / STEP E / STEP C')
+    expect(next.prompt).toContain('recommend exactly one change owner')
+    expect(next.bringBack).toContain('revision owner')
   })
 })

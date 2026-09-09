@@ -1,10 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { ArrowRight, Check, Clipboard, Download, ExternalLink, FileCode2, Github, ShieldCheck } from 'lucide-react'
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { ArcadeButton } from '../../../components/ui/ArcadeButton'
 import type { ProjectRow } from '../../../lib/supabase/database.types'
 import { useLanguage } from '../../i18n/LanguageContext'
+import { CrossStepAlignment } from '../CrossStepAlignment'
+import { alignmentIsReady, normalizeAlignmentStatus } from '../crossStepAlignmentModel'
 import { completeImplementation, getLatestPrdSnapshot, getPhaseEntries } from '../journey.service'
 import { JourneyLayout } from '../JourneyLayout'
 import { FormField, PhaseSection, ReviewGate } from '../PhaseFormComponents'
@@ -12,7 +14,15 @@ import { assembleStartWithCodex, type GitHubReadiness } from '../prd/handoffFile
 import { MarkdownPreview } from '../prd/MarkdownPreview'
 import { usePhaseDraft } from '../usePhaseDraft'
 
-const initialImplement = { githubReadiness: 'unsure', workingApp: false, appUrl: '', repositoryUrl: '' }
+const initialImplement = {
+  githubReadiness: 'unsure',
+  workingApp: false,
+  appUrl: '',
+  repositoryUrl: '',
+  alignmentStatus: '',
+  alignmentNote: '',
+  alignmentConfirmed: false,
+}
 
 export function ImplementPhase({ project }: { project: ProjectRow }) {
   const { isThai } = useLanguage()
@@ -25,7 +35,9 @@ export function ImplementPhase({ project }: { project: ProjectRow }) {
   const prdEntries = useQuery({ queryKey: ['phase-entries', project.id, 'PRD'], queryFn: () => getPhaseEntries(project.id, 'PRD') })
   const readiness = String(draft.values.githubReadiness) as GitHubReadiness
   const startWithCodex = assembleStartWithCodex(project, readiness)
-  const ready = Boolean(draft.values.workingApp && String(draft.values.appUrl).trim() && String(draft.values.repositoryUrl).trim())
+  const alignmentStatus = normalizeAlignmentStatus(draft.values.alignmentStatus)
+  const alignmentNote = String(draft.values.alignmentNote)
+  const resetAlignment = () => draft.setField('alignmentConfirmed', false)
   const completion = useMutation({
     mutationFn: async () => {
       await draft.saveAll()
@@ -53,6 +65,10 @@ export function ImplementPhase({ project }: { project: ProjectRow }) {
   ]
   const activePackageFile = packageFiles.find((file) => file.fileName === selectedPackageFile) ?? packageFiles[3]
   const packageReady = packageFiles.every((file) => file.content.trim())
+  const packageLoadError = snapshot.isError || prdEntries.isError || (!snapshot.isLoading && !prdEntries.isLoading && !packageReady)
+  const prdReviewOutcome = prdEntries.data?.find((entry) => entry.fieldKey === 'reviewOutcomeV2')?.content
+  const alignmentReady = alignmentIsReady({ status: alignmentStatus, note: alignmentNote, confirmed: Boolean(draft.values.alignmentConfirmed) })
+  const ready = Boolean(draft.values.workingApp && String(draft.values.appUrl).trim() && String(draft.values.repositoryUrl).trim() && packageReady && snapshot.isSuccess && prdEntries.isSuccess && alignmentReady)
 
   const downloadPackageFile = (fileName: string, content: string) => {
     const url = URL.createObjectURL(new Blob([content], { type: 'text/markdown;charset=utf-8' }))
@@ -108,7 +124,7 @@ export function ImplementPhase({ project }: { project: ProjectRow }) {
         <div className="github-readiness-options">
           {readinessChoices.map((choice) => (
             <label key={choice.value} className={readiness === choice.value ? 'is-active' : ''}>
-              <input type="radio" name="github-readiness" checked={readiness === choice.value} onChange={() => draft.setField('githubReadiness', choice.value)} />
+              <input type="radio" name="github-readiness" checked={readiness === choice.value} onChange={() => { draft.setField('githubReadiness', choice.value); resetAlignment() }} />
               <Check size={19} />
               <span><strong>{choice.title}</strong><small>{choice.description}</small></span>
             </label>
@@ -118,7 +134,7 @@ export function ImplementPhase({ project }: { project: ProjectRow }) {
 
       <PhaseSection step="I3" title={isThai ? 'ประกอบชุด 4 ไฟล์สำหรับ Codex' : 'ASSEMBLE THE FOUR-FILE CODEX PACKAGE'} description={isThai ? 'สามไฟล์แรกคือ Snapshot ที่ Lock จาก PRD ส่วน START_WITH_CODEX.md ถูกสร้างในขั้นนี้ตามความพร้อม GitHub ที่คุณเลือก' : 'The first three files are the locked PRD snapshot. START_WITH_CODEX.md is generated here from your GitHub readiness.'}>
         {(snapshot.isLoading || prdEntries.isLoading) ? <p>{isThai ? 'กำลังโหลดไฟล์ที่ Lock ไว้…' : 'LOADING LOCKED FILES…'}</p> : null}
-        {(snapshot.isError || prdEntries.isError || !packageReady) ? <p className="field-error" role="alert">{isThai ? 'โหลดชุดไฟล์หลักไม่ครบ กรุณากลับไปตรวจ PRD ก่อนส่งต่อ' : 'THE LOCKED SOURCE PACKAGE COULD NOT BE LOADED COMPLETELY.'}</p> : null}
+        {packageLoadError ? <p className="field-error" role="alert">{isThai ? 'โหลดชุดไฟล์หลักไม่ครบ กรุณากลับไปตรวจ PRD ก่อนส่งต่อ' : 'THE LOCKED SOURCE PACKAGE COULD NOT BE LOADED COMPLETELY.'}</p> : null}
         <div className="implement-package-grid" aria-label={isThai ? 'ชุดไฟล์สำหรับ Codex' : 'Codex package files'}>
           {packageFiles.map((file) => <div key={file.fileName} className={selectedPackageFile === file.fileName ? 'is-active' : ''}>
             <button type="button" className="implement-package-grid__preview" onClick={() => setSelectedPackageFile(file.fileName)}><FileCode2 size={20} /><span><strong>{file.fileName}</strong><small>{file.description}</small></span></button>
@@ -140,14 +156,34 @@ export function ImplementPhase({ project }: { project: ProjectRow }) {
 
       <PhaseSection step="I4" title={isThai ? 'บันทึกแอปที่ใช้งานได้จริง' : 'RECORD THE WORKING BUILD'} description={isThai ? 'กลับมาบันทึก URL หลังจาก Codex สร้าง ทดสอบ และ Publish สำเร็จ' : 'Return after Codex has built, tested, and published the app.'}>
         <label className={draft.values.workingApp ? 'build-confirm is-active' : 'build-confirm'}>
-          <input type="checkbox" checked={Boolean(draft.values.workingApp)} onChange={(event) => draft.setField('workingApp', event.target.checked)} />
+          <input type="checkbox" checked={Boolean(draft.values.workingApp)} onChange={(event) => { draft.setField('workingApp', event.target.checked); resetAlignment() }} />
           <Check size={20} /> {isThai ? 'ฉันทดสอบเส้นทางหลักแล้ว และ App ใช้งานได้จริง' : 'I TESTED THE PRIMARY JOURNEY AND THE APP WORKS'}
         </label>
         <div className="form-grid form-grid--two">
-          <FormField label={isThai ? 'URL สาธารณะของ App' : 'PUBLIC APP URL'} required><input type="url" value={String(draft.values.appUrl)} onChange={(event) => draft.setField('appUrl', event.target.value)} placeholder="https://username.github.io/project/" /></FormField>
-          <FormField label={isThai ? 'URL ของ GitHub Repository' : 'GITHUB REPOSITORY URL'} required><input type="url" value={String(draft.values.repositoryUrl)} onChange={(event) => draft.setField('repositoryUrl', event.target.value)} placeholder="https://github.com/username/project" /></FormField>
+          <FormField label={isThai ? 'URL สาธารณะของ App' : 'PUBLIC APP URL'} required><input type="url" value={String(draft.values.appUrl)} onChange={(event) => { draft.setField('appUrl', event.target.value); resetAlignment() }} placeholder="https://username.github.io/project/" /></FormField>
+          <FormField label={isThai ? 'URL ของ GitHub Repository' : 'GITHUB REPOSITORY URL'} required><input type="url" value={String(draft.values.repositoryUrl)} onChange={(event) => { draft.setField('repositoryUrl', event.target.value); resetAlignment() }} placeholder="https://github.com/username/project" /></FormField>
         </div>
       </PhaseSection>
+
+      <CrossStepAlignment
+        step="I5"
+        sourceStep="PRD"
+        targetStep="I"
+        loading={snapshot.isLoading || prdEntries.isLoading}
+        loadError={packageLoadError}
+        items={[
+          { label: isThai ? 'ชุดส่งต่องานที่ใช้สร้าง' : 'SOURCE PACKAGE', value: [`PRD v${snapshot.data?.version ?? '—'}`, 'CODESIGN_HANDOFF.md', 'CONTENT_PACK.md', 'EXPERIENCE_DIRECTION.md', 'START_WITH_CODEX.md'] },
+          { label: isThai ? 'ผลการตรวจ PRD' : 'PRD REVIEW RESULT', value: String(prdReviewOutcome ?? '') },
+          { label: isThai ? 'หลักฐานการสร้าง' : 'BUILD EVIDENCE', value: [String(draft.values.appUrl), String(draft.values.repositoryUrl)].filter(Boolean) },
+        ]}
+        status={alignmentStatus}
+        note={alignmentNote}
+        confirmed={Boolean(draft.values.alignmentConfirmed)}
+        revisionAction={<div className="alignment-revision-links"><Link to={`/projects/${project.id}/PRD`}>PRD</Link><Link to={`/projects/${project.id}/S`}>STEP S</Link><Link to={`/projects/${project.id}/E`}>STEP E</Link></div>}
+        onStatusChange={(status) => { draft.setField('alignmentStatus', status); draft.setField('alignmentConfirmed', false) }}
+        onNoteChange={(note) => { draft.setField('alignmentNote', note); resetAlignment() }}
+        onConfirmedChange={(confirmed) => draft.setField('alignmentConfirmed', confirmed)}
+      />
 
       <ReviewGate title={isThai ? 'ตรวจสอบแอปที่สร้าง' : 'BUILD CHECK'} question={isThai ? 'App ทำงานจาก Public URL และมี Repository ที่กลับมาแก้ไขต่อได้หรือยัง?' : 'Does the app work from its public URL, with a repository you can continue editing?'} actions={<ArcadeButton disabled={!ready || completion.isPending} onClick={() => completion.mutate()}>{isThai ? 'ทดสอบแอป' : 'TEST THE BUILD'} <ArrowRight size={18} /></ArcadeButton>}>
         <p>{isThai ? 'ต้องยืนยันว่า App ใช้งานได้ และบันทึกทั้ง Public URL กับ Repository URL ก่อนเข้าสู่ Feedback' : 'Confirm the working app and record both the public and repository URLs before feedback.'}</p>

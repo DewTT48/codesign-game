@@ -25,14 +25,14 @@ const phaseNames: Record<PhaseCode, { th: string; en: string }> = {
 
 const preferredFields: Record<PhaseCode, string[]> = {
   C: ['who', 'goal', 'success', 'importantContext', 'constraints', 'reflection', 'corrections'],
-  O: ['favorite', 'options'],
-  D: ['assumptions', 'directionResult', 'whatChanged'],
-  E: ['direction', 'mustHaves', 'nonGoals', 'scopeAlignmentConfirmed'],
+  O: ['favorite', 'options', 'alignmentStatus', 'alignmentNote', 'alignmentConfirmed'],
+  D: ['assumptions', 'directionResult', 'whatChanged', 'alignmentStatus', 'alignmentNote', 'alignmentConfirmed'],
+  E: ['direction', 'mustHaves', 'nonGoals', 'scopeAlignmentConfirmed', 'alignmentStatus', 'alignmentNote', 'alignmentConfirmed'],
   S: ['productLanguage', 'brandCopy', 'dailyDuration', 'journeySummary', 'dailyCompletionRule', 'returnRule', 'sequenceRule', 'storageRule', 'contentArcs', 'contentPattern', 'exercisePattern', 'recordPattern', 'dailyContent', 'selectedExperience', 'experienceOptions', 'advancedNotes', 'acceptanceCriteria', 'alignmentStatus', 'alignmentNote', 'alignmentConfirmed'],
   PRD: ['markdownDraft', 'contentPackDraft', 'experienceDirectionDraft', 'reviewOutcomeV2'],
-  I: ['githubReadiness', 'workingApp', 'appUrl', 'repositoryUrl'],
-  G: ['mobile', 'start', 'dailyFlow', 'saveData', 'reopen', 'persistence', 'navigation', 'prdRules', 'expected', 'actual', 'stuck', 'worked', 'mostImportant'],
-  N: ['change', 'because', 'expectedResult'],
+  I: ['githubReadiness', 'workingApp', 'appUrl', 'repositoryUrl', 'alignmentStatus', 'alignmentNote', 'alignmentConfirmed'],
+  G: ['mobile', 'start', 'dailyFlow', 'saveData', 'reopen', 'persistence', 'navigation', 'prdRules', 'expected', 'actual', 'stuck', 'worked', 'mostImportant', 'alignmentStatus', 'alignmentNote', 'alignmentConfirmed'],
+  N: ['change', 'because', 'expectedResult', 'changeRoute', 'routeConfirmed'],
 }
 
 const thaiLabels: Record<string, string> = {
@@ -40,11 +40,11 @@ const thaiLabels: Record<string, string> = {
   favorite: 'ทางเลือกที่เลือกไว้', options: 'ทางเลือกที่สำรวจ', name: 'ชื่อ', coreIdea: 'แนวคิดหลัก', like: 'สิ่งที่ชอบ', tradeoff: 'สิ่งที่ต้องแลก',
   assumptions: 'สมมติฐานที่ท้าทาย', text: 'สมมติฐาน', stance: 'การตัดสินใจ', why: 'เหตุผลของคุณ', directionResult: 'ผลต่อ Direction', whatChanged: 'สิ่งที่เปลี่ยนและเหตุผล',
   direction: 'เรากำลังจะสร้าง', mustHaves: 'สิ่งที่ต้องมีใน Version แรก', nonGoals: 'สิ่งที่ยังไม่ทำใน Version นี้', scopeAlignmentConfirmed: 'ยืนยันความสอดคล้องของขอบเขต',
-  productLanguage: 'ภาษาของ Product', brandCopy: 'ข้อความประจำ Product', dailyDuration: 'เวลาต่อวัน', journeySummary: 'เส้นทางหลักของผู้ใช้', dailyCompletionRule: 'หนึ่งวันสำเร็จเมื่อ', returnRule: 'การย้อนกลับมา', sequenceRule: 'ลำดับการทำ', storageRule: 'การจำข้อมูล', contentArcs: 'โครงเนื้อหา 3 ช่วง', contentPattern: 'รูปแบบเนื้อหาประจำวัน', exercisePattern: 'รูปแบบแบบฝึก', recordPattern: 'รูปแบบการบันทึก', dailyContent: 'เนื้อหา 21 วัน', selectedExperience: 'Theme ที่เลือก', experienceOptions: 'แนวทางประสบการณ์ที่พิจารณา', advancedNotes: 'หมายเหตุเพิ่มเติมสำหรับการสร้าง', acceptanceCriteria: 'เกณฑ์ตรวจรับ', alignmentStatus: 'ความสัมพันธ์ระหว่าง Step E และ S', alignmentNote: 'คำอธิบายล่าสุดจาก Step S', alignmentConfirmed: 'ยืนยันการส่งต่อ E → S',
+  productLanguage: 'ภาษาของ Product', brandCopy: 'ข้อความประจำ Product', dailyDuration: 'เวลาต่อวัน', journeySummary: 'เส้นทางหลักของผู้ใช้', dailyCompletionRule: 'หนึ่งวันสำเร็จเมื่อ', returnRule: 'การย้อนกลับมา', sequenceRule: 'ลำดับการทำ', storageRule: 'การจำข้อมูล', contentArcs: 'โครงเนื้อหา 3 ช่วง', contentPattern: 'รูปแบบเนื้อหาประจำวัน', exercisePattern: 'รูปแบบแบบฝึก', recordPattern: 'รูปแบบการบันทึก', dailyContent: 'เนื้อหา 21 วัน', selectedExperience: 'Theme ที่เลือก', experienceOptions: 'แนวทางประสบการณ์ที่พิจารณา', advancedNotes: 'หมายเหตุเพิ่มเติมสำหรับการสร้าง', acceptanceCriteria: 'เกณฑ์ตรวจรับ', alignmentStatus: 'ความสัมพันธ์กับ Step ก่อนหน้า', alignmentNote: 'คำอธิบายล่าสุดในการส่งต่อ', alignmentConfirmed: 'ยืนยันการส่งต่อข้อมูล',
   markdownDraft: 'CODESIGN_HANDOFF.md', contentPackDraft: 'CONTENT_PACK.md', experienceDirectionDraft: 'EXPERIENCE_DIRECTION.md', reviewOutcomeV2: 'ผลการตรวจชุดส่งต่องาน',
   githubReadiness: 'ความพร้อมเรื่อง GitHub', workingApp: 'ยืนยันว่า App ทำงานแล้ว', appUrl: 'Public App URL', repositoryUrl: 'GitHub Repository URL',
   mobile: 'เปิดบนโทรศัพท์แล้ว', start: 'เริ่มโปรแกรมได้', dailyFlow: 'ทดลองหนึ่งวันจนจบแล้ว', saveData: 'บันทึกข้อมูลได้', reopen: 'เปิด App ใหม่แล้ว', persistence: 'ความคืบหน้ายังคงอยู่', navigation: 'ออกแล้วกลับมาได้', prdRules: 'ผ่านกติกาสำคัญจาก PRD', expected: 'สิ่งที่คาดว่าผู้ใช้จะทำ', actual: 'สิ่งที่ผู้ใช้ทำจริง', stuck: 'จุดที่ผู้ใช้ติดขัด', worked: 'สิ่งที่ทำงานได้ดี', mostImportant: 'ข้อเสนอแนะสำคัญที่สุด',
-  change: 'สิ่งที่จะเปลี่ยน', because: 'เหตุผล', expectedResult: 'ผลลัพธ์ที่คาดหวัง',
+  change: 'สิ่งที่จะเปลี่ยน', because: 'เหตุผล', expectedResult: 'ผลลัพธ์ที่คาดหวัง', changeRoute: 'Step ที่เป็นเจ้าของการเปลี่ยนแปลง', routeConfirmed: 'ยืนยันว่าแก้เฉพาะการสร้าง',
   title: 'หัวข้อ', objective: 'เป้าหมาย', content: 'เนื้อหา', exercise: 'แบบฝึก', record: 'สิ่งที่บันทึก', completion: 'เกณฑ์จบ', duration: 'ระยะเวลา', mood: 'อารมณ์', rationale: 'เหตุผลที่เหมาะ',
 }
 
@@ -58,6 +58,7 @@ const codeLabels: Record<string, { th: string; en: string }> = {
   th: { th: 'ภาษาไทย', en: 'THAI' }, en: { th: 'ภาษาอังกฤษ', en: 'ENGLISH' }, bilingual: { th: 'สองภาษา', en: 'BILINGUAL' },
   aligned: { th: 'สอดคล้องกัน', en: 'ALIGNED' }, clarifies: { th: 'ทำให้ชัดขึ้น', en: 'CLARIFIES' }, revision: { th: 'ต้องแก้คำตัดสินเดิม', en: 'REVISION REQUIRED' },
   ready: { th: 'พร้อมยืนยัน', en: 'READY TO LOCK' }, files: { th: 'ต้องอัปเดตไฟล์', en: 'FILE UPDATE REQUIRED' },
+  implementation: { th: 'แก้เฉพาะการสร้าง App', en: 'IMPLEMENTATION ONLY' },
 }
 
 const markdownFields = new Set(['markdownDraft', 'contentPackDraft', 'experienceDirectionDraft'])

@@ -5,11 +5,15 @@ import { phaseSequence } from './phaseNavigation'
 export const revisionTargets: PhaseCode[] = ['C', 'O', 'D', 'E', 'S', 'PRD']
 
 const booleanConfirmations = new Set([
+  'O:alignmentConfirmed',
+  'D:alignmentConfirmed',
   'E:scopeAlignmentConfirmed',
+  'E:alignmentConfirmed',
   'S:contentOwnerConfirmed',
   'S:experienceOwnerConfirmed',
   'S:alignmentConfirmed',
   'I:workingApp',
+  'I:alignmentConfirmed',
   'G:mobile',
   'G:start',
   'G:dailyFlow',
@@ -18,6 +22,8 @@ const booleanConfirmations = new Set([
   'G:persistence',
   'G:navigation',
   'G:prdRules',
+  'G:alignmentConfirmed',
+  'N:routeConfirmed',
 ])
 
 const listConfirmations = new Set([
@@ -26,9 +32,20 @@ const listConfirmations = new Set([
 ])
 
 const emptyTextOnRevision = new Set([
+  'O:alignmentStatus',
+  'O:alignmentNote',
+  'D:alignmentStatus',
+  'D:alignmentNote',
+  'E:alignmentStatus',
+  'E:alignmentNote',
   'S:alignmentStatus',
   'S:alignmentNote',
   'PRD:reviewOutcomeV2',
+  'I:alignmentStatus',
+  'I:alignmentNote',
+  'G:alignmentStatus',
+  'G:alignmentNote',
+  'N:changeRoute',
 ])
 
 export function contentForRevision(

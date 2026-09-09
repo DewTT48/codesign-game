@@ -198,8 +198,17 @@ export function getPhaseGuide(
   const direction = sourceValue(source, 'E', 'direction')
   const mustHaves = sourceValue(source, 'E', 'mustHaves')
   const baseNonGoals = sourceValue(source, 'E', 'nonGoals')
-  const alignmentRecord = `E → S ALIGNMENT: ${sourceValue(source, 'S', 'alignmentStatus')}\nALIGNMENT NOTE / LATEST INTERPRETATION: ${sourceValue(source, 'S', 'alignmentNote')}`
-  const nonGoals = phase === 'PRD' ? `${baseNonGoals}\n${alignmentRecord}` : baseNonGoals
+  const alignmentRecord = `C → O ALIGNMENT: ${sourceValue(source, 'O', 'alignmentStatus')}
+C → O NOTE: ${sourceValue(source, 'O', 'alignmentNote')}
+O → D ALIGNMENT: ${sourceValue(source, 'D', 'alignmentStatus')}
+O → D NOTE: ${sourceValue(source, 'D', 'alignmentNote')}
+D → E ALIGNMENT: ${sourceValue(source, 'E', 'alignmentStatus')}
+D → E NOTE: ${sourceValue(source, 'E', 'alignmentNote')}
+E → S ALIGNMENT: ${sourceValue(source, 'S', 'alignmentStatus')}
+E → S NOTE: ${sourceValue(source, 'S', 'alignmentNote')}`
+  const nonGoals = phase === 'PRD'
+    ? `${baseNonGoals}\n\n===== CROSS-STEP ALIGNMENT — OWNER CONFIRMED =====\n${alignmentRecord}`
+    : baseNonGoals
   const debateOptions = formatOptionsForPrompt(source)
 
   const guides: Record<string, Localized<PhaseGuide>> = {
@@ -229,18 +238,18 @@ export function getPhaseGuide(
         principle: 'Problem เดียวสามารถกลายเป็น Product ได้หลายแบบ ก่อนเลือกต้องเห็นความแตกต่างและสิ่งที่ต้องแลก',
         hint: 'Direction ที่ต่างกันจริงต้องเปลี่ยนกลไกที่พาผู้ใช้ไปถึง Goal ไม่ใช่แค่เปลี่ยนสี ชื่อ หรือ Layout',
         chatGoal: 'สร้างอย่างน้อย 3 Product directions ที่แตกต่างกันจริงจาก Context ที่ Lock ไว้',
-        prompt: `เรากำลังออกแบบ “21 DAYS OF ${topic}”\n\nLOCKED CONTEXT\nWHO: ${who}\nGOAL: ${goal}\nSUCCESS: ${success}\nCONTEXT: ${context}\nCONSTRAINTS: ${constraints}\n\nช่วยเสนอ Product direction อย่างน้อย 3 แบบที่ใช้กลไกต่างกันจริงในการพาผู้ใช้ไปถึง Goal ห้ามสร้างความต่างด้วยสี ชื่อ หรือรายละเอียดตกแต่งเท่านั้น\n\nสำหรับแต่ละ Direction ให้ระบุ OPTION NAME / CORE IDEA / WHAT WE LIKE / TRADE-OFF และอธิบายว่าเหมาะหรือขัดกับ Context ข้อใด โดยยังไม่เลือกผู้ชนะให้ผม`,
+        prompt: `เรากำลังออกแบบ “21 DAYS OF ${topic}”\n\nLOCKED CONTEXT\nWHO: ${who}\nGOAL: ${goal}\nSUCCESS: ${success}\nCONTEXT: ${context}\nCONSTRAINTS: ${constraints}\n\nช่วยเสนอ Product direction อย่างน้อย 3 แบบที่ใช้กลไกต่างกันจริงในการพาผู้ใช้ไปถึง Goal ห้ามสร้างความต่างด้วยสี ชื่อ หรือรายละเอียดตกแต่งเท่านั้น\n\nสำหรับแต่ละ Direction ให้ระบุ OPTION NAME / CORE IDEA / WHAT WE LIKE / TRADE-OFF และอธิบายว่าเหมาะหรือขัดกับ Context ข้อใด โดยยังไม่เลือกผู้ชนะให้ผม\n\nก่อนจบให้ตรวจทุก Direction กับ LOCKED CONTEXT แล้วสรุป C → O HANDOFF เป็น ALIGNED / CLARIFIES / REVISION REQUIRED — STEP C พร้อมเหตุผลสั้น ๆ ห้ามแก้ Context เดิมโดยเงียบ ๆ`,
         followUps: ['ตัวเลือกใดคล้ายกันเกินไปและควรแตกต่างอย่างไร?', 'แต่ละทางเลือกต้องยอมเสียอะไร?', 'มี Direction ใดที่เรียบง่ายกว่านี้แต่ยังถึง Goal หรือไม่?'],
-        bringBack: 'บันทึก 3+ Directions พร้อม Core idea, Benefit และ Trade-off แล้วเลือก Current favorite ด้วยเหตุผลของคุณเอง',
+        bringBack: 'บันทึก 3+ Directions เลือก Current favorite แล้วนำสถานะ C → O และคำอธิบายกลับมายืนยันก่อนผ่าน Step',
       },
       en: {
         headline: "DON'T FALL IN LOVE WITH THE FIRST IDEA.",
         principle: 'One problem can become several products. See the meaningful differences and trade-offs before choosing.',
         hint: 'A genuinely different direction changes how the user reaches the goal—not only color, naming, or layout.',
         chatGoal: 'Generate at least three genuinely different product directions from the locked context.',
-        prompt: `We are designing “21 DAYS OF ${topic}”.\n\nLOCKED CONTEXT\nWHO: ${who}\nGOAL: ${goal}\nSUCCESS: ${success}\nCONTEXT: ${context}\nCONSTRAINTS: ${constraints}\n\nPropose at least three product directions that use meaningfully different mechanisms to reach the goal. Do not create superficial variation through color, naming, or decoration.\n\nFor each direction provide OPTION NAME / CORE IDEA / WHAT WE LIKE / TRADE-OFF and explain how it fits or conflicts with the locked context. Do not choose a winner for me.`,
+        prompt: `We are designing “21 DAYS OF ${topic}”.\n\nLOCKED CONTEXT\nWHO: ${who}\nGOAL: ${goal}\nSUCCESS: ${success}\nCONTEXT: ${context}\nCONSTRAINTS: ${constraints}\n\nPropose at least three product directions that use meaningfully different mechanisms to reach the goal. Do not create superficial variation through color, naming, or decoration.\n\nFor each direction provide OPTION NAME / CORE IDEA / WHAT WE LIKE / TRADE-OFF and explain how it fits or conflicts with the locked context. Do not choose a winner for me.\n\nBefore finishing, compare every direction with the LOCKED CONTEXT and report C → O HANDOFF as ALIGNED / CLARIFIES / REVISION REQUIRED — STEP C with a short reason. Never silently rewrite the context.`,
         followUps: ['Which directions are still too similar?', 'What must be sacrificed in each option?', 'Is there a simpler direction that still reaches the goal?'],
-        bringBack: 'Capture 3+ directions with core idea, benefit, and trade-off, then select your own current favorite.',
+        bringBack: 'Capture 3+ directions, select your current favorite, then bring back the C → O status and explanation for confirmation.',
       },
     },
     D: {
@@ -249,18 +258,18 @@ export function getPhaseGuide(
         principle: 'แยกสิ่งที่รู้จริงออกจากสิ่งที่ AI และทีมกำลังคาด ก่อนยอมรับ Direction',
         hint: 'มองหา Assumption เกี่ยวกับ Behavior, Motivation, เวลา อุปกรณ์ และความเต็มใจกลับมาใช้ซ้ำ',
         chatGoal: 'เปิดเผย Assumptions และ Failure modes ของ Direction ที่กำลังชอบ',
-        prompt: `ROLE\nทำหน้าที่เป็น Product Challenger สำหรับ “21 DAYS OF ${topic}”\n\nOBJECTIVE\nท้าทายสมมติฐานของ Current Favorite โดยเทียบกับ Locked Context ก่อนที่ผมจะยืนยัน Direction\n\nLOCKED CONTEXT\nWHO: ${who}\nGOAL: ${goal}\nCONTEXT: ${context}\nCONSTRAINTS: ${constraints}\n\nCURRENT FAVORITE — วิเคราะห์เป็นหลัก\n${debateOptions.favorite}\n\nALTERNATIVES — ใช้เปรียบเทียบเท่านั้น\n${debateOptions.alternatives}\n\nTASK\n1. ระบุสมมติฐานสำคัญ 3–5 ข้อเกี่ยวกับ User behavior, Motivation, Context, เวลา อุปกรณ์ และการกลับมาใช้ซ้ำ\n2. แยกแต่ละข้อเป็น KNOWN / ASSUMED / UNKNOWN\n3. อธิบาย Failure mode หากสมมติฐานนั้นไม่จริง\n4. จัดลำดับตาม Impact และ Evidence gap\n5. ตรวจว่าตัวเลือกอื่นลดความเสี่ยงนั้นได้หรือไม่ โดยไม่เลือก Direction แทนผม\n\nOUTPUT FORMAT\nสำหรับแต่ละข้อให้ใช้:\nASSUMPTION:\nSTATUS: KNOWN / ASSUMED / UNKNOWN\nEVIDENCE:\nFAILURE MODE:\nIMPACT: HIGH / MEDIUM / LOW\nQUESTION FOR OWNER:\n\nCONVERSATION RULES\n- ห้ามเสนอ Feature ใหม่\n- อย่าตัดสินใจ Agree หรือ Challenge แทนผม\n- หลังสรุป ให้เลือก 2 ข้อที่เป็น ASSUMED หรือ UNKNOWN ซึ่งสำคัญต่อ Direction มากที่สุด แล้วถามผมทีละหนึ่งข้อ\n- ช่วยผมอธิบายเหตุผลด้วยคำของผมเอง ไม่ใช้ข้อสรุปของ AI แทน\n- เมื่อผมตัดสินใจครบ 2 ข้อ ให้สรุป DEBATE HANDOFF เป็น DIRECTION ASSUMES THAT / OWNER STANCE / OWNER REASON / WHAT SHOULD CHANGE และปิดท้ายด้วย DIRECTION RESULT / WHAT CHANGED AND WHY`,
+        prompt: `ROLE\nทำหน้าที่เป็น Product Challenger สำหรับ “21 DAYS OF ${topic}”\n\nOBJECTIVE\nท้าทายสมมติฐานของ Current Favorite โดยเทียบกับ Locked Context ก่อนที่ผมจะยืนยัน Direction\n\nLOCKED CONTEXT\nWHO: ${who}\nGOAL: ${goal}\nCONTEXT: ${context}\nCONSTRAINTS: ${constraints}\n\nCURRENT FAVORITE — วิเคราะห์เป็นหลัก\n${debateOptions.favorite}\n\nALTERNATIVES — ใช้เปรียบเทียบเท่านั้น\n${debateOptions.alternatives}\n\nTASK\n1. ระบุสมมติฐานสำคัญ 3–5 ข้อเกี่ยวกับ User behavior, Motivation, Context, เวลา อุปกรณ์ และการกลับมาใช้ซ้ำ\n2. แยกแต่ละข้อเป็น KNOWN / ASSUMED / UNKNOWN\n3. อธิบาย Failure mode หากสมมติฐานนั้นไม่จริง\n4. จัดลำดับตาม Impact และ Evidence gap\n5. ตรวจว่าตัวเลือกอื่นลดความเสี่ยงนั้นได้หรือไม่ โดยไม่เลือก Direction แทนผม\n\nOUTPUT FORMAT\nสำหรับแต่ละข้อให้ใช้:\nASSUMPTION:\nSTATUS: KNOWN / ASSUMED / UNKNOWN\nEVIDENCE:\nFAILURE MODE:\nIMPACT: HIGH / MEDIUM / LOW\nQUESTION FOR OWNER:\n\nCONVERSATION RULES\n- ห้ามเสนอ Feature ใหม่\n- อย่าตัดสินใจ Agree หรือ Challenge แทนผม\n- หลังสรุป ให้เลือก 2 ข้อที่เป็น ASSUMED หรือ UNKNOWN ซึ่งสำคัญต่อ Direction มากที่สุด แล้วถามผมทีละหนึ่งข้อ\n- ช่วยผมอธิบายเหตุผลด้วยคำของผมเอง ไม่ใช้ข้อสรุปของ AI แทน\n- เมื่อผมตัดสินใจครบ 2 ข้อ ให้สรุป DEBATE HANDOFF เป็น DIRECTION ASSUMES THAT / OWNER STANCE / OWNER REASON / WHAT SHOULD CHANGE และ DIRECTION RESULT / WHAT CHANGED AND WHY\n- ปิดท้ายด้วย O → D HANDOFF: ALIGNED / CLARIFIES / REVISION REQUIRED — STEP O หรือ STEP C พร้อมเหตุผล ห้ามเปลี่ยนตัวเลือกหรือ Context เดิมโดยเงียบ ๆ`,
         followUps: ['ข้อใดมีผลต่อ Product มากที่สุดแต่มีหลักฐานน้อยที่สุด?', 'ใครอาจไม่ใช้ Product ตามที่เราคาด?', 'Direction นี้จะล้มเหลวในบริบทใด?'],
-        bringBack: 'เลือกอย่างน้อย 2 Assumptions ระบุ Agree/Challenge เหตุผล สิ่งที่ควรเปลี่ยน และสรุปว่า Direction เปลี่ยนหรือไม่',
+        bringBack: 'บันทึก Assumptions และผล Debate แล้วนำสถานะ O → D พร้อมคำอธิบายกลับมายืนยันก่อนผ่าน Step',
       },
       en: {
         headline: "AI SOUNDS CONFIDENT. THAT DOESN'T MAKE IT RIGHT.",
         principle: 'Separate what is known from what AI and the team are assuming before accepting a direction.',
         hint: 'Look for assumptions about behavior, motivation, time, device, and willingness to return.',
         chatGoal: 'Expose assumptions and failure modes in the current favorite direction.',
-        prompt: `ROLE\nAct as a Product Challenger for “21 DAYS OF ${topic}”.\n\nOBJECTIVE\nChallenge the assumptions behind the Current Favorite against the Locked Context before I confirm the direction.\n\nLOCKED CONTEXT\nWHO: ${who}\nGOAL: ${goal}\nCONTEXT: ${context}\nCONSTRAINTS: ${constraints}\n\nCURRENT FAVORITE — analyze this primarily\n${debateOptions.favorite}\n\nALTERNATIVES — use for comparison only\n${debateOptions.alternatives}\n\nTASK\n1. Identify 3–5 important assumptions about user behavior, motivation, context, time, device, and repeat use.\n2. Classify each as KNOWN / ASSUMED / UNKNOWN.\n3. Explain the failure mode if the assumption is false.\n4. Prioritize by impact and evidence gap.\n5. Check whether an alternative reduces that risk without choosing a direction for me.\n\nOUTPUT FORMAT\nFor each item use:\nASSUMPTION:\nSTATUS: KNOWN / ASSUMED / UNKNOWN\nEVIDENCE:\nFAILURE MODE:\nIMPACT: HIGH / MEDIUM / LOW\nQUESTION FOR OWNER:\n\nCONVERSATION RULES\n- Do not propose new features.\n- Do not decide Agree or Challenge for me.\n- After the summary, select the 2 ASSUMED or UNKNOWN items most critical to the direction and ask me about them one at a time.\n- Help me express the reason in my own words rather than substituting an AI conclusion.\n- After both decisions, provide a DEBATE HANDOFF using DIRECTION ASSUMES THAT / OWNER STANCE / OWNER REASON / WHAT SHOULD CHANGE, followed by DIRECTION RESULT / WHAT CHANGED AND WHY.`,
+        prompt: `ROLE\nAct as a Product Challenger for “21 DAYS OF ${topic}”.\n\nOBJECTIVE\nChallenge the assumptions behind the Current Favorite against the Locked Context before I confirm the direction.\n\nLOCKED CONTEXT\nWHO: ${who}\nGOAL: ${goal}\nCONTEXT: ${context}\nCONSTRAINTS: ${constraints}\n\nCURRENT FAVORITE — analyze this primarily\n${debateOptions.favorite}\n\nALTERNATIVES — use for comparison only\n${debateOptions.alternatives}\n\nTASK\n1. Identify 3–5 important assumptions about user behavior, motivation, context, time, device, and repeat use.\n2. Classify each as KNOWN / ASSUMED / UNKNOWN.\n3. Explain the failure mode if the assumption is false.\n4. Prioritize by impact and evidence gap.\n5. Check whether an alternative reduces that risk without choosing a direction for me.\n\nOUTPUT FORMAT\nFor each item use:\nASSUMPTION:\nSTATUS: KNOWN / ASSUMED / UNKNOWN\nEVIDENCE:\nFAILURE MODE:\nIMPACT: HIGH / MEDIUM / LOW\nQUESTION FOR OWNER:\n\nCONVERSATION RULES\n- Do not propose new features.\n- Do not decide Agree or Challenge for me.\n- After the summary, select the 2 ASSUMED or UNKNOWN items most critical to the direction and ask me about them one at a time.\n- Help me express the reason in my own words rather than substituting an AI conclusion.\n- After both decisions, provide a DEBATE HANDOFF using DIRECTION ASSUMES THAT / OWNER STANCE / OWNER REASON / WHAT SHOULD CHANGE, followed by DIRECTION RESULT / WHAT CHANGED AND WHY.\n- Finish with O → D HANDOFF: ALIGNED / CLARIFIES / REVISION REQUIRED — STEP O or STEP C and a reason. Never silently change an option or the locked context.`,
         followUps: ['Which high-impact assumption has the weakest evidence?', 'Who may not behave as expected?', 'In what context would this direction fail?'],
-        bringBack: 'Capture at least two assumptions, your agree/challenge stance, reasons, changes, and whether the direction changed.',
+        bringBack: 'Capture the assumptions and debate result, then bring back the O → D status and explanation for confirmation.',
       },
     },
     E: {
@@ -291,9 +300,11 @@ NOT IN THIS VERSION: ${text(current.nonGoals)}
 
 สำหรับ NOT IN THIS VERSION ให้ตรวจว่าเป็นสิ่งที่เราตั้งใจยังไม่สร้างใน Version แรกอย่างชัดเจนหรือไม่
 
-ชี้รายการที่กว้าง ซ้ำ ไม่เชื่อมกับ Goal หรือเป็นเพียงรายละเอียดตกแต่ง แล้วถามผมทีละคำถามเพื่อให้ผมตัดสินใจ ห้ามเพิ่ม Feature ใหม่และห้ามตัดสินใจแทนผม`,
+ชี้รายการที่กว้าง ซ้ำ ไม่เชื่อมกับ Goal หรือเป็นเพียงรายละเอียดตกแต่ง แล้วถามผมทีละคำถามเพื่อให้ผมตัดสินใจ ห้ามเพิ่ม Feature ใหม่และห้ามตัดสินใจแทนผม
+
+ก่อนจบให้ตรวจว่า Direction และ Scope สอดคล้องกับผล Debate และไม่มีรายการเดียวกันอยู่ทั้ง MUST HAVE กับ NOT IN THIS VERSION แล้วสรุป D → E HANDOFF เป็น ALIGNED / CLARIFIES / REVISION REQUIRED — STEP D, O หรือ C พร้อมเหตุผล`,
         followUps: ['ผู้ใช้ทำอะไรไม่ได้ถ้าตัด Must Have ข้อนี้ออก?', 'Must Have ข้อใดไม่ช่วยให้ผู้ใช้บรรลุ Goal?', 'ข้อใดควรรวมกันเป็น Product capability เดียว?', 'มี Non-goal ใดที่ควรระบุเพื่อป้องกัน scope creep?'],
-        bringBack: 'กลับมาพร้อม Direction หนึ่งประโยค, Must Have 1–8 ข้อ และ Non-goal อย่างน้อย 2 ข้อ',
+        bringBack: 'กลับมาพร้อม Direction, Must Have, Non-goal และสถานะ D → E พร้อมคำอธิบายเพื่อยืนยันก่อนผ่าน Step',
       },
       en: {
         headline: 'EXPLORATION ENDS HERE.',
@@ -322,9 +333,11 @@ For each MUST HAVE:
 
 For NOT IN THIS VERSION, check whether it clearly states what we intentionally will not build in version one.
 
-Identify items that are broad, duplicated, disconnected from the goal, or merely decorative. Ask me one question at a time so I decide. Do not add features or decide for me.`,
+Identify items that are broad, duplicated, disconnected from the goal, or merely decorative. Ask me one question at a time so I decide. Do not add features or decide for me.
+
+Before finishing, verify that the direction and scope follow the debate result and that no item appears in both MUST HAVE and NOT IN THIS VERSION. Report D → E HANDOFF as ALIGNED / CLARIFIES / REVISION REQUIRED — STEP D, O, or C with a reason.`,
         followUps: ['What becomes impossible for the user if this must-have is removed?', 'Which must-have does not help the user reach the goal?', 'Which items should become one product capability?', 'Which non-goal would best prevent scope creep?'],
-        bringBack: 'Return with a one-sentence direction, 1–8 must-haves, and at least two explicit non-goals.',
+        bringBack: 'Return with the direction, must-haves, non-goals, and the D → E status and explanation for confirmation.',
       },
     },
     S: {
@@ -677,5 +690,65 @@ After receiving the file-creation command and completing all three sections, cre
     },
   }
 
-  return (guides[phase] ?? guides.C)[th ? 'th' : 'en']
+  const guide = (guides[phase] ?? guides.C)[th ? 'th' : 'en']
+  const alignmentExtensions: Record<string, Localized<{ prompt: string; bringBack?: string }>> = {
+    D: {
+      th: {
+        prompt: `บันทึกการส่งต่อที่เจ้าของ Product ยืนยันไว้ก่อนหน้า:\nC → O STATUS: ${sourceValue(source, 'O', 'alignmentStatus')}\nC → O LATEST INTERPRETATION: ${sourceValue(source, 'O', 'alignmentNote')}\nใช้บันทึกนี้เป็นบริบท หากงานปัจจุบันขัดกับบันทึก ห้ามตีความใหม่โดยเงียบ ๆ และให้ระบุ Revision owner ที่ถูกต้อง`,
+      },
+      en: {
+        prompt: `Prior owner-confirmed handoff:\nC → O STATUS: ${sourceValue(source, 'O', 'alignmentStatus')}\nC → O LATEST INTERPRETATION: ${sourceValue(source, 'O', 'alignmentNote')}\nTreat this record as context. If the current work conflicts with it, do not silently reinterpret it; name the correct revision owner.`,
+      },
+    },
+    E: {
+      th: {
+        prompt: `บันทึกการส่งต่อที่เจ้าของ Product ยืนยันไว้ก่อนหน้า:\nO → D STATUS: ${sourceValue(source, 'D', 'alignmentStatus')}\nO → D LATEST INTERPRETATION: ${sourceValue(source, 'D', 'alignmentNote')}\nใช้บันทึกนี้กำกับการตั้งขอบเขต และห้ามลบเหตุผลจาก Debate โดยเงียบ ๆ`,
+      },
+      en: {
+        prompt: `Prior owner-confirmed handoff:\nO → D STATUS: ${sourceValue(source, 'D', 'alignmentStatus')}\nO → D LATEST INTERPRETATION: ${sourceValue(source, 'D', 'alignmentNote')}\nUse this record when setting scope. Never silently discard the debate reasoning.`,
+      },
+    },
+    S: {
+      th: {
+        prompt: `บันทึกการส่งต่อที่เจ้าของ Product ยืนยันไว้ก่อนหน้า:\nD → E STATUS: ${sourceValue(source, 'E', 'alignmentStatus')}\nD → E LATEST INTERPRETATION: ${sourceValue(source, 'E', 'alignmentNote')}\nให้ Content, Journey และ Experience สืบทอดการตีความล่าสุดนี้ด้วย`,
+      },
+      en: {
+        prompt: `Prior owner-confirmed handoff:\nD → E STATUS: ${sourceValue(source, 'E', 'alignmentStatus')}\nD → E LATEST INTERPRETATION: ${sourceValue(source, 'E', 'alignmentNote')}\nThe content, journey, and experience must inherit this latest interpretation.`,
+      },
+    },
+    I: {
+      th: {
+        prompt: 'หลัง Build และทดสอบแล้ว ให้เทียบ App กับ PRD และสรุป PRD → I HANDOFF เป็น ALIGNED / CLARIFIES / REVISION REQUIRED — PRD, STEP S หรือ STEP E พร้อมเหตุผลและหลักฐาน URL ห้ามแก้ Product decision โดยเงียบ ๆ',
+        bringBack: 'บันทึก Public App URL, Repository URL และสถานะ PRD → I พร้อมคำอธิบายหลัง Build ผ่านการทดสอบ',
+      },
+      en: {
+        prompt: 'After build and testing, compare the app with the PRD and report PRD → I HANDOFF as ALIGNED / CLARIFIES / REVISION REQUIRED — PRD, STEP S, or STEP E with reasons and URL evidence. Never silently change a product decision.',
+        bringBack: 'Save the public app URL, repository URL, and PRD → I status and explanation after the tested build.',
+      },
+    },
+    G: {
+      th: {
+        prompt: 'ก่อนจบ ให้แยกด้วยว่า Observation ใดเป็น Build mismatch จาก Step I, ข้อใดเป็นคำอธิบายที่ไม่เปลี่ยน Product และข้อใดต้องเปลี่ยน Product decision แล้วสรุป I → G HANDOFF เป็น ALIGNED / CLARIFIES / REVISION REQUIRED พร้อม Owner ที่ควรกลับไปหา: IMPLEMENTATION / PRD / STEP S / STEP E / STEP C',
+        bringBack: 'นำ Observation สำคัญหนึ่งประเด็น พร้อมสถานะ I → G คำอธิบาย และ Owner ของการแก้ไขกลับมายืนยัน',
+      },
+      en: {
+        prompt: 'Before finishing, separate build mismatches from Step I, clarifications that do not change the product, and findings that require a product-decision change. Report I → G HANDOFF as ALIGNED / CLARIFIES / REVISION REQUIRED and name the owner: IMPLEMENTATION / PRD / STEP S / STEP E / STEP C.',
+        bringBack: 'Bring back one important observation with the I → G status, explanation, and change owner for confirmation.',
+      },
+    },
+    N: {
+      th: {
+        prompt: 'ก่อน Lock ให้แนะนำ Owner ของการเปลี่ยนแปลงเพียงหนึ่งทาง: IMPLEMENTATION หากแก้โค้ดโดยไม่เปลี่ยน Product decision, PRD หากแก้เฉพาะไฟล์ส่งต่องาน, STEP S หากเปลี่ยน Journey/Content/Experience, STEP E หากเปลี่ยน Scope/Direction หรือ STEP C หากเปลี่ยน User/Goal/Success จากนั้นรอให้ผมเป็นผู้เลือกเส้นทาง',
+        bringBack: 'Lock หนึ่ง Change พร้อมหลักฐานและ Expected result แล้วเลือก Owner ของ Revision ก่อนเริ่มรอบถัดไป',
+      },
+      en: {
+        prompt: 'Before locking, recommend exactly one change owner: IMPLEMENTATION for a code-only fix, PRD for handoff-file corrections, STEP S for journey/content/experience changes, STEP E for scope/direction changes, or STEP C for user/goal/success changes. Then wait for me to choose the route.',
+        bringBack: 'Lock one evidence-based change and expected result, then choose the revision owner before starting the next iteration.',
+      },
+    },
+  }
+  const extension = alignmentExtensions[phase]?.[th ? 'th' : 'en']
+  return extension
+    ? { ...guide, prompt: `${guide.prompt}\n\n${extension.prompt}`, bringBack: extension.bringBack ?? guide.bringBack }
+    : guide
 }

@@ -1,9 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Check, LockKeyhole, RotateCcw } from 'lucide-react'
+import { Check, LockKeyhole } from 'lucide-react'
 import { Link, useNavigate } from 'react-router-dom'
 import { ArcadeButton } from '../../../components/ui/ArcadeButton'
 import type { Json, ProjectRow } from '../../../lib/supabase/database.types'
 import { useLanguage } from '../../i18n/LanguageContext'
+import { CrossStepAlignment } from '../CrossStepAlignment'
+import { normalizeAlignmentStatus } from '../crossStepAlignmentModel'
 import { completePhase, getPrdSource } from '../journey.service'
 import { JourneyLayout } from '../JourneyLayout'
 import { FormField, PhaseSection, ReviewGate } from '../PhaseFormComponents'
@@ -28,7 +30,6 @@ import {
 import { usePhaseDraft } from '../usePhaseDraft'
 
 type ScreenSpec = { name: string; sees: string; actions: string; next: string }
-type AlignmentStatus = '' | 'aligned' | 'clarifies' | 'revision'
 
 const initialSpecify = {
   specificationVersion: 2,
@@ -288,25 +289,25 @@ export function SpecifyPhase({ project }: { project: ProjectRow }) {
         </details>
       </PhaseSection>
 
-      <PhaseSection step="S5" title={isThai ? 'ตรวจการส่งต่อจาก Step E' : 'CHECK THE STEP E HANDOFF'} description={isThai ? 'รายละเอียดใน Step S ต้องต่อยอดจากขอบเขตที่ยืนยันแล้ว หากเปลี่ยนความหมายต้องสร้าง Revision ที่ Step E ก่อน' : 'Step S must build on the locked scope. If it changes the meaning, revise Step E first.'}>
-        <div className="alignment-contract">
-          <article><span>{isThai ? 'ทิศทางที่ยืนยันแล้ว' : 'LOCKED DIRECTION'}</span><p>{inheritedDirection || '—'}</p></article>
-          <article><span>{isThai ? 'ต้องมี' : 'MUST HAVE'}</span><ul>{inheritedMustHaves.length ? inheritedMustHaves.map((item) => <li key={item}>{item}</li>) : <li>—</li>}</ul></article>
-          <article><span>{isThai ? 'ยังไม่ทำใน Version นี้' : 'NOT IN THIS VERSION'}</span><ul>{inheritedNonGoals.length ? inheritedNonGoals.map((item) => <li key={item}>{item}</li>) : <li>—</li>}</ul></article>
-        </div>
-        <div className="alignment-choices" role="radiogroup" aria-label={isThai ? 'ความสัมพันธ์ระหว่าง Step E และ S' : 'Relationship between Step E and S'}>
-          <label className={alignmentStatus === 'aligned' ? 'is-active' : ''}><input type="radio" name="alignment-status" checked={alignmentStatus === 'aligned'} onChange={() => { draft.setField('alignmentStatus', 'aligned'); resetAlignment() }} /><span><strong>{isThai ? 'สอดคล้องกัน' : 'ALIGNED'}</strong><small>{isThai ? 'Step S ลงรายละเอียดโดยไม่เปลี่ยนความหมายของ Step E' : 'Step S adds detail without changing Step E.'}</small></span></label>
-          <label className={alignmentStatus === 'clarifies' ? 'is-active' : ''}><input type="radio" name="alignment-status" checked={alignmentStatus === 'clarifies'} onChange={() => { draft.setField('alignmentStatus', 'clarifies'); resetAlignment() }} /><span><strong>{isThai ? 'ทำให้ชัดขึ้น' : 'CLARIFIES'}</strong><small>{isThai ? 'รายละเอียดใหม่กำหนดวิธีตีความข้อความเดิมให้ชัดเจนขึ้น' : 'A new detail makes earlier wording more precise.'}</small></span></label>
-          <label className={alignmentStatus === 'revision' ? 'is-active is-revision' : 'is-revision'}><input type="radio" name="alignment-status" checked={alignmentStatus === 'revision'} onChange={() => { draft.setField('alignmentStatus', 'revision'); resetAlignment() }} /><span><strong>{isThai ? 'เปลี่ยนคำตัดสินเดิม' : 'CHANGES STEP E'}</strong><small>{isThai ? 'ต้องสร้าง Revision เพื่อเก็บฉบับเดิมและตรวจ Step ถัดไปใหม่' : 'Create a revision and preserve the prior version.'}</small></span></label>
-        </div>
-        {alignmentStatus === 'clarifies' ? <FormField label={isThai ? 'Step S ทำให้เรื่องใดชัดขึ้น' : 'WHAT DOES STEP S CLARIFY?'} required hint={isThai ? 'เขียนคำตัดสินล่าสุดให้ชัด เช่น “เวลา 5–10 นาทีหมายถึงเวลาใน Product เท่านั้น ไม่รวมการลงมือทำจริง”' : 'State the latest interpretation clearly.'}><textarea rows={3} value={String(draft.values.alignmentNote)} onChange={(event) => { draft.setField('alignmentNote', event.target.value); resetAlignment() }} /></FormField> : null}
-        {alignmentStatus === 'revision' ? <div className="alignment-revision-route"><RotateCcw size={22} /><div><strong>{isThai ? 'Step S ยังยืนยันไม่ได้' : 'STEP S CANNOT BE LOCKED YET'}</strong><p>{isThai ? 'กลับไป Step E แล้วกด “สร้าง Revision เพื่อแก้ไข” ระบบจะเก็บฉบับเดิมไว้และเปิด Step S ให้ตรวจใหม่ภายหลัง' : 'Return to Step E and create a revision. The prior version remains in history.'}</p><Link to={`/projects/${project.id}/E`}>{isThai ? 'ไปที่ Step E' : 'GO TO STEP E'}</Link></div></div> : null}
-        {alignmentStatus && alignmentStatus !== 'revision' ? <label className={draft.values.alignmentConfirmed ? 'owner-confirm is-active' : 'owner-confirm'}>
-          <input type="checkbox" checked={Boolean(draft.values.alignmentConfirmed)} onChange={(event) => draft.setField('alignmentConfirmed', event.target.checked)} />
-          <Check size={19} />
-          <span><strong>{isThai ? 'ฉันตรวจ Step E และ Step S พร้อมกันแล้ว' : 'I REVIEWED STEP E AND STEP S TOGETHER'}</strong><small>{isThai ? 'ข้อมูลไม่ขัดกัน และคำอธิบายด้านบนคือคำตัดสินล่าสุดของฉัน' : 'The handoff is consistent and the statement above is my latest decision.'}</small></span>
-        </label> : null}
-      </PhaseSection>
+      <CrossStepAlignment
+        step="S5"
+        sourceStep="E"
+        targetStep="S"
+        loading={inherited.isLoading}
+        loadError={inherited.isError}
+        items={[
+          { label: isThai ? 'ทิศทางที่ยืนยันแล้ว' : 'LOCKED DIRECTION', value: inheritedDirection },
+          { label: isThai ? 'ต้องมี' : 'MUST HAVE', value: inheritedMustHaves },
+          { label: isThai ? 'สิ่งที่ยังไม่ทำและการส่งต่อก่อนหน้า' : 'NON-GOALS AND PRIOR HANDOFF', value: [...inheritedNonGoals, [String(inherited.data?.E?.alignmentStatus ?? ''), String(inherited.data?.E?.alignmentNote ?? '')].filter(Boolean).join(' — ')].filter(Boolean) },
+        ]}
+        status={alignmentStatus}
+        note={alignmentNote}
+        confirmed={Boolean(draft.values.alignmentConfirmed)}
+        revisionAction={<Link to={`/projects/${project.id}/E`}>{isThai ? 'ไปที่ Step E' : 'GO TO STEP E'}</Link>}
+        onStatusChange={(status) => { draft.setField('alignmentStatus', status); resetAlignment() }}
+        onNoteChange={(note) => { draft.setField('alignmentNote', note); resetAlignment() }}
+        onConfirmedChange={(confirmed) => draft.setField('alignmentConfirmed', confirmed)}
+      />
 
       <ReviewGate
         title={isThai ? 'ตรวจความพร้อมก่อนส่งต่อ' : 'SPECIFICATION QUALITY GATE'}
@@ -322,10 +323,6 @@ export function SpecifyPhase({ project }: { project: ProjectRow }) {
 
 function asStringList(value: Json | undefined) {
   return Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string') : []
-}
-
-function normalizeAlignmentStatus(value: Json | undefined): AlignmentStatus {
-  return value === 'aligned' || value === 'clarifies' || value === 'revision' ? value : ''
 }
 
 export type { ScreenSpec }

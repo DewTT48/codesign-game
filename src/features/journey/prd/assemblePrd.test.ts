@@ -43,7 +43,9 @@ describe('assemblePrd', () => {
   it('assembles the simplified Specify model into a companion-file handoff', () => {
     const markdown = assemblePrd(project, {
       C: { who: 'New writers', goal: 'Write daily', success: '21 entries' },
-      E: { direction: 'A calm daily writing companion', mustHaves: ['Complete one activity'], nonGoals: ['Social feed'] },
+      O: { alignmentStatus: 'aligned', alignmentConfirmed: true },
+      D: { alignmentStatus: 'clarifies', alignmentNote: 'The preferred option keeps the daily action small.', alignmentConfirmed: true },
+      E: { direction: 'A calm daily writing companion', mustHaves: ['Complete one activity'], nonGoals: ['Social feed'], alignmentStatus: 'aligned', alignmentConfirmed: true },
       S: {
         specificationVersion: 2,
         journeySummary: 'Open → do today’s activity → save → see progress',
@@ -68,7 +70,11 @@ describe('assemblePrd', () => {
     expect(markdown).toContain('Thai content must use natural word wrapping')
     expect(markdown).toContain('No embedded AI')
     expect(markdown).toContain('## 13. Cross-step Alignment Record')
-    expect(markdown).toContain('Step E → Step S relationship:** clarifies')
+    expect(markdown).toContain('### Step C → Step O')
+    expect(markdown).toContain('### Step O → Step D')
+    expect(markdown).toContain('### Step D → Step E')
+    expect(markdown).toContain('### Step E → Step S')
+    expect(markdown).toContain('**Relationship:** clarifies')
     expect(markdown).toContain('Owner reviewed both steps together:** YES')
   })
 })

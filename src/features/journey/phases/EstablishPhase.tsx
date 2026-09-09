@@ -1,10 +1,12 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Check, LockKeyhole, Plus, X } from 'lucide-react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { ArcadeButton } from '../../../components/ui/ArcadeButton'
 import type { Json, ProjectRow } from '../../../lib/supabase/database.types'
 import { useLanguage } from '../../i18n/LanguageContext'
-import { completePhase } from '../journey.service'
+import { CrossStepAlignment } from '../CrossStepAlignment'
+import { alignmentIsReady, entriesToRecord, normalizeAlignmentStatus } from '../crossStepAlignmentModel'
+import { completePhase, getPhaseEntries } from '../journey.service'
 import { getFieldGuide } from '../guidanceContent'
 import { JourneyLayout } from '../JourneyLayout'
 import { FieldGuideDetails, FormField, PhaseSection, ReviewGate } from '../PhaseFormComponents'
@@ -16,6 +18,9 @@ const initialEstablish = {
   mustHaves: ['', '', ''] as unknown as Json,
   nonGoals: ['', ''] as unknown as Json,
   scopeAlignmentConfirmed: false,
+  alignmentStatus: '',
+  alignmentNote: '',
+  alignmentConfirmed: false,
 }
 
 export function EstablishPhase({ project }: { project: ProjectRow }) {
@@ -25,14 +30,19 @@ export function EstablishPhase({ project }: { project: ProjectRow }) {
   const queryClient = useQueryClient()
   const mustHaves = draft.values.mustHaves as unknown as string[]
   const nonGoals = draft.values.nonGoals as unknown as string[]
+  const debateEntries = useQuery({ queryKey: ['phase-entries', project.id, 'D'], queryFn: () => getPhaseEntries(project.id, 'D') })
+  const debate = entriesToRecord(debateEntries.data)
+  const alignmentStatus = normalizeAlignmentStatus(draft.values.alignmentStatus)
+  const alignmentNote = String(draft.values.alignmentNote)
   const completion = useMutation({ mutationFn: async () => { await draft.saveAll(); return completePhase(project.id, 'E') }, onSuccess: async () => { await queryClient.invalidateQueries({ queryKey: ['project', project.id] }); navigate(`/projects/${project.id}/S`) } })
-  const resetScopeAlignment = () => draft.setField('scopeAlignmentConfirmed', false)
-  const updateDirection = (value: string) => { draft.setField('direction', value); resetScopeAlignment() }
-  const updateList = (key: 'mustHaves' | 'nonGoals', index: number, value: string) => { const list = key === 'mustHaves' ? mustHaves : nonGoals; draft.setField(key, list.map((item, itemIndex) => itemIndex === index ? value : item) as unknown as Json); resetScopeAlignment() }
-  const removeItem = (key: 'mustHaves' | 'nonGoals', index: number) => { const list = key === 'mustHaves' ? mustHaves : nonGoals; draft.setField(key, list.filter((_, itemIndex) => itemIndex !== index) as unknown as Json); resetScopeAlignment() }
-  const addItem = (key: 'mustHaves' | 'nonGoals') => { const list = key === 'mustHaves' ? mustHaves : nonGoals; draft.setField(key, [...list, ''] as unknown as Json); resetScopeAlignment() }
+  const resetValidations = () => { draft.setField('scopeAlignmentConfirmed', false); draft.setField('alignmentConfirmed', false) }
+  const updateDirection = (value: string) => { draft.setField('direction', value); resetValidations() }
+  const updateList = (key: 'mustHaves' | 'nonGoals', index: number, value: string) => { const list = key === 'mustHaves' ? mustHaves : nonGoals; draft.setField(key, list.map((item, itemIndex) => itemIndex === index ? value : item) as unknown as Json); resetValidations() }
+  const removeItem = (key: 'mustHaves' | 'nonGoals', index: number) => { const list = key === 'mustHaves' ? mustHaves : nonGoals; draft.setField(key, list.filter((_, itemIndex) => itemIndex !== index) as unknown as Json); resetValidations() }
+  const addItem = (key: 'mustHaves' | 'nonGoals') => { const list = key === 'mustHaves' ? mustHaves : nonGoals; draft.setField(key, [...list, ''] as unknown as Json); resetValidations() }
   const overlapTerms = findScopeOverlapTerms(String(draft.values.direction), mustHaves, nonGoals)
-  const ready = String(draft.values.direction).trim() && mustHaves.filter((item) => item.trim()).length >= 1 && nonGoals.filter((item) => item.trim()).length >= 2 && Boolean(draft.values.scopeAlignmentConfirmed)
+  const upstreamReady = alignmentIsReady({ status: alignmentStatus, note: alignmentNote, confirmed: Boolean(draft.values.alignmentConfirmed) })
+  const ready = String(draft.values.direction).trim() && mustHaves.filter((item) => item.trim()).length >= 1 && nonGoals.filter((item) => item.trim()).length >= 2 && Boolean(draft.values.scopeAlignmentConfirmed) && debateEntries.isSuccess && upstreamReady
   const displayedRules = isThai ? [
     'เป็น Web App ที่ทำงานได้ด้วยตัวเอง',
     'บันทึกข้อมูลไว้ใน Browser ได้',
@@ -66,6 +76,25 @@ export function EstablishPhase({ project }: { project: ProjectRow }) {
           <span><strong>{isThai ? 'ฉันตรวจขอบเขตทั้งสามส่วนแล้ว' : 'I REVIEWED ALL THREE SCOPE AREAS'}</strong><small>{isThai ? 'Direction, Must Have และ Non-goal ไม่ขัดกัน และพร้อมส่งต่อไป Step S' : 'Direction, must-haves, and non-goals agree and can be handed to Step S.'}</small></span>
         </label>
       </PhaseSection>
+      <CrossStepAlignment
+        step="04"
+        sourceStep="D"
+        targetStep="E"
+        loading={debateEntries.isLoading}
+        loadError={debateEntries.isError}
+        items={[
+          { label: isThai ? 'ผลต่อ Direction' : 'DIRECTION RESULT', value: String(debate.directionResult ?? '') },
+          { label: isThai ? 'สิ่งที่เปลี่ยนและเหตุผล' : 'WHAT CHANGED AND WHY', value: String(debate.whatChanged ?? '') },
+          { label: isThai ? 'สมมติฐานและการส่งต่อก่อนหน้า' : 'ASSUMPTIONS AND PRIOR HANDOFF', value: [...(Array.isArray(debate.assumptions) ? debate.assumptions.map((item) => item && typeof item === 'object' && !Array.isArray(item) && typeof item.text === 'string' ? item.text : '').filter(Boolean) : []), [String(debate.alignmentStatus ?? ''), String(debate.alignmentNote ?? '')].filter(Boolean).join(' — ')].filter(Boolean) },
+        ]}
+        status={alignmentStatus}
+        note={alignmentNote}
+        confirmed={Boolean(draft.values.alignmentConfirmed)}
+        revisionAction={<Link to={`/projects/${project.id}/D`}>{isThai ? 'กลับไปตรวจ Step D' : 'REVIEW STEP D'}</Link>}
+        onStatusChange={(status) => { draft.setField('alignmentStatus', status); draft.setField('alignmentConfirmed', false) }}
+        onNoteChange={(note) => { draft.setField('alignmentNote', note); draft.setField('alignmentConfirmed', false) }}
+        onConfirmedChange={(confirmed) => draft.setField('alignmentConfirmed', confirmed)}
+      />
       <ReviewGate title={isThai ? 'ตรวจขอบเขตของ Product' : 'SCOPE GATE'} question={isThai ? 'ถ้า Chat เสนอ Feature ใหม่ คุณจะตรวจ Scope ก่อนเพิ่มหรือไม่?' : 'If Chat suggests a new feature, will you check the scope before adding it?'} actions={<ArcadeButton disabled={!ready || completion.isPending} onClick={() => completion.mutate()}><LockKeyhole aria-hidden="true" size={18} /> {completion.isPending ? (isThai ? 'กำลังยืนยัน…' : 'LOCKING…') : (isThai ? 'ยืนยันขอบเขต Product' : 'LOCK PRODUCT SCOPE')}</ArcadeButton>}>
         <dl><div><dt>{isThai ? 'เรากำลังจะสร้าง' : 'WE ARE BUILDING'}</dt><dd>{String(draft.values.direction)}</dd></div><div><dt>{isThai ? 'สิ่งที่ต้องมี' : 'MUST HAVE'}</dt><dd>{mustHaves.filter(Boolean).join(' · ')}</dd></div><div><dt>{isThai ? 'สิ่งที่ยังไม่ทำใน Version นี้' : 'NOT IN THIS VERSION'}</dt><dd>{nonGoals.filter(Boolean).join(' · ')}</dd></div></dl>
         {completion.isError ? <p className="field-error" role="alert">Lock scope ไม่สำเร็จ ข้อมูลยังไม่เปลี่ยนสถานะ</p> : null}
