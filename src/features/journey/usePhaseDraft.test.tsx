@@ -11,11 +11,13 @@ const serviceMocks = vi.hoisted(() => ({
 
 vi.mock('./journey.service', () => serviceMocks)
 
-function wrapper({ children }: { children: ReactNode }) {
+function createWrapper() {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
   })
-  return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+  return function Wrapper({ children }: { children: ReactNode }) {
+    return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+  }
 }
 
 describe('usePhaseDraft', () => {
@@ -30,7 +32,7 @@ describe('usePhaseDraft', () => {
       projectId: 'project-1',
       phase: 'N',
       initialValues: { change: '' },
-    }), { wrapper })
+    }), { wrapper: createWrapper() })
 
     await waitFor(() => expect(result.current.loading).toBe(false))
 
@@ -50,5 +52,35 @@ describe('usePhaseDraft', () => {
       fieldKey: 'change',
       content: 'latest draft',
     })
+  })
+
+  it('waits for an unmount save before hydrating the same phase again', async () => {
+    let finishSave: (() => void) | undefined
+    serviceMocks.savePhaseEntry.mockReturnValue(new Promise<void>((resolve) => {
+      finishSave = resolve
+    }))
+
+    const first = renderHook(() => usePhaseDraft({
+      projectId: 'project-2',
+      phase: 'C',
+      initialValues: { who: '' },
+    }), { wrapper: createWrapper() })
+    await waitFor(() => expect(first.result.current.loading).toBe(false))
+
+    act(() => first.result.current.setField('who', 'latest owner answer'))
+    first.unmount()
+    await waitFor(() => expect(serviceMocks.savePhaseEntry).toHaveBeenCalledTimes(1))
+
+    const second = renderHook(() => usePhaseDraft({
+      projectId: 'project-2',
+      phase: 'C',
+      initialValues: { who: '' },
+    }), { wrapper: createWrapper() })
+    await new Promise((resolve) => window.setTimeout(resolve, 20))
+    expect(serviceMocks.getPhaseEntries).toHaveBeenCalledTimes(1)
+
+    finishSave?.()
+    await waitFor(() => expect(serviceMocks.getPhaseEntries).toHaveBeenCalledTimes(2))
+    second.unmount()
   })
 })

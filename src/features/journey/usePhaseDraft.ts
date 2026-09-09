@@ -9,6 +9,40 @@ import {
 
 export type SaveState = 'idle' | 'saving' | 'saved' | 'error'
 
+type PhaseEntrySave = Parameters<typeof savePhaseEntry>[0]
+
+// Keep writes ordered across route unmounts/remounts. Without a shared queue, a
+// slower stale request can finish after a newer value and overwrite it.
+const phaseSaveQueues = new Map<string, Promise<void>>()
+
+function phaseSaveKey(input: Pick<PhaseEntrySave, 'projectId' | 'phase' | 'section' | 'fieldKey'>) {
+  return `${input.projectId}:${input.phase}:${input.section}:${input.fieldKey}`
+}
+
+function queuePhaseEntrySave(input: PhaseEntrySave) {
+  const key = phaseSaveKey(input)
+  const previous = phaseSaveQueues.get(key) ?? Promise.resolve()
+  const next = previous.catch(() => undefined).then(() => savePhaseEntry(input))
+  phaseSaveQueues.set(key, next)
+  void next.then(
+    () => {
+      if (phaseSaveQueues.get(key) === next) phaseSaveQueues.delete(key)
+    },
+    () => {
+      if (phaseSaveQueues.get(key) === next) phaseSaveQueues.delete(key)
+    },
+  )
+  return next
+}
+
+async function waitForQueuedPhaseSaves(projectId: string, phase: PhaseCode) {
+  const prefix = `${projectId}:${phase}:`
+  const pending = [...phaseSaveQueues.entries()]
+    .filter(([key]) => key.startsWith(prefix))
+    .map(([, save]) => save)
+  await Promise.all(pending)
+}
+
 export function usePhaseDraft<T extends Record<string, Json>>(input: {
   projectId: string
   phase: PhaseCode
@@ -21,12 +55,15 @@ export function usePhaseDraft<T extends Record<string, Json>>(input: {
 
   const entries = useQuery({
     queryKey: ['phase-entries', input.projectId, input.phase],
-    queryFn: () => getPhaseEntries(input.projectId, input.phase),
+    queryFn: async () => {
+      await waitForQueuedPhaseSaves(input.projectId, input.phase)
+      return getPhaseEntries(input.projectId, input.phase)
+    },
   })
 
   const saveEntry = useMutation({
     mutationFn: (entry: { key: keyof T; value: Json }) =>
-      savePhaseEntry({
+      queuePhaseEntrySave({
         projectId: input.projectId,
         phase: input.phase,
         section: 'form',
@@ -56,7 +93,7 @@ export function usePhaseDraft<T extends Record<string, Json>>(input: {
       for (const pending of pendingSaves.current.values()) window.clearTimeout(pending.timer)
       pendingSaves.current.clear()
       if (queued.length) {
-        void Promise.all(queued.map(([key, pending]) => savePhaseEntry({
+        void Promise.all(queued.map(([key, pending]) => queuePhaseEntrySave({
           projectId: input.projectId,
           phase: input.phase,
           section: 'form',
@@ -92,7 +129,7 @@ export function usePhaseDraft<T extends Record<string, Json>>(input: {
     try {
       await Promise.all(
         Object.entries(values).map(([key, value]) =>
-          savePhaseEntry({
+          queuePhaseEntrySave({
             projectId: input.projectId,
             phase: input.phase,
             section: 'form',
