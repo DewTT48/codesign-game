@@ -17,7 +17,7 @@ export function usePhaseDraft<T extends Record<string, Json>>(input: {
   const [values, setValues] = useState<T>(input.initialValues)
   const [saveState, setSaveState] = useState<SaveState>('idle')
   const hydrated = useRef(false)
-  const timers = useRef(new Map<keyof T, number>())
+  const pendingSaves = useRef(new Map<keyof T, { timer: number; value: Json }>())
 
   const entries = useQuery({
     queryKey: ['phase-entries', input.projectId, input.phase],
@@ -52,29 +52,42 @@ export function usePhaseDraft<T extends Record<string, Json>>(input: {
 
   useEffect(
     () => () => {
-      for (const timer of timers.current.values()) window.clearTimeout(timer)
+      const queued = [...pendingSaves.current.entries()]
+      for (const pending of pendingSaves.current.values()) window.clearTimeout(pending.timer)
+      pendingSaves.current.clear()
+      if (queued.length) {
+        void Promise.all(queued.map(([key, pending]) => savePhaseEntry({
+          projectId: input.projectId,
+          phase: input.phase,
+          section: 'form',
+          fieldKey: String(key),
+          content: pending.value,
+        }))).catch(() => undefined)
+      }
     },
-    [],
+    [input.phase, input.projectId],
   )
 
   const setField = useCallback(
     <K extends keyof T>(key: K, value: T[K]) => {
       setValues((current) => ({ ...current, [key]: value }))
       setSaveState('idle')
-      const existingTimer = timers.current.get(key)
-      if (existingTimer) window.clearTimeout(existingTimer)
+      const existing = pendingSaves.current.get(key)
+      if (existing) window.clearTimeout(existing.timer)
       const timer = window.setTimeout(() => {
-        timers.current.delete(key)
+        const pending = pendingSaves.current.get(key)
+        if (!pending || pending.timer !== timer) return
+        pendingSaves.current.delete(key)
         saveEntry.mutate({ key, value })
       }, 700)
-      timers.current.set(key, timer)
+      pendingSaves.current.set(key, { timer, value })
     },
     [saveEntry],
   )
 
   const saveAll = useCallback(async () => {
-    for (const timer of timers.current.values()) window.clearTimeout(timer)
-    timers.current.clear()
+    for (const pending of pendingSaves.current.values()) window.clearTimeout(pending.timer)
+    pendingSaves.current.clear()
     setSaveState('saving')
     try {
       await Promise.all(

@@ -167,12 +167,38 @@ export async function startPhaseRevision(input: {
   if (!reason) throw new Error('Please explain why this revision is needed.')
 
   const client = requireSupabase()
+  const project = await getProject(input.projectId)
+  const affectedPhases = affectedRevisionPhases(input.targetPhase, project.current_phase)
+  if (!affectedPhases.length) throw new Error('This step is not available for revision.')
   const rpcResult = await client.rpc('start_phase_revision', {
     target_project_id: input.projectId,
     target_phase: input.targetPhase,
     change_reason: reason,
   })
-  if (!rpcResult.error) return rpcResult.data
+  if (!rpcResult.error) {
+    // Hosted projects can briefly run an older function while a migration rolls
+    // out. Normalize every affected current row so stale confirmations can never
+    // bypass the required re-review gates.
+    const { data: currentEntries, error: currentEntriesError } = await client
+      .from('phase_entries')
+      .select('id, phase, field_key, content')
+      .eq('project_id', input.projectId)
+      .in('phase', affectedPhases)
+      .eq('is_current', true)
+    if (currentEntriesError) throw currentEntriesError
+
+    const resets = currentEntries.flatMap((entry) => {
+      const content = contentForRevision(entry.phase as PhaseCode, entry.field_key, entry.content)
+      return JSON.stringify(content) === JSON.stringify(entry.content) ? [] : [{ id: entry.id, content }]
+    })
+    const resetResults = await Promise.all(resets.map((entry) => client
+      .from('phase_entries')
+      .update({ content: entry.content })
+      .eq('id', entry.id)))
+    const resetError = resetResults.find((result) => result.error)?.error
+    if (resetError) throw resetError
+    return rpcResult.data
+  }
   const isMissingFunction = ['PGRST202', '42883'].includes(rpcResult.error.code ?? '')
   const isOlderRevisionFunction = rpcResult.error.code === 'P0001'
     && /not available for revision/i.test(rpcResult.error.message)
@@ -180,10 +206,6 @@ export async function startPhaseRevision(input: {
 
   // Backward-compatible client transaction while the atomic database function is
   // being rolled out. Every original row remains available as a superseded version.
-  const project = await getProject(input.projectId)
-  const affectedPhases = affectedRevisionPhases(input.targetPhase, project.current_phase)
-  if (!affectedPhases.length) throw new Error('This step is not available for revision.')
-
   const { data: originals, error: originalError } = await client
     .from('phase_entries')
     .select('*')
