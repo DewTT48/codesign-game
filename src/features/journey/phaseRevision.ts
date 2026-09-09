@@ -5,8 +5,10 @@ import { phaseSequence } from './phaseNavigation'
 export const revisionTargets: PhaseCode[] = ['C', 'O', 'D', 'E', 'S', 'PRD']
 
 const booleanConfirmations = new Set([
+  'E:scopeAlignmentConfirmed',
   'S:contentOwnerConfirmed',
   'S:experienceOwnerConfirmed',
+  'S:alignmentConfirmed',
   'I:workingApp',
   'G:mobile',
   'G:start',
@@ -23,6 +25,12 @@ const listConfirmations = new Set([
   'PRD:confirmedFilesV2',
 ])
 
+const emptyTextOnRevision = new Set([
+  'S:alignmentStatus',
+  'S:alignmentNote',
+  'PRD:reviewOutcomeV2',
+])
+
 export function contentForRevision(
   phase: PhaseCode,
   fieldKey: string,
@@ -31,6 +39,7 @@ export function contentForRevision(
   const key = `${phase}:${fieldKey}`
   if (booleanConfirmations.has(key)) return false
   if (listConfirmations.has(key)) return []
+  if (emptyTextOnRevision.has(key)) return ''
   return content
 }
 

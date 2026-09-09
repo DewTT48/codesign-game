@@ -13,6 +13,8 @@ export type OwnerSpecificationImport = {
   contentPattern: string
   exercisePattern: string
   recordPattern: string
+  alignmentStatus: 'aligned' | 'clarifies' | 'revision' | ''
+  alignmentNote: string
 }
 
 export type SpecifyMarkdownImport = {
@@ -40,6 +42,8 @@ const ownerLabels = [
   'DAILY_CONTENT_PATTERN',
   'DAILY_EXERCISE_PATTERN',
   'DAILY_RECORD_PATTERN',
+  'ALIGNMENT_WITH_STEP_E',
+  'ALIGNMENT_NOTE',
 ] as const
 const dailyLabels = ['TITLE', 'OBJECTIVE', 'CONTENT', 'EXERCISE', 'REFLECTION', 'RECORD', 'COMPLETION', 'DURATION'] as const
 const experienceLabels = ['NAME', 'MOOD', 'BACKGROUND', 'SURFACE', 'PRIMARY', 'ACCENT', 'TEXT', 'TYPOGRAPHY', 'INTERACTION', 'RATIONALE', 'TRADEOFF'] as const
@@ -70,6 +74,8 @@ export function parseSpecifyMarkdown(source: string): SpecifyMarkdownImport {
     contentPattern: ownerFields.DAILY_CONTENT_PATTERN,
     exercisePattern: ownerFields.DAILY_EXERCISE_PATTERN,
     recordPattern: ownerFields.DAILY_RECORD_PATTERN,
+    alignmentStatus: normalizeChoice(ownerFields.ALIGNMENT_WITH_STEP_E, ['aligned', 'clarifies', 'revision'] as const),
+    alignmentNote: ownerFields.ALIGNMENT_NOTE,
   } satisfies OwnerSpecificationImport : null
 
   const days = parseSections(markdown, /^##\s+DAY\s+(\d{1,2})\s*$/gim).flatMap(({ id, body }) => {
@@ -204,7 +210,9 @@ ARC_3_TITLE: ${owner.contentArcs[2]?.title ?? ''}
 ARC_3_GOAL: ${owner.contentArcs[2]?.goal ?? ''}
 DAILY_CONTENT_PATTERN: ${owner.contentPattern}
 DAILY_EXERCISE_PATTERN: ${owner.exercisePattern}
-DAILY_RECORD_PATTERN: ${owner.recordPattern}`
+DAILY_RECORD_PATTERN: ${owner.recordPattern}
+ALIGNMENT_WITH_STEP_E: ${owner.alignmentStatus}
+ALIGNMENT_NOTE: ${owner.alignmentNote}`
 }
 
 export function serializeExperienceDraft(options: ExperienceOption[]) {

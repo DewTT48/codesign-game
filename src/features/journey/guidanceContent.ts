@@ -197,7 +197,9 @@ export function getPhaseGuide(
   const constraints = sourceValue(source, 'C', 'constraints')
   const direction = sourceValue(source, 'E', 'direction')
   const mustHaves = sourceValue(source, 'E', 'mustHaves')
-  const nonGoals = sourceValue(source, 'E', 'nonGoals')
+  const baseNonGoals = sourceValue(source, 'E', 'nonGoals')
+  const alignmentRecord = `E → S ALIGNMENT: ${sourceValue(source, 'S', 'alignmentStatus')}\nALIGNMENT NOTE / LATEST INTERPRETATION: ${sourceValue(source, 'S', 'alignmentNote')}`
+  const nonGoals = phase === 'PRD' ? `${baseNonGoals}\n${alignmentRecord}` : baseNonGoals
   const debateOptions = formatOptionsForPrompt(source)
 
   const guides: Record<string, Localized<PhaseGuide>> = {
@@ -383,6 +385,8 @@ DAILY RECORD PATTERN: ${text(current.recordPattern)}
 5. หลังเลือก Direction แล้ว ตรวจเฉพาะความกำกวมที่เปลี่ยน Product behavior, เนื้อหาหลัก หรือผลลัพธ์ของผู้ใช้
 6. หากต้องถาม ให้ถามทีละคำถาม ไม่เกิน 5 คำถามสำคัญ รายละเอียดมาตรฐานที่ย้อนแก้ได้ให้เสนอค่าแนะนำพร้อมป้าย AI RECOMMENDATION
 7. หลังแต่ละคำตอบ ให้จำเฉพาะข้อสรุปที่ผมยอมรับแล้ว ห้ามถือว่า Recommendation ที่ยังไม่ยืนยันเป็นการตัดสินใจ
+7.1 ก่อนร่างเนื้อหา ให้เทียบข้อสรุปทั้งหมดกับ LOCKED DIRECTION, MUST HAVE และ NOT IN THIS VERSION แล้วระบุหนึ่งสถานะ: aligned, clarifies หรือ revision
+7.2 หากเป็น clarifies ต้องสรุปคำตัดสินล่าสุดที่ทำให้ข้อความเดิมชัดขึ้น หากเป็น revision ให้หยุดและบอกว่าต้องกลับไปแก้ Step E ห้ามร่างต่อโดยเปลี่ยนขอบเขตเงียบ ๆ
 
 ขั้นที่ 3 — แสดงร่างให้อ่านและทำความเข้าใจก่อน
 8. สรุป Owner Specification, Direction ที่เลือก, Content Arcs และ Daily Pattern เป็นภาษาคนอ่านก่อน
@@ -421,6 +425,8 @@ ARC_3_GOAL:
 DAILY_CONTENT_PATTERN:
 DAILY_EXERCISE_PATTERN:
 DAILY_RECORD_PATTERN:
+ALIGNMENT_WITH_STEP_E: aligned | clarifies | revision
+ALIGNMENT_NOTE:
 
 CONTENT PACK TEMPLATE — ทำให้ครบ DAY 01 ถึง DAY 21:
 <!-- CODESIGN:CONTENT_PACK:v1 -->
@@ -512,6 +518,8 @@ STAGE 2 — RESOLVE HIGH-IMPACT QUESTIONS
 5. After I choose a direction, ask only about ambiguity that materially changes product behavior, core content, or user outcomes.
 6. Ask one question at a time, with no more than five high-impact questions. For reversible standard detail, offer a sensible default labeled AI RECOMMENDATION.
 7. Retain only decisions I explicitly accept. Never treat an unaccepted recommendation as a decision.
+7.1 Before drafting content, compare every conclusion with LOCKED DIRECTION, MUST HAVE, and NOT IN THIS VERSION, then report one relationship: aligned, clarifies, or revision.
+7.2 For clarifies, state the latest interpretation explicitly. For revision, stop and tell me to revise Step E; never continue by silently changing the scope.
 
 STAGE 3 — SHOW A HUMAN-READABLE DRAFT FIRST
 8. Summarize the Owner Specification, selected direction, Content Arcs, and Daily Pattern in plain language.
@@ -550,6 +558,8 @@ ARC_3_GOAL:
 DAILY_CONTENT_PATTERN:
 DAILY_EXERCISE_PATTERN:
 DAILY_RECORD_PATTERN:
+ALIGNMENT_WITH_STEP_E: aligned | clarifies | revision
+ALIGNMENT_NOTE:
 
 CONTENT PACK TEMPLATE — repeat for DAY 01 through DAY 21:
 <!-- CODESIGN:CONTENT_PACK:v1 -->

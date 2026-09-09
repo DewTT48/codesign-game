@@ -150,6 +150,14 @@ ${bullets(acceptance)}
 ${text(specify.advancedNotes, 'No additional owner-written build notes.')}
 
 Codex may decide component structure, spacing, responsive layout, code organization, validation details, and implementation-level states that do not change the locked product behavior. If an ambiguity would materially change the user, goal, journey, content, completion rule, scope, data behavior, or experience direction, mark it **PRODUCT DECISION REQUIRED** and ask the owner one clear question.
+
+## 13. Cross-step Alignment Record
+
+- **Step E → Step S relationship:** ${text(specify.alignmentStatus)}
+- **Latest owner interpretation:** ${text(specify.alignmentNote, 'No clarification needed; Step S is aligned with Step E as written.')}
+- **Owner reviewed both steps together:** ${specify.alignmentConfirmed ? 'YES' : 'NO'}
+
+When the relationship is **clarifies**, the latest owner interpretation above governs how earlier broad wording is implemented. When it is **revision**, this package is not ready to lock and the relevant source step must be revised first.
 `
 }
 

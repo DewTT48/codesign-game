@@ -103,6 +103,8 @@ describe('guided content', () => {
     expect(guide.prompt).toContain('DAY 01–07, DAY 08–14, and DAY 15–21')
     expect(guide.prompt).toContain('APPROVE COMPLETE DRAFT')
     expect(guide.prompt).toContain('CREATE CODESIGN_SPEC.md')
+    expect(guide.prompt).toContain('ALIGNMENT_WITH_STEP_E: aligned | clarifies | revision')
+    expect(guide.prompt).toContain('never continue by silently changing the scope')
     expect(guide.prompt).not.toContain('type FINALIZE')
     expect(guide.prompt).toContain('CODESIGN_SPEC.md')
     expect(guide.prompt).toContain('must not use JSON')
@@ -130,7 +132,7 @@ describe('guided content', () => {
   })
 
   it('reviews three source files against locked decisions and returns complete updates', () => {
-    const guide = getPhaseGuide('th', 'PRD', { C: { who: 'พนักงานใหม่', goal: 'เติบโตในงาน' } }, {
+    const guide = getPhaseGuide('th', 'PRD', { C: { who: 'พนักงานใหม่', goal: 'เติบโตในงาน' }, S: { alignmentStatus: 'clarifies', alignmentNote: 'เวลาใน Product ไม่รวมการลงมือทำจริง' } }, {
       handoff: 'HANDOFF CONTENT',
       contentPack: 'CONTENT PACK CONTENT',
       experienceDirection: 'EXPERIENCE CONTENT',
@@ -141,6 +143,7 @@ describe('guided content', () => {
     expect(guide.prompt).toContain('EXPERIENCE CONTENT')
     expect(guide.prompt).toContain('LOCKED OWNER DECISIONS')
     expect(guide.prompt).toContain('WHO: พนักงานใหม่')
+    expect(guide.prompt).toContain('E → S ALIGNMENT: clarifies')
     expect(guide.prompt).toContain('ASSEMBLY MISMATCH')
     expect(guide.prompt).toContain('READY TO LOCK')
     expect(guide.prompt).toContain('FILE UPDATE REQUIRED')

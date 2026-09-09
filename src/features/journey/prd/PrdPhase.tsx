@@ -24,6 +24,8 @@ const fileFieldKeys: Record<PrdFileKey, string> = {
 const emptyDrafts: PrdDrafts = { handoff: '', contentPack: '', experienceDirection: '' }
 // V2 deliberately ignores confirmations created by the old "open means reviewed" behavior.
 const reviewFieldKey = 'confirmedFilesV2'
+const reviewOutcomeFieldKey = 'reviewOutcomeV2'
+type ReviewOutcome = 'ready' | 'files' | 'revision'
 
 export function PrdPhase({ project }: { project: ProjectRow }) {
   const { isThai } = useLanguage()
@@ -38,7 +40,7 @@ export function PrdPhase({ project }: { project: ProjectRow }) {
   const [scrolledFiles, setScrolledFiles] = useState<PrdFileKey[]>([])
   const [dirtyFiles, setDirtyFiles] = useState<PrdFileKey[]>([])
   const [viewMode, setViewMode] = useState<'preview' | 'edit'>('preview')
-  const [reviewOutcome, setReviewOutcome] = useState<'ready' | 'files' | 'revision' | null>(null)
+  const [reviewOutcome, setReviewOutcome] = useState<ReviewOutcome | null>(null)
   const [saveState, setSaveState] = useState<SaveState>('idle')
   const [feedback, setFeedback] = useState('')
 
@@ -63,16 +65,21 @@ export function PrdPhase({ project }: { project: ProjectRow }) {
     const initialReviewed: PrdFileKey[] = Array.isArray(savedReviewed)
       ? savedReviewed.filter((value): value is PrdFileKey => prdFiles.some((file) => file.key === value))
       : []
+    const savedOutcome = draft.data.find((entry) => entry.fieldKey === reviewOutcomeFieldKey)?.content
+    const initialOutcome: ReviewOutcome | null = savedOutcome === 'ready' || savedOutcome === 'files' || savedOutcome === 'revision' ? savedOutcome : null
     setFiles(initial)
     setReviewedFiles(initialReviewed)
+    setReviewOutcome(initialOutcome)
 
     const missing = prdFiles.filter(({ key }) => !draft.data.some((entry) => entry.fieldKey === fileFieldKeys[key]))
     const missingReview = !draft.data.some((entry) => entry.fieldKey === reviewFieldKey)
-    if (missing.length || missingReview) {
+    const missingOutcome = !draft.data.some((entry) => entry.fieldKey === reviewOutcomeFieldKey)
+    if (missing.length || missingReview || missingOutcome) {
       setSaveState('saving')
       void Promise.all([
         ...missing.map(({ key }) => savePhaseEntry({ projectId: project.id, phase: 'PRD' as const, section: 'document', fieldKey: fileFieldKeys[key], content: initial[key] })),
         ...(missingReview ? [savePhaseEntry({ projectId: project.id, phase: 'PRD' as const, section: 'review', fieldKey: reviewFieldKey, content: initialReviewed })] : []),
+        ...(missingOutcome ? [savePhaseEntry({ projectId: project.id, phase: 'PRD' as const, section: 'review', fieldKey: reviewOutcomeFieldKey, content: initialOutcome ?? '' })] : []),
       ]).then(() => setSaveState('saved')).catch(() => setSaveState('error'))
     } else setSaveState('saved')
   }, [draft.data, project, source.data])
@@ -96,6 +103,18 @@ export function PrdPhase({ project }: { project: ProjectRow }) {
     } catch (error) {
       setSaveState('error')
       throw error
+    }
+  }
+
+  const chooseReviewOutcome = async (outcome: ReviewOutcome) => {
+    setReviewOutcome(outcome)
+    setSaveState('saving')
+    try {
+      await savePhaseEntry({ projectId: project.id, phase: 'PRD', section: 'review', fieldKey: reviewOutcomeFieldKey, content: outcome })
+      setSaveState('saved')
+    } catch {
+      setReviewOutcome(null)
+      setSaveState('error')
     }
   }
 
@@ -179,11 +198,14 @@ export function PrdPhase({ project }: { project: ProjectRow }) {
   const documentChecks = Object.fromEntries(prdFiles.map(({ key }) => [key, validatePrdDocument(key, files[key])])) as Record<PrdFileKey, ReturnType<typeof validatePrdDocument>>
   const allValid = prdFiles.every(({ key }) => documentChecks[key].valid)
   const allReviewed = prdFiles.every(({ key }) => reviewedFiles.includes(key))
+  const reviewResolved = reviewOutcome === 'ready' || reviewOutcome === 'files'
 
   const completion = useMutation({
     mutationFn: async () => {
+      if (!reviewResolved) throw new Error('PRD review outcome is unresolved')
       await Promise.all(prdFiles.map(({ key }) => persist(key, files[key])))
       await persistReviewed(reviewedFiles)
+      await savePhaseEntry({ projectId: project.id, phase: 'PRD', section: 'review', fieldKey: reviewOutcomeFieldKey, content: reviewOutcome })
       return lockPrd(project.id, files)
     },
     onSuccess: async () => {
@@ -237,13 +259,13 @@ export function PrdPhase({ project }: { project: ProjectRow }) {
         </div>
 
         <div className="prd-review-outcomes" role="group" aria-label={isThai ? 'เลือกผลการตรวจจาก Chat' : 'Choose the Chat review result'}>
-          <button type="button" className={reviewOutcome === 'ready' ? 'is-active is-ready' : ''} aria-pressed={reviewOutcome === 'ready'} onClick={() => setReviewOutcome('ready')}>
+          <button type="button" className={reviewOutcome === 'ready' ? 'is-active is-ready' : ''} aria-pressed={reviewOutcome === 'ready'} onClick={() => void chooseReviewOutcome('ready')}>
             <Check size={22} /><span><strong>READY TO LOCK</strong><small>{isThai ? 'ไม่พบจุดที่เปลี่ยนการสร้าง ใช้ไฟล์เดิมต่อได้' : 'No build-changing issue; continue with the current files.'}</small></span>
           </button>
-          <button type="button" className={reviewOutcome === 'files' ? 'is-active is-files' : ''} aria-pressed={reviewOutcome === 'files'} onClick={() => setReviewOutcome('files')}>
+          <button type="button" className={reviewOutcome === 'files' ? 'is-active is-files' : ''} aria-pressed={reviewOutcome === 'files'} onClick={() => void chooseReviewOutcome('files')}>
             <FileUp size={22} /><span><strong>FILE UPDATE REQUIRED</strong><small>{isThai ? 'แก้ให้ตรงกับการตัดสินใจเดิม โดยไม่เปลี่ยน Product' : 'Align the files to existing decisions without changing the product.'}</small></span>
           </button>
-          <button type="button" className={reviewOutcome === 'revision' ? 'is-active is-revision' : ''} aria-pressed={reviewOutcome === 'revision'} onClick={() => setReviewOutcome('revision')}>
+          <button type="button" className={reviewOutcome === 'revision' ? 'is-active is-revision' : ''} aria-pressed={reviewOutcome === 'revision'} onClick={() => void chooseReviewOutcome('revision')}>
             <RotateCcw size={22} /><span><strong>REVISION REQUIRED</strong><small>{isThai ? 'ต้องเปลี่ยนการตัดสินใจใน Step E หรือ S ก่อน' : 'A decision in Step E or S must change first.'}</small></span>
           </button>
         </div>
@@ -300,9 +322,10 @@ export function PrdPhase({ project }: { project: ProjectRow }) {
 
       <ReviewGate title={isThai ? 'ยืนยันชุดส่งต่องานฉบับหลัก' : 'LOCK THE SOURCE PACKAGE'} question={isThai ? 'ไฟล์หลักทั้ง 3 ฉบับสะท้อนสิ่งที่คุณตัดสินใจ ตรงกัน และพร้อมนำไปประกอบชุดสำหรับ Codex แล้วหรือยัง?' : 'Do all three source files reflect your decisions, agree with each other, and feel ready for the Codex package?'} actions={<>
         <ArcadeButton variant="secondary" onClick={() => { setFeedback(isThai ? 'เปิดไฟล์ที่ยังไม่ยืนยัน อ่านถึงด้านล่าง หรือแก้ข้อความที่ไม่ตรงกับการตัดสินใจของคุณ' : 'OPEN AN UNCONFIRMED FILE, READ TO THE END, OR CORRECT IT.'); const first = prdFiles.find(({ key }) => !reviewedFiles.includes(key) || !documentChecks[key].valid); openFile(first?.key ?? 'handoff') }}>{isThai ? 'ยัง — ตรวจอีกครั้ง' : 'NOT YET — REVIEW'}</ArcadeButton>
-        <ArcadeButton disabled={!allValid || !allReviewed || dirtyFiles.length > 0 || completion.isPending || saveState === 'saving'} onClick={() => completion.mutate()}><LockKeyhole size={18} /> {completion.isPending ? (isThai ? 'กำลังยืนยัน…' : 'LOCKING…') : (isThai ? 'พร้อม — Lock ทั้ง 3 ไฟล์' : 'READY — LOCK ALL THREE')}</ArcadeButton>
+        <ArcadeButton disabled={!reviewResolved || !allValid || !allReviewed || dirtyFiles.length > 0 || completion.isPending || saveState === 'saving'} onClick={() => completion.mutate()}><LockKeyhole size={18} /> {completion.isPending ? (isThai ? 'กำลังยืนยัน…' : 'LOCKING…') : (isThai ? 'พร้อม — Lock ทั้ง 3 ไฟล์' : 'READY — LOCK ALL THREE')}</ArcadeButton>
       </>}>
         <p>{isThai ? `ยืนยันแล้ว ${reviewedFiles.length}/3 ไฟล์ เมื่อ Lock ระบบจะเก็บทั้ง 3 ไฟล์เป็นชุด Version เดียวกัน จากนั้น Stage Implement จะสร้าง START_WITH_CODEX.md ตามความพร้อม GitHub ของคุณ` : `${reviewedFiles.length}/3 files confirmed. Locking stores all three as one version. Implement then creates START_WITH_CODEX.md from your GitHub readiness.`}</p>
+        {!reviewResolved ? <p className="field-error" role="alert">{isThai ? 'ยัง Lock ไม่ได้ กรุณาบันทึกผลตรวจเป็น READY TO LOCK หรือ FILE UPDATE REQUIRED ก่อน' : 'LOCKING IS DISABLED UNTIL THE REVIEW RESULT IS READY TO LOCK OR FILE UPDATE REQUIRED.'}</p> : null}
         {!allValid ? <p className="field-error" role="alert">{isThai ? 'ยัง Lock ไม่ได้ เพราะมีไฟล์ที่โครงสร้างไม่ครบ' : 'LOCKING IS DISABLED UNTIL EVERY FILE PASSES STRUCTURE CHECKS.'}</p> : null}
         {dirtyFiles.length > 0 ? <p className="field-error" role="alert">{isThai ? 'ยัง Lock ไม่ได้ เพราะมีไฟล์ที่แก้ไขแล้วแต่ยังไม่ได้กดบันทึก' : 'LOCKING IS DISABLED WHILE A FILE HAS UNSAVED CHANGES.'}</p> : null}
         {completion.isError ? <p className="field-error" role="alert">{isThai ? 'Lock PRD ไม่สำเร็จ ข้อมูลยังคงเป็น Draft' : 'PRD LOCK FAILED. YOUR FILES REMAIN DRAFTS.'}</p> : null}

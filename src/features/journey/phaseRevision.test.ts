@@ -20,7 +20,10 @@ describe('phaseRevision', () => {
   it('preserves content while clearing confirmations that must be reviewed again', () => {
     expect(contentForRevision('S', 'dailyContent', [{ day: 1, title: 'Day one' }])).toEqual([{ day: 1, title: 'Day one' }])
     expect(contentForRevision('S', 'contentOwnerConfirmed', true)).toBe(false)
+    expect(contentForRevision('S', 'alignmentConfirmed', true)).toBe(false)
+    expect(contentForRevision('S', 'alignmentStatus', 'clarifies')).toBe('')
     expect(contentForRevision('PRD', 'confirmedFilesV2', ['handoff', 'contentPack'])).toEqual([])
+    expect(contentForRevision('PRD', 'reviewOutcomeV2', 'ready')).toBe('')
     expect(contentForRevision('I', 'workingApp', true)).toBe(false)
     expect(contentForRevision('G', 'mobile', true)).toBe(false)
   })

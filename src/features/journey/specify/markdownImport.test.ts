@@ -20,6 +20,8 @@ describe('Specify Markdown import', () => {
     contentPattern: 'แนวคิดสั้นหนึ่งเรื่อง',
     exercisePattern: 'ลงมือทำหนึ่งอย่าง',
     recordPattern: 'สิ่งที่เกิดขึ้น สิ่งที่เปลี่ยน และหลักฐาน',
+    alignmentStatus: 'clarifies' as const,
+    alignmentNote: 'เวลา 5–10 นาทีหมายถึงเวลาใน Product เท่านั้น',
   }
 
   it('parses the owner specification used to populate S1–S2', () => {

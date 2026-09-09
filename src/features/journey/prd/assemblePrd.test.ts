@@ -56,6 +56,9 @@ describe('assemblePrd', () => {
         dailyContent: [{ day: 1, title: 'Begin', objective: 'Start', content: 'Read', exercise: 'Write', reflection: 'Notice', record: 'Answer', completion: 'Save', duration: '5 min', reviewed: true }],
         selectedExperience: 'Calm Focus',
         experienceOwnerConfirmed: true,
+        alignmentStatus: 'clarifies',
+        alignmentNote: 'The ten-minute duration covers in-product reading and recording only.',
+        alignmentConfirmed: true,
       },
     })
 
@@ -64,5 +67,8 @@ describe('assemblePrd', () => {
     expect(markdown).toContain('Owner-selected direction:** Calm Focus')
     expect(markdown).toContain('Thai content must use natural word wrapping')
     expect(markdown).toContain('No embedded AI')
+    expect(markdown).toContain('## 13. Cross-step Alignment Record')
+    expect(markdown).toContain('Step E → Step S relationship:** clarifies')
+    expect(markdown).toContain('Owner reviewed both steps together:** YES')
   })
 })
