@@ -59,12 +59,16 @@ describe('usePhaseDraft', () => {
     serviceMocks.savePhaseEntry.mockReturnValue(new Promise<void>((resolve) => {
       finishSave = resolve
     }))
+    serviceMocks.getPhaseEntries
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([{ id: 'who-v1', fieldKey: 'who', content: 'latest owner answer', status: 'captured' }])
+    const sharedWrapper = createWrapper()
 
     const first = renderHook(() => usePhaseDraft({
       projectId: 'project-2',
       phase: 'C',
       initialValues: { who: '' },
-    }), { wrapper: createWrapper() })
+    }), { wrapper: sharedWrapper })
     await waitFor(() => expect(first.result.current.loading).toBe(false))
 
     act(() => first.result.current.setField('who', 'latest owner answer'))
@@ -75,12 +79,13 @@ describe('usePhaseDraft', () => {
       projectId: 'project-2',
       phase: 'C',
       initialValues: { who: '' },
-    }), { wrapper: createWrapper() })
+    }), { wrapper: sharedWrapper })
     await new Promise((resolve) => window.setTimeout(resolve, 20))
     expect(serviceMocks.getPhaseEntries).toHaveBeenCalledTimes(1)
 
     finishSave?.()
     await waitFor(() => expect(serviceMocks.getPhaseEntries).toHaveBeenCalledTimes(2))
+    await waitFor(() => expect(second.result.current.values.who).toBe('latest owner answer'))
     second.unmount()
   })
 })
