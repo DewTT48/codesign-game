@@ -6,7 +6,8 @@
   /* Press Start 2P contains Latin glyphs only. Keep Chakra Petch next in the
      stack so every Thai glyph uses the same face instead of a browser-chosen
      system fallback. */
-  --font-display: 'Press Start 2P', 'Chakra Petch', monospace;
+  --font-pixel: 'Press Start 2P', 'Chakra Petch', monospace;
+  --font-display: var(--font-pixel);
   --deep: #0b5792;
   --deep-2: #063761;
   --deep-3: #1674ad;
@@ -25,6 +26,13 @@
   --positive: var(--green);
   font-synthesis: none;
   text-rendering: optimizeLegibility;
+}
+
+/* In the Thai interface, Chakra Petch is the default for the complete text
+   run. This prevents embedded Latin words from switching to a second face.
+   Deliberate arcade marks and short codes opt back into --font-pixel below. */
+:root:lang(th) {
+  --font-display: var(--font-body);
 }
 
 :root[data-theme='deep-sea'] {
@@ -7323,6 +7331,203 @@ a.mission-node__content:focus-visible {
     align-items: stretch;
     flex-direction: column;
   }
+}
+
+/* System-wide Thai typography contract
+   ------------------------------------
+   Thai UI copy uses one face for the complete text run, including embedded
+   Latin words. Compact UI copy has a 15px floor and actionable/content labels
+   use 16px. The pixel face is an explicit exception, never the default. */
+:lang(th) :is(
+  .creator-credit,
+  .mission-you,
+  .mission-viewing,
+  .project-card__meta,
+  .phase-revision-history > div > details > summary small,
+  .revision-timeline article > header small,
+  .prd-revision-links small,
+  .prd-import__status-grid small
+) {
+  font-family: var(--font-body);
+  font-size: 15px;
+  letter-spacing: 0;
+  line-height: 1.55;
+}
+
+:lang(th) :is(
+  .eyebrow,
+  .chapter-code,
+  .panel-kicker,
+  .section-label,
+  .arcade-button,
+  .text-action,
+  .mission-badge,
+  .mission-name,
+  .solid-meter__header strong,
+  .solid-meter__label,
+  .role-callout strong,
+  .time-card > span,
+  .github-preview span,
+  .launch-row > div > span,
+  .route-loading,
+  .secondary-action,
+  .dashboard-state,
+  .dashboard-state--error button,
+  .mission-manage-action,
+  .archive-card__actions button,
+  .delete-dialog__actions button,
+  .archive-section__heading > span,
+  .archive-card > div:first-child > span,
+  .admin-readonly-badge,
+  .admin-heading__actions button,
+  .admin-metric-card span,
+  .admin-phase-row > small,
+  .admin-user-search button,
+  .admin-user-identity > span,
+  .admin-user-stats dt,
+  .admin-empty-users,
+  .admin-generated-at,
+  .topic-field label,
+  .readiness-fieldset legend,
+  .readiness-option strong,
+  .readiness-option small,
+  .form-actions > span,
+  .save-indicator,
+  .guidance-actions button,
+  .help-panel__header > span,
+  .help-panel small,
+  .prompt-copy,
+  .prompt-kit section > strong,
+  .form-field__control > span,
+  .form-field em,
+  .field-guide summary,
+  .field-guide p,
+  .field-guide p strong,
+  .chat-mission-card span,
+  .chat-mission-card strong,
+  .phase-next-row p,
+  .review-gate > span,
+  .review-gate dt,
+  .prd-checklist span,
+  .prd-toolbar button,
+  .prd-toolbar span,
+  .handoff-file-grid small,
+  .prd-file-workspace > header span,
+  .prd-view-switch button,
+  .prd-source-editor summary,
+  .prd-chat-flow strong,
+  .prd-file-confirmation button,
+  .github-basics strong,
+  .codex-handoff-actions button,
+  .codex-handoff-actions > span,
+  .implementation-steps li span,
+  .test-checklist label,
+  .completion-hero > span,
+  .completion-artifacts article > span,
+  .completion-actions > span,
+  .completion-artifacts a,
+  .completion-artifacts button,
+  .journal-preview button,
+  .completion-status,
+  .debate-guide > header > span,
+  .debate-guide h3,
+  .debate-guide__steps strong,
+  .debate-guide__reference h3,
+  .debate-guide dt,
+  .debate-guide__example summary,
+  .assumption-card__remove,
+  .option-card > header,
+  .favorite-summary small,
+  .stance-buttons button,
+  .simple-choice,
+  .list-editor h3,
+  .list-editor li > span,
+  .add-list-item,
+  .reorder-list h3,
+  .reorder-list li > span,
+  .screen-spec-card > header,
+  .specify-intro > span,
+  .spec-import__header > div > span,
+  .day-editor-card header span,
+  .experience-detail header span,
+  .content-pack-progress > span,
+  .content-arc-grid label strong,
+  .day-editor-fields label strong,
+  .day-editor-fields small,
+  .rule-select-grid > label > span,
+  .phase-history__readonly,
+  .phase-history__hero > div:nth-child(2) > span,
+  .phase-history__nav > span,
+  .phase-history__nav a,
+  .phase-history__results > header span,
+  .phase-history__object dt,
+  .revision-history-page__hero span,
+  .revision-timeline > header span,
+  .revision-timeline article > header span,
+  .active-revision-banner p,
+  .active-revision-banner a,
+  .prd-import > header span
+) {
+  font-family: var(--font-body);
+  font-size: 16px;
+  letter-spacing: 0;
+  line-height: 1.55;
+}
+
+:lang(th) :is(
+  .section-heading-row h2,
+  .course-rules h2,
+  .admin-panel h2,
+  .phase-section h2,
+  .completion-artifacts h2
+) {
+  font-family: var(--font-body);
+  font-size: clamp(20px, 2vw, 24px);
+  letter-spacing: 0;
+  line-height: 1.45;
+}
+
+/* Intentional pixel typography in the Thai interface: brand marks, compact
+   machine-readable codes, numeric markers, filenames, and English-only arcade
+   artwork. These exceptions must not contain Thai prose. */
+:lang(th) :is(
+  .brand-mark,
+  .brand-word,
+  .language-switch button,
+  .sound-status,
+  .hero-copy h1,
+  .hero-copy .eyebrow,
+  .landing-page .arcade-button,
+  .quest-card__topline,
+  .screen-label,
+  .quest-card__screen strong,
+  .quest-card__rule,
+  .thesis-number,
+  .pixel-character,
+  .pixel-flag,
+  .mission-key,
+  .phase-token,
+  .phase-section > header > span,
+  .admin-phase-row > span,
+  .admin-phase-row > strong,
+  .auth-status,
+  .auth-divider,
+  .specify-intro li strong,
+  .content-arc-grid article > span,
+  .revision-timeline__marker,
+  .handoff-file-grid strong,
+  .prd-file-workspace h3,
+  .implement-package-grid__preview strong,
+  .implement-package-preview h3,
+  .site-footer,
+  .site-footer a
+) {
+  font-family: var(--font-pixel);
+}
+
+/* Keep the deliberately compact arcade controls at their designed scale. */
+:lang(th) .landing-page .arcade-button {
+  font-size: 13px;
 }
 
 @media print {
