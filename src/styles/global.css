@@ -6584,6 +6584,21 @@ a.mission-node__content:focus-visible {
   line-height: 1.55;
 }
 
+/* When Thai and Latin words share one label, keep the whole label in the
+   Thai UI face. Pure step codes, filenames, and English arcade labels retain
+   the pixel face. */
+:lang(th) :is(
+  .journey-heading .chapter-code,
+  .solid-meter .section-label,
+  .chat-mission-card > span,
+  .chat-mission-card > strong,
+  .role-callout > strong,
+  .github-preview span
+) {
+  font-family: var(--font-body);
+  letter-spacing: 0;
+}
+
 @container (max-width: 560px) {
   .solid-meter__stages {
     grid-template-columns: repeat(3, minmax(0, 1fr));
