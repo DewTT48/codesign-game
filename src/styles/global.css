@@ -7343,6 +7343,7 @@ a.mission-node__content:focus-visible {
   .mission-you,
   .mission-viewing,
   .project-card__meta,
+  .admin-user-dates,
   .phase-revision-history > div > details > summary small,
   .revision-timeline article > header small,
   .prd-revision-links small,
@@ -7381,6 +7382,7 @@ a.mission-node__content:focus-visible {
   .admin-readonly-badge,
   .admin-heading__actions button,
   .admin-metric-card span,
+  .admin-growth-grid span,
   .admin-phase-row > small,
   .admin-user-search button,
   .admin-user-identity > span,
@@ -7439,6 +7441,7 @@ a.mission-node__content:focus-visible {
   .option-card > header,
   .favorite-summary small,
   .stance-buttons button,
+  .stance-buttons button strong,
   .simple-choice,
   .list-editor h3,
   .list-editor li > span,
@@ -7466,7 +7469,8 @@ a.mission-node__content:focus-visible {
   .revision-timeline article > header span,
   .active-revision-banner p,
   .active-revision-banner a,
-  .prd-import > header span
+  .prd-import > header span,
+  .prd-editor
 ) {
   font-family: var(--font-body);
   font-size: 16px;
@@ -7515,6 +7519,7 @@ a.mission-node__content:focus-visible {
   .specify-intro li strong,
   .content-arc-grid article > span,
   .revision-timeline__marker,
+  .github-basics article > span,
   .handoff-file-grid strong,
   .prd-file-workspace h3,
   .implement-package-grid__preview strong,
