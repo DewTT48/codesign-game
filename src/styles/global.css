@@ -6599,6 +6599,18 @@ a.mission-node__content:focus-visible {
   letter-spacing: 0;
 }
 
+/* Review-gate labels carry important Thai context, so keep them at the same
+   readable scale as the rest of the Thai utility UI. */
+:lang(th) :is(
+  .review-gate > span,
+  .review-gate dt
+) {
+  font-family: var(--font-body);
+  font-size: 16px;
+  letter-spacing: 0;
+  line-height: 1.5;
+}
+
 @container (max-width: 560px) {
   .solid-meter__stages {
     grid-template-columns: repeat(3, minmax(0, 1fr));
