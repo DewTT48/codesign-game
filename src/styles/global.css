@@ -6503,6 +6503,18 @@ a.mission-node__content:focus-visible {
   line-height: 1.65;
 }
 
+/* Thai utility copy sits outside the content panels and needs to remain
+   readable on high-resolution displays. Keep panel labels and headings on
+   their existing scale. */
+:lang(th) .back-link,
+:lang(th) .save-indicator {
+  font-family: var(--font-body);
+  font-size: clamp(15px, 0.9vw, 17px);
+  font-weight: 600;
+  letter-spacing: 0;
+  line-height: 1.5;
+}
+
 .site-footer {
   min-height: 64px;
   align-items: center;
