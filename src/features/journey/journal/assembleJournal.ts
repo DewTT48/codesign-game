@@ -1,4 +1,5 @@
 import type { Json, ProjectRow } from '../../../lib/supabase/database.types'
+import { debateDecisionMarkdown, debateOutcomeLabel } from '../debateModel'
 import type { JourneyExportData } from '../journey.service'
 import {
   countCompleteDays,
@@ -35,6 +36,7 @@ export function assembleJournal(project: ProjectRow, data: JourneyExportData): s
   const dailyContent = normalizeDailyContent(s.dailyContent)
   const experienceOptions = normalizeExperienceOptions(s.experienceOptions)
   const selectedExperience = experienceOptions.find((option) => option.name === text(s.selectedExperience, ''))
+  const debateOwnerSummary = d.summaryCustomized !== false ? text(d.whatChanged, '') : ''
   const specificationSummary = isCurrentSpecification ? `### Journey & Rules
 
 - **Primary journey:** ${text(s.journeySummary)}
@@ -111,12 +113,11 @@ ${jsonBlock(o.options)}
 
 ## D — Debate
 
-### AI assumptions, challenges, and changes
+### Assumption decisions
 
-${jsonBlock(d.assumptions)}
+${debateDecisionMarkdown(d.assumptions, 'en')}
 
-- **Direction result:** ${text(d.directionResult)}
-- **What changed and why:** ${text(d.whatChanged)}
+- **Overall impact on direction:** ${debateOutcomeLabel(d.directionResult, 'en') || text(d.directionResult)}${debateOwnerSummary ? `\n- **Owner-edited summary:** ${debateOwnerSummary}` : ''}
 
 ## E — Established Product Scope
 

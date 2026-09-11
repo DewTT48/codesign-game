@@ -44,7 +44,20 @@ describe('assemblePrd', () => {
     const markdown = assemblePrd(project, {
       C: { who: 'New writers', goal: 'Write daily', success: '21 entries' },
       O: { alignmentStatus: 'aligned', alignmentConfirmed: true },
-      D: { alignmentStatus: 'clarifies', alignmentNote: 'The preferred option keeps the daily action small.', alignmentConfirmed: true },
+      D: {
+        assumptions: [{
+          text: 'Users will return every day',
+          stance: 'agree',
+          agreeReason: 'A small first version lets us test this safely',
+          challengeReason: '',
+          change: '',
+        }],
+        directionResult: 'OUR DIRECTION STAYED THE SAME',
+        summaryCustomized: false,
+        alignmentStatus: 'clarifies',
+        alignmentNote: 'The preferred option keeps the daily action small.',
+        alignmentConfirmed: true,
+      },
       E: { direction: 'A calm daily writing companion', mustHaves: ['Complete one activity'], nonGoals: ['Social feed'], alignmentStatus: 'aligned', alignmentConfirmed: true },
       S: {
         specificationVersion: 2,
@@ -76,5 +89,7 @@ describe('assemblePrd', () => {
     expect(markdown).toContain('### Step E → Step S')
     expect(markdown).toContain('**Relationship:** clarifies')
     expect(markdown).toContain('Owner reviewed both steps together:** YES')
+    expect(markdown).toContain('A small first version lets us test this safely')
+    expect(markdown).toContain('KEEP THE CURRENT DIRECTION')
   })
 })

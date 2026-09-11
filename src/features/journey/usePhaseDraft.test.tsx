@@ -89,4 +89,24 @@ describe('usePhaseDraft', () => {
     await waitFor(() => expect(second.result.current.values.who).toBe('latest owner answer'))
     second.unmount()
   })
+
+  it('applies final derived values when saving a complete phase', async () => {
+    const { result } = renderHook(() => usePhaseDraft({
+      projectId: 'project-3',
+      phase: 'D',
+      initialValues: { directionResult: 'WE REFINED OUR DIRECTION', whatChanged: '' },
+    }), { wrapper: createWrapper() })
+
+    await waitFor(() => expect(result.current.loading).toBe(false))
+    await act(() => result.current.saveAll({ whatChanged: 'Automatic debate summary' }))
+
+    expect(serviceMocks.savePhaseEntry).toHaveBeenCalledWith({
+      projectId: 'project-3',
+      phase: 'D',
+      section: 'form',
+      fieldKey: 'whatChanged',
+      content: 'Automatic debate summary',
+    })
+    expect(result.current.values.whatChanged).toBe('Automatic debate summary')
+  })
 })

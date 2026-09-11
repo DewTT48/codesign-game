@@ -1,4 +1,5 @@
 import type { AppLanguage } from '../i18n/LanguageContext'
+import { resolveDebateSummary } from './debateModel'
 import type { PrdSource } from './journey.service'
 
 export type FieldGuide = {
@@ -196,6 +197,7 @@ export function getPhaseGuide(
   const context = sourceValue(source, 'C', 'importantContext')
   const constraints = sourceValue(source, 'C', 'constraints')
   const direction = sourceValue(source, 'E', 'direction')
+  const debateSummary = resolveDebateSummary(source.D ?? {}, language)
   const mustHaves = sourceValue(source, 'E', 'mustHaves')
   const baseNonGoals = sourceValue(source, 'E', 'nonGoals')
   const alignmentRecord = `C → O ALIGNMENT: ${sourceValue(source, 'O', 'alignmentStatus')}
@@ -258,7 +260,7 @@ E → S NOTE: ${sourceValue(source, 'S', 'alignmentNote')}`
         principle: 'แยกสิ่งที่รู้จริงออกจากสิ่งที่ AI และทีมกำลังคาด ก่อนยอมรับ Direction',
         hint: 'มองหา Assumption เกี่ยวกับ Behavior, Motivation, เวลา อุปกรณ์ และความเต็มใจกลับมาใช้ซ้ำ',
         chatGoal: 'เปิดเผย Assumptions และ Failure modes ของ Direction ที่กำลังชอบ',
-        prompt: `ROLE\nทำหน้าที่เป็น Product Challenger สำหรับ “21 DAYS OF ${topic}”\n\nOBJECTIVE\nท้าทายสมมติฐานของ Current Favorite โดยเทียบกับ Locked Context ก่อนที่ผมจะยืนยัน Direction\n\nLOCKED CONTEXT\nWHO: ${who}\nGOAL: ${goal}\nCONTEXT: ${context}\nCONSTRAINTS: ${constraints}\n\nCURRENT FAVORITE — วิเคราะห์เป็นหลัก\n${debateOptions.favorite}\n\nALTERNATIVES — ใช้เปรียบเทียบเท่านั้น\n${debateOptions.alternatives}\n\nTASK\n1. ระบุสมมติฐานสำคัญ 3–5 ข้อเกี่ยวกับ User behavior, Motivation, Context, เวลา อุปกรณ์ และการกลับมาใช้ซ้ำ\n2. แยกแต่ละข้อเป็น KNOWN / ASSUMED / UNKNOWN\n3. อธิบาย Failure mode หากสมมติฐานนั้นไม่จริง\n4. จัดลำดับตาม Impact และ Evidence gap\n5. ตรวจว่าตัวเลือกอื่นลดความเสี่ยงนั้นได้หรือไม่ โดยไม่เลือก Direction แทนผม\n\nOUTPUT FORMAT\nสำหรับแต่ละข้อให้ใช้:\nASSUMPTION:\nSTATUS: KNOWN / ASSUMED / UNKNOWN\nEVIDENCE:\nFAILURE MODE:\nIMPACT: HIGH / MEDIUM / LOW\nQUESTION FOR OWNER:\n\nCONVERSATION RULES\n- ห้ามเสนอ Feature ใหม่\n- อย่าตัดสินใจ Agree หรือ Challenge แทนผม\n- หลังสรุป ให้เลือก 2 ข้อที่เป็น ASSUMED หรือ UNKNOWN ซึ่งสำคัญต่อ Direction มากที่สุด แล้วถามผมทีละหนึ่งข้อ\n- ช่วยผมอธิบายเหตุผลด้วยคำของผมเอง ไม่ใช้ข้อสรุปของ AI แทน\n- เมื่อผมตัดสินใจครบ 2 ข้อ ให้สรุป DEBATE HANDOFF เป็น DIRECTION ASSUMES THAT / OWNER STANCE / OWNER REASON / WHAT SHOULD CHANGE และ DIRECTION RESULT / WHAT CHANGED AND WHY\n- ปิดท้ายด้วย O → D HANDOFF: ALIGNED / CLARIFIES / REVISION REQUIRED — STEP O หรือ STEP C พร้อมเหตุผล ห้ามเปลี่ยนตัวเลือกหรือ Context เดิมโดยเงียบ ๆ`,
+        prompt: `ROLE\nทำหน้าที่เป็น Product Challenger สำหรับ “21 DAYS OF ${topic}”\n\nOBJECTIVE\nท้าทายสมมติฐานของ Current Favorite โดยเทียบกับ Locked Context ก่อนที่ผมจะยืนยัน Direction\n\nLOCKED CONTEXT\nWHO: ${who}\nGOAL: ${goal}\nCONTEXT: ${context}\nCONSTRAINTS: ${constraints}\n\nCURRENT FAVORITE — วิเคราะห์เป็นหลัก\n${debateOptions.favorite}\n\nALTERNATIVES — ใช้เปรียบเทียบเท่านั้น\n${debateOptions.alternatives}\n\nTASK\n1. ระบุสมมติฐานสำคัญ 3–5 ข้อเกี่ยวกับ User behavior, Motivation, Context, เวลา อุปกรณ์ และการกลับมาใช้ซ้ำ\n2. แยกแต่ละข้อเป็น KNOWN / ASSUMED / UNKNOWN\n3. อธิบาย Failure mode หากสมมติฐานนั้นไม่จริง\n4. จัดลำดับตาม Impact และ Evidence gap\n5. ตรวจว่าตัวเลือกอื่นลดความเสี่ยงนั้นได้หรือไม่ โดยไม่เลือก Direction แทนผม\n\nOUTPUT FORMAT\nสำหรับแต่ละข้อให้ใช้:\nASSUMPTION:\nSTATUS: KNOWN / ASSUMED / UNKNOWN\nEVIDENCE:\nFAILURE MODE:\nIMPACT: HIGH / MEDIUM / LOW\nQUESTION FOR OWNER:\n\nCONVERSATION RULES\n- ห้ามเสนอ Feature ใหม่\n- อย่าตัดสินใจว่าจะเดินหน้าต่อชั่วคราวหรือปรับ Direction แทนผม\n- หลังสรุป ให้เลือก 2 ข้อที่เป็น ASSUMED หรือ UNKNOWN ซึ่งสำคัญต่อ Direction มากที่สุด แล้วถามผมทีละหนึ่งข้อ\n- ช่วยผมอธิบายเหตุผลด้วยคำของผมเอง ไม่ใช้ข้อสรุปของ AI แทน\n- เมื่อผมตัดสินใจครบ 2 ข้อ ให้สรุป DEBATE HANDOFF เป็น DIRECTION ASSUMES THAT / OWNER STANCE: PROCEED FOR NOW หรือ ADJUST DIRECTION / OWNER REASON / WHAT SHOULD CHANGE และ OVERALL IMPACT ON DIRECTION\n- ปิดท้ายด้วย O → D HANDOFF: ALIGNED / CLARIFIES / REVISION REQUIRED — STEP O หรือ STEP C พร้อมเหตุผล ห้ามเปลี่ยนตัวเลือกหรือ Context เดิมโดยเงียบ ๆ`,
         followUps: ['ข้อใดมีผลต่อ Product มากที่สุดแต่มีหลักฐานน้อยที่สุด?', 'ใครอาจไม่ใช้ Product ตามที่เราคาด?', 'Direction นี้จะล้มเหลวในบริบทใด?'],
         bringBack: 'บันทึก Assumptions และผล Debate แล้วนำสถานะ O → D พร้อมคำอธิบายกลับมายืนยันก่อนผ่าน Step',
       },
@@ -267,7 +269,7 @@ E → S NOTE: ${sourceValue(source, 'S', 'alignmentNote')}`
         principle: 'Separate what is known from what AI and the team are assuming before accepting a direction.',
         hint: 'Look for assumptions about behavior, motivation, time, device, and willingness to return.',
         chatGoal: 'Expose assumptions and failure modes in the current favorite direction.',
-        prompt: `ROLE\nAct as a Product Challenger for “21 DAYS OF ${topic}”.\n\nOBJECTIVE\nChallenge the assumptions behind the Current Favorite against the Locked Context before I confirm the direction.\n\nLOCKED CONTEXT\nWHO: ${who}\nGOAL: ${goal}\nCONTEXT: ${context}\nCONSTRAINTS: ${constraints}\n\nCURRENT FAVORITE — analyze this primarily\n${debateOptions.favorite}\n\nALTERNATIVES — use for comparison only\n${debateOptions.alternatives}\n\nTASK\n1. Identify 3–5 important assumptions about user behavior, motivation, context, time, device, and repeat use.\n2. Classify each as KNOWN / ASSUMED / UNKNOWN.\n3. Explain the failure mode if the assumption is false.\n4. Prioritize by impact and evidence gap.\n5. Check whether an alternative reduces that risk without choosing a direction for me.\n\nOUTPUT FORMAT\nFor each item use:\nASSUMPTION:\nSTATUS: KNOWN / ASSUMED / UNKNOWN\nEVIDENCE:\nFAILURE MODE:\nIMPACT: HIGH / MEDIUM / LOW\nQUESTION FOR OWNER:\n\nCONVERSATION RULES\n- Do not propose new features.\n- Do not decide Agree or Challenge for me.\n- After the summary, select the 2 ASSUMED or UNKNOWN items most critical to the direction and ask me about them one at a time.\n- Help me express the reason in my own words rather than substituting an AI conclusion.\n- After both decisions, provide a DEBATE HANDOFF using DIRECTION ASSUMES THAT / OWNER STANCE / OWNER REASON / WHAT SHOULD CHANGE, followed by DIRECTION RESULT / WHAT CHANGED AND WHY.\n- Finish with O → D HANDOFF: ALIGNED / CLARIFIES / REVISION REQUIRED — STEP O or STEP C and a reason. Never silently change an option or the locked context.`,
+        prompt: `ROLE\nAct as a Product Challenger for “21 DAYS OF ${topic}”.\n\nOBJECTIVE\nChallenge the assumptions behind the Current Favorite against the Locked Context before I confirm the direction.\n\nLOCKED CONTEXT\nWHO: ${who}\nGOAL: ${goal}\nCONTEXT: ${context}\nCONSTRAINTS: ${constraints}\n\nCURRENT FAVORITE — analyze this primarily\n${debateOptions.favorite}\n\nALTERNATIVES — use for comparison only\n${debateOptions.alternatives}\n\nTASK\n1. Identify 3–5 important assumptions about user behavior, motivation, context, time, device, and repeat use.\n2. Classify each as KNOWN / ASSUMED / UNKNOWN.\n3. Explain the failure mode if the assumption is false.\n4. Prioritize by impact and evidence gap.\n5. Check whether an alternative reduces that risk without choosing a direction for me.\n\nOUTPUT FORMAT\nFor each item use:\nASSUMPTION:\nSTATUS: KNOWN / ASSUMED / UNKNOWN\nEVIDENCE:\nFAILURE MODE:\nIMPACT: HIGH / MEDIUM / LOW\nQUESTION FOR OWNER:\n\nCONVERSATION RULES\n- Do not propose new features.\n- Do not decide whether to proceed for now or adjust the direction for me.\n- After the summary, select the 2 ASSUMED or UNKNOWN items most critical to the direction and ask me about them one at a time.\n- Help me express the reason in my own words rather than substituting an AI conclusion.\n- After both decisions, provide a DEBATE HANDOFF using DIRECTION ASSUMES THAT / OWNER STANCE: PROCEED FOR NOW or ADJUST DIRECTION / OWNER REASON / WHAT SHOULD CHANGE, followed by OVERALL IMPACT ON DIRECTION.\n- Finish with O → D HANDOFF: ALIGNED / CLARIFIES / REVISION REQUIRED — STEP O or STEP C and a reason. Never silently change an option or the locked context.`,
         followUps: ['Which high-impact assumption has the weakest evidence?', 'Who may not behave as expected?', 'In what context would this direction fail?'],
         bringBack: 'Capture the assumptions and debate result, then bring back the O → D status and explanation for confirmation.',
       },
@@ -284,7 +286,7 @@ WHO: ${who}
 GOAL: ${goal}
 SUCCESS: ${success}
 CONSTRAINTS: ${constraints}
-DIRECTION หลัง Debate: ${sourceValue(source, 'D', 'whatChanged')}
+DIRECTION หลัง Debate: ${debateSummary || '—'}
 
 Scope ที่ผมกำลังคิด:
 WE ARE BUILDING: ${text(current.direction)}
@@ -317,7 +319,7 @@ WHO: ${who}
 GOAL: ${goal}
 SUCCESS: ${success}
 CONSTRAINTS: ${constraints}
-POST-DEBATE DIRECTION: ${sourceValue(source, 'D', 'whatChanged')}
+POST-DEBATE DIRECTION: ${debateSummary || '—'}
 
 CURRENT SCOPE:
 WE ARE BUILDING: ${text(current.direction)}

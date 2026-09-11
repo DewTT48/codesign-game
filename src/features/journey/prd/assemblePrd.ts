@@ -1,4 +1,5 @@
 import type { Json, ProjectRow } from '../../../lib/supabase/database.types'
+import { debateDecisionMarkdown, debateOutcomeLabel } from '../debateModel'
 import type { PrdSource } from '../journey.service'
 import {
   countCompleteDays,
@@ -37,6 +38,17 @@ const alignmentRecord = (sourceStep: string, targetStep: string, entry: Record<s
 - **Relationship:** ${text(entry.alignmentStatus, 'Not recorded')}
 - **Latest owner interpretation:** ${text(entry.alignmentNote, 'No clarification recorded.')}
 - **Owner reviewed both steps together:** ${entry.alignmentConfirmed ? 'YES' : 'NO'}`
+
+const debateRecord = (debate: Record<string, Json | undefined>) => {
+  const outcome = debateOutcomeLabel(debate.directionResult, 'en') || text(debate.directionResult, 'Not recorded')
+  const decisions = debateDecisionMarkdown(debate.assumptions, 'en')
+  const ownerSummary = debate.summaryCustomized !== false ? text(debate.whatChanged, '') : ''
+  return `- **Overall impact on direction:** ${outcome}
+
+### Assumption Decisions
+
+${decisions}${ownerSummary ? `\n\n**Owner-edited summary:** ${ownerSummary}` : ''}`
+}
 
 export function assemblePrd(project: ProjectRow, source: PrdSource): string {
   const specify = source.S ?? {}
@@ -86,7 +98,8 @@ The product helps ${text(context.who, 'the intended user')} achieve ${text(conte
 ${text(establish.direction)}
 
 ${selectedOption ? `- **Selected option:** ${text(selectedOption.name)}\n- **Core idea:** ${text(selectedOption.coreIdea)}` : '- **Selected option:** Not specified'}
-- **What the debate changed:** ${text(debate.whatChanged)}
+
+${debateRecord(debate)}
 
 ## 4. Must Have
 
@@ -214,7 +227,7 @@ ${text(context.who)}
 
 **Constraints:** ${text(context.constraints)}
 
-**Decision challenge notes:** ${text(debate.whatChanged)}
+${debateRecord(debate)}
 
 ## 6. Product Direction
 

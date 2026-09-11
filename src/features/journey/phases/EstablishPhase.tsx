@@ -6,6 +6,7 @@ import type { Json, ProjectRow } from '../../../lib/supabase/database.types'
 import { useLanguage } from '../../i18n/LanguageContext'
 import { CrossStepAlignment } from '../CrossStepAlignment'
 import { alignmentIsReady, entriesToRecord, normalizeAlignmentStatus } from '../crossStepAlignmentModel'
+import { debateOutcomeLabel, resolveDebateSummary } from '../debateModel'
 import { completePhase, getPhaseEntries } from '../journey.service'
 import { getFieldGuide } from '../guidanceContent'
 import { JourneyLayout } from '../JourneyLayout'
@@ -32,6 +33,8 @@ export function EstablishPhase({ project }: { project: ProjectRow }) {
   const nonGoals = draft.values.nonGoals as unknown as string[]
   const debateEntries = useQuery({ queryKey: ['phase-entries', project.id, 'D'], queryFn: () => getPhaseEntries(project.id, 'D') })
   const debate = entriesToRecord(debateEntries.data)
+  const debateLanguage = isThai ? 'th' : 'en'
+  const debateSummary = resolveDebateSummary(debate, debateLanguage)
   const alignmentStatus = normalizeAlignmentStatus(draft.values.alignmentStatus)
   const alignmentNote = String(draft.values.alignmentNote)
   const completion = useMutation({ mutationFn: async () => { await draft.saveAll(); return completePhase(project.id, 'E') }, onSuccess: async () => { await queryClient.invalidateQueries({ queryKey: ['project', project.id] }); navigate(`/projects/${project.id}/S`) } })
@@ -83,9 +86,9 @@ export function EstablishPhase({ project }: { project: ProjectRow }) {
         loading={debateEntries.isLoading}
         loadError={debateEntries.isError}
         items={[
-          { label: isThai ? 'ผลต่อ Direction' : 'DIRECTION RESULT', value: String(debate.directionResult ?? '') },
-          { label: isThai ? 'สิ่งที่เปลี่ยนและเหตุผล' : 'WHAT CHANGED AND WHY', value: String(debate.whatChanged ?? '') },
-          { label: isThai ? 'สมมติฐานและการส่งต่อก่อนหน้า' : 'ASSUMPTIONS AND PRIOR HANDOFF', value: [...(Array.isArray(debate.assumptions) ? debate.assumptions.map((item) => item && typeof item === 'object' && !Array.isArray(item) && typeof item.text === 'string' ? item.text : '').filter(Boolean) : []), [String(debate.alignmentStatus ?? ''), String(debate.alignmentNote ?? '')].filter(Boolean).join(' — ')].filter(Boolean) },
+          { label: isThai ? 'ผลต่อ Direction' : 'DIRECTION RESULT', value: debateOutcomeLabel(debate.directionResult, debateLanguage) || String(debate.directionResult ?? '') },
+          { label: isThai ? 'สรุปการตัดสินใจและเหตุผล' : 'DECISIONS AND REASONS', value: debateSummary ? debateSummary.split('\n') : [] },
+          { label: isThai ? 'การส่งต่อก่อนหน้า O → D' : 'PRIOR O → D HANDOFF', value: [String(debate.alignmentStatus ?? ''), String(debate.alignmentNote ?? '')].filter(Boolean) },
         ]}
         status={alignmentStatus}
         note={alignmentNote}

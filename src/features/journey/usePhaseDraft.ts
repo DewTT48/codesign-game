@@ -126,13 +126,15 @@ export function usePhaseDraft<T extends Record<string, Json>>(input: {
     [saveEntry],
   )
 
-  const saveAll = useCallback(async () => {
+  const saveAll = useCallback(async (overrides?: Partial<T>) => {
     for (const pending of pendingSaves.current.values()) window.clearTimeout(pending.timer)
     pendingSaves.current.clear()
     setSaveState('saving')
+    const valuesToSave = { ...values, ...overrides }
+    if (overrides) setValues(valuesToSave)
     try {
       await Promise.all(
-        Object.entries(values).map(([key, value]) =>
+        Object.entries(valuesToSave).map(([key, value]) =>
           queuePhaseEntrySave({
             projectId: input.projectId,
             phase: input.phase,

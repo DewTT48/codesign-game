@@ -7,6 +7,7 @@ import { SolidificationMeter } from '../../components/progress/SolidificationMet
 import type { Json, ProjectRow } from '../../lib/supabase/database.types'
 import { useLanguage } from '../i18n/LanguageContext'
 import { getPhaseEntries, getPhaseEntryHistory, startPhaseRevision, type PhaseCode, type PhaseEntry, type PhaseEntryVersion } from './journey.service'
+import { debateDecisionLines } from './debateModel'
 import { currentPhasePath, isCompletedPhase, phaseSequence } from './phaseNavigation'
 import { affectedRevisionPhases, revisionTargets } from './phaseRevision'
 import { MarkdownPreview } from './prd/MarkdownPreview'
@@ -38,7 +39,7 @@ const preferredFields: Record<PhaseCode, string[]> = {
 const thaiLabels: Record<string, string> = {
   who: 'ผู้ใช้หลัก', goal: 'เป้าหมายของผู้ใช้', success: 'ภาพความสำเร็จ', importantContext: 'บริบทสำคัญ', constraints: 'ข้อจำกัด', reflection: 'สิ่งที่ได้จากการคุยกับ Chat', corrections: 'สิ่งที่ต้องแก้ความเข้าใจ',
   favorite: 'ทางเลือกที่เลือกไว้', options: 'ทางเลือกที่สำรวจ', name: 'ชื่อ', coreIdea: 'แนวคิดหลัก', like: 'สิ่งที่ชอบ', tradeoff: 'สิ่งที่ต้องแลก',
-  assumptions: 'สมมติฐานที่ท้าทาย', text: 'สมมติฐาน', stance: 'การตัดสินใจ', why: 'เหตุผลของคุณ', directionResult: 'ผลต่อ Direction', whatChanged: 'สิ่งที่เปลี่ยนและเหตุผล',
+  assumptions: 'การตัดสินใจต่อสมมติฐาน', text: 'สมมติฐาน', stance: 'การตัดสินใจ', why: 'เหตุผลของคุณ', agreeReason: 'เหตุผลที่เดินหน้าต่อ', challengeReason: 'เหตุผลที่ปรับ Direction', directionResult: 'ผลต่อ Direction', whatChanged: 'สรุปจาก Step D',
   direction: 'เรากำลังจะสร้าง', mustHaves: 'สิ่งที่ต้องมีใน Version แรก', nonGoals: 'สิ่งที่ยังไม่ทำใน Version นี้', scopeAlignmentConfirmed: 'ยืนยันความสอดคล้องของขอบเขต',
   productLanguage: 'ภาษาของ Product', brandCopy: 'ข้อความประจำ Product', dailyDuration: 'เวลาต่อวัน', journeySummary: 'เส้นทางหลักของผู้ใช้', dailyCompletionRule: 'หนึ่งวันสำเร็จเมื่อ', returnRule: 'การย้อนกลับมา', sequenceRule: 'ลำดับการทำ', storageRule: 'การจำข้อมูล', contentArcs: 'โครงเนื้อหา 3 ช่วง', contentPattern: 'รูปแบบเนื้อหาประจำวัน', exercisePattern: 'รูปแบบแบบฝึก', recordPattern: 'รูปแบบการบันทึก', dailyContent: 'เนื้อหา 21 วัน', selectedExperience: 'Theme ที่เลือก', experienceOptions: 'แนวทางประสบการณ์ที่พิจารณา', advancedNotes: 'หมายเหตุเพิ่มเติมสำหรับการสร้าง', acceptanceCriteria: 'เกณฑ์ตรวจรับ', alignmentStatus: 'ความสัมพันธ์กับ Step ก่อนหน้า', alignmentNote: 'คำอธิบายล่าสุดในการส่งต่อ', alignmentConfirmed: 'ยืนยันการส่งต่อข้อมูล',
   markdownDraft: 'CODESIGN_HANDOFF.md', contentPackDraft: 'CONTENT_PACK.md', experienceDirectionDraft: 'EXPERIENCE_DIRECTION.md', reviewOutcomeV2: 'ผลการตรวจชุดส่งต่องาน',
@@ -49,8 +50,9 @@ const thaiLabels: Record<string, string> = {
 }
 
 const codeLabels: Record<string, { th: string; en: string }> = {
-  agree: { th: 'ยอมรับ', en: 'AGREE' }, challenge: { th: 'ท้าทาย', en: 'CHALLENGE' },
+  agree: { th: 'เดินหน้าต่อชั่วคราว', en: 'PROCEED FOR NOW' }, challenge: { th: 'ปรับ Direction', en: 'ADJUST DIRECTION' },
   'OUR DIRECTION STAYED THE SAME': { th: 'ใช้ Direction เดิมต่อ', en: 'DIRECTION STAYED THE SAME' },
+  'WE REFINED OUR DIRECTION': { th: 'ใช้ Direction เดิม แต่ปรับบางส่วน', en: 'DIRECTION REFINED' },
   'WE CHANGED OUR DIRECTION': { th: 'เปลี่ยน Direction', en: 'DIRECTION CHANGED' },
   'allow-edit': { th: 'กลับมาอ่านและแก้ได้', en: 'READ AND EDIT' }, 'read-only': { th: 'กลับมาอ่านได้อย่างเดียว', en: 'READ ONLY' }, 'no-revisit': { th: 'ย้อนกลับไม่ได้', en: 'NO REVISIT' },
   sequential: { th: 'ทำตามลำดับ', en: 'IN ORDER' }, 'allow-skip': { th: 'เลือกหรือข้ามได้', en: 'ALLOW SKIPPING' },
@@ -156,6 +158,9 @@ export function PhaseHistoryPage({ project, phase }: { project: ProjectRow; phas
   }, new Map<number, PhaseEntryVersion[]>()))
 
   const displayContent = (entry: PhaseEntry) => {
+    if (phase === 'D' && entry.fieldKey === 'assumptions') {
+      return debateDecisionLines(entry.content, isThai ? 'th' : 'en')
+    }
     if (phase === 'O' && entry.fieldKey === 'favorite' && typeof entry.content === 'number') {
       const options = entryMap.get('options')
       const favorite = Array.isArray(options) ? options[entry.content] : null
@@ -215,7 +220,7 @@ export function PhaseHistoryPage({ project, phase }: { project: ProjectRow; phas
             <h3>{fieldLabel(entry.fieldKey, isThai)}</h3>
             {markdownFields.has(entry.fieldKey) && typeof entry.content === 'string'
               ? <details><summary><FileCode2 size={17} /> {isThai ? 'เปิดดูไฟล์ฉบับนี้' : 'OPEN THIS VERSION'}</summary><MarkdownPreview markdown={entry.content} /></details>
-              : <ReadOnlyValue value={entry.content} isThai={isThai} />}
+              : <ReadOnlyValue value={phase === 'D' && entry.fieldKey === 'assumptions' ? debateDecisionLines(entry.content, isThai ? 'th' : 'en') : entry.content} isThai={isThai} />}
           </article>)}</div>
         </details>
       })}</div>

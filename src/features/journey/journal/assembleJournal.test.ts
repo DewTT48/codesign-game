@@ -11,7 +11,15 @@ const project: ProjectRow = {
 describe('assembleJournal', () => {
   it('preserves the learner journey and build evidence', () => {
     const journal = assembleJournal(project, {
-      phases: { C: { who: 'New writers', goal: 'Write daily' }, N: { change: 'Clarify the first step', because: 'Tester paused', expectedResult: 'Faster start' } },
+      phases: {
+        C: { who: 'New writers', goal: 'Write daily' },
+        D: {
+          assumptions: [{ text: 'Users will return daily', stance: 'challenge', why: 'Similar apps were abandoned', change: 'Remove streak pressure' }],
+          directionResult: 'WE REFINED OUR DIRECTION',
+          summaryCustomized: false,
+        },
+        N: { change: 'Clarify the first step', because: 'Tester paused', expectedResult: 'Faster start' },
+      },
       prd: null,
       build: { id: 'build-1', project_id: 'project-1', version_label: 'v1', app_url: 'https://example.com', repository_url: null, created_at: '2026-08-30T00:00:00Z' },
       feedback: [],
@@ -21,6 +29,8 @@ describe('assembleJournal', () => {
     expect(journal).toContain('New writers')
     expect(journal).toContain('https://example.com')
     expect(journal).toContain('Clarify the first step')
+    expect(journal).toContain('Similar apps were abandoned')
+    expect(journal).toContain('Remove streak pressure')
+    expect(journal).not.toContain('```json')
   })
 })
-

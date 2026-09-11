@@ -1,24 +1,37 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { ArrowRight, Plus, X } from 'lucide-react'
+import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { ArcadeButton } from '../../../components/ui/ArcadeButton'
 import type { Json, ProjectRow } from '../../../lib/supabase/database.types'
 import { useLanguage } from '../../i18n/LanguageContext'
 import { CrossStepAlignment } from '../CrossStepAlignment'
 import { alignmentIsReady, entriesToRecord, normalizeAlignmentStatus } from '../crossStepAlignmentModel'
+import {
+  blankDebateAssumption,
+  buildDebateSummary,
+  debateOutcomeLabel,
+  debateOutcomes,
+  debateReason,
+  normalizeDebateAssumptions,
+  normalizeDebateOutcome,
+  type DebateAssumption,
+  type DebateStance,
+  withDebateReason,
+  withDebateStance,
+} from '../debateModel'
 import { completePhase, getPhaseEntries } from '../journey.service'
 import { JourneyLayout } from '../JourneyLayout'
 import { FormField, PhaseSection, ReviewGate } from '../PhaseFormComponents'
 import { usePhaseDraft } from '../usePhaseDraft'
 
-type Assumption = { text: string; stance: '' | 'agree' | 'challenge'; why: string; change: string }
 const MIN_ASSUMPTIONS = 2
 const MAX_ASSUMPTIONS = 5
-const blankAssumption = (): Assumption => ({ text: '', stance: '', why: '', change: '' })
 const initialDebate = {
-  assumptions: [blankAssumption(), blankAssumption()] as unknown as Json,
+  assumptions: [blankDebateAssumption(), blankDebateAssumption()] as unknown as Json,
   directionResult: '',
   whatChanged: '',
+  summaryCustomized: false,
   alignmentStatus: '',
   alignmentNote: '',
   alignmentConfirmed: false,
@@ -26,12 +39,12 @@ const initialDebate = {
 
 const debateGuide = {
   th: {
-    title: 'ขั้นนี้ไม่ได้ให้ AI เลือกแทนคุณ',
-    intro: <>AI มีหน้าที่เปิดเผยมุมที่ Direction อาจมองข้าม ส่วนคุณมีหน้าที่ตัดสินใจว่าจะยอมรับความเสี่ยงนั้น หรือปรับ Direction <span className="keep-together">ก่อนสร้างจริง</span></>,
+    title: 'ตรวจสมมติฐานก่อนตัดสินใจ',
+    intro: <>AI ช่วยชี้สิ่งที่ Direction อาจมองข้าม คุณเพียงตัดสินใจทีละข้อว่าจะเดินหน้าต่อชั่วคราว หรือปรับ Direction <span className="keep-together">ก่อนสร้างจริง</span></>,
     steps: [
       ['01 · ให้ AI ท้าทาย', 'ใช้ Prompt Kit เพื่อหา 3–5 สมมติฐาน แล้วอ่าน Evidence, Failure\u00a0mode และ Impact เพื่อเข้าใจความเสี่ยง'],
       ['02 · เลือกอย่างน้อย 2 ข้อ', 'เริ่มจาก ASSUMPTION สถานะ ASSUMED หรือ UNKNOWN ที่สำคัญที่สุด 2 ข้อ และเพิ่มได้ถึง 5 ข้อเมื่อจำเป็น โดยไม่ต้องคัดลอกบทวิเคราะห์ทั้งหมด'],
-      ['03 · คุณเป็นคนตัดสินใจ', 'เลือก Agree หรือ Challenge พร้อมเขียนเหตุผลด้วยคำของคุณเอง แล้วสรุปว่า Direction เดิมยังอยู่หรือต้องเปลี่ยน'],
+      ['03 · ระบบสรุปให้', 'เมื่อให้เหตุผลครบ ระบบจะรวบรวมคำตอบให้อัตโนมัติ คุณเพียงเลือกผลรวมต่อ Direction และตรวจความถูกต้อง'],
     ],
     statusTitle: 'อ่าน STATUS จาก Chat อย่างไร',
     statuses: [
@@ -43,21 +56,21 @@ const debateGuide = {
     mapping: [
       ['ASSUMPTION', 'คัดลอกเฉพาะประโยคสมมติฐานลงใน DIRECTION\u00a0ASSUMES\u00a0THAT…'],
       ['EVIDENCE / FAILURE MODE / IMPACT', 'ใช้ประกอบการคิด ไม่ต้องคัดลอกทั้งหมด'],
-      ['QUESTION FOR OWNER', 'ตอบคำถามนี้ แล้วเลือก WE\u00a0AGREE หรือ WE\u00a0CHALLENGE'],
-      ['OWNER REASON / WHAT SHOULD CHANGE', 'บันทึกเหตุผลของคุณ และสิ่งที่ต้องเปลี่ยนเมื่อ Challenge'],
+      ['QUESTION FOR OWNER', 'ตอบคำถามนี้ แล้วเลือกว่าจะเดินหน้าต่อชั่วคราวหรือปรับ Direction'],
+      ['OWNER REASON / WHAT SHOULD CHANGE', 'บันทึกเหตุผลหนึ่งครั้ง และระบุสิ่งที่จะเปลี่ยนเฉพาะเมื่อเลือกปรับ Direction'],
     ],
-    agree: 'ยอมรับเป็น Working\u00a0assumption เพื่อสร้างและทดสอบต่อ ไม่ได้แปลว่าเป็นข้อเท็จจริง',
-    challenge: 'เห็นว่าเสี่ยงหรือไม่เหมาะเป็นฐานของ Product จึงต้องบันทึกเหตุผลและสิ่งที่จะเปลี่ยน',
+    agree: 'ความเสี่ยงนี้ยอมรับได้ในตอนนี้ จึงสร้างและทดสอบต่อได้ โดยยังไม่ถือว่าเป็นข้อเท็จจริง',
+    challenge: 'ความเสี่ยงสูงเกินไป จึงต้องปรับ Direction หรือกติกาก่อนสร้างต่อ',
     exampleTitle: 'ตัวอย่างสั้น ๆ',
-    example: 'Chat: “ผู้ใช้พร้อมกลับมาทุกวันโดยไม่ต้องมีสิ่งเตือน” → นำประโยคนี้มากรอก → เลือก Challenge → เหตุผล: ผู้ใช้เหนื่อยและเคยเลิกใช้ Habit\u00a0app → เปลี่ยน: ไม่ใช้ Daily\u00a0streak เป็นแกนหลัก',
+    example: 'Chat: “ผู้ใช้พร้อมกลับมาทุกวันโดยไม่ต้องมีสิ่งเตือน” → นำประโยคนี้มากรอก → เลือกปรับ Direction → เหตุผล: ผู้ใช้เหนื่อยและเคยเลิกใช้ Habit\u00a0app → เปลี่ยน: ไม่ใช้ Daily\u00a0streak เป็นแกนหลัก',
   },
   en: {
-    title: 'AI does not make the decision in this step',
-    intro: 'AI exposes what the direction may be overlooking. You decide whether to accept that risk or revise the direction before building.',
+    title: 'Review assumptions before deciding',
+    intro: 'AI exposes what the direction may be overlooking. For each item, decide whether to proceed for now or adjust the direction before building.',
     steps: [
       ['01 · LET AI CHALLENGE', 'Use the Prompt Kit to find 3–5 assumptions. Read the evidence, failure mode, and impact to understand each risk.'],
       ['02 · CHOOSE AT LEAST 2', 'Start with the 2 most critical ASSUMED or UNKNOWN items. Add up to 5 when needed; do not copy the full analysis.'],
-      ['03 · MAKE THE HUMAN DECISION', 'Choose Agree or Challenge, explain the reason in your own words, then decide whether the direction stays or changes.'],
+      ['03 · REVIEW THE AUTOMATIC SUMMARY', 'After you explain each decision, choose the overall impact on the direction and verify the summary.'],
     ],
     statusTitle: 'How to read Chat status',
     statuses: [
@@ -69,22 +82,42 @@ const debateGuide = {
     mapping: [
       ['ASSUMPTION', 'Copy only the assumption into DIRECTION ASSUMES THAT…'],
       ['EVIDENCE / FAILURE MODE / IMPACT', 'Use these to think; do not copy the entire analysis.'],
-      ['QUESTION FOR OWNER', 'Answer it, then choose WE AGREE or WE CHALLENGE.'],
-      ['OWNER REASON / WHAT SHOULD CHANGE', 'Record your reason and the change when you challenge.'],
+      ['QUESTION FOR OWNER', 'Answer it, then choose whether to proceed for now or adjust the direction.'],
+      ['OWNER REASON / WHAT SHOULD CHANGE', 'Record the reason once, and add a change only when you adjust the direction.'],
     ],
-    agree: 'Accept it as a working assumption to build and test—not as a proven fact.',
-    challenge: 'It is too risky or unsuitable as a foundation, so record why and what changes.',
+    agree: 'The risk is acceptable for now, so build and test without treating it as proven fact.',
+    challenge: 'The risk is too high, so adjust the direction or a rule before building.',
     exampleTitle: 'Short example',
-    example: 'Chat: “Users will return every day without a reminder” → copy that sentence → choose Challenge → reason: tired users have abandoned habit apps → change: do not make a daily streak the core mechanism.',
+    example: 'Chat: “Users will return every day without a reminder” → copy that sentence → choose Adjust direction → reason: tired users have abandoned habit apps → change: do not make a daily streak the core mechanism.',
+  },
+} as const
+
+const outcomeDescriptions = {
+  th: {
+    'OUR DIRECTION STAYED THE SAME': 'ไม่มีคำตอบข้อใดทำให้แนวคิดหลักต้องเปลี่ยน',
+    'WE REFINED OUR DIRECTION': 'แนวคิดหลักยังเดิม แต่ต้องปรับกติกาหรือรายละเอียดบางส่วน',
+    'WE CHANGED OUR DIRECTION': 'แนวคิดหลักหรือวิธีแก้ปัญหาต้องเปลี่ยน',
+  },
+  en: {
+    'OUR DIRECTION STAYED THE SAME': 'None of the decisions changes the core approach.',
+    'WE REFINED OUR DIRECTION': 'The core stays, but a rule or detail must be adjusted.',
+    'WE CHANGED OUR DIRECTION': 'The core approach or solution must change.',
   },
 } as const
 
 export function DebatePhase({ project }: { project: ProjectRow }) {
   const { isThai } = useLanguage()
   const draft = usePhaseDraft({ projectId: project.id, phase: 'D', initialValues: initialDebate })
+  const [summaryEditing, setSummaryEditing] = useState(false)
   const navigate = useNavigate()
   const queryClient = useQueryClient()
-  const assumptions = draft.values.assumptions as unknown as Assumption[]
+  const language = isThai ? 'th' : 'en'
+  const assumptions = normalizeDebateAssumptions(draft.values.assumptions)
+  const directionResult = normalizeDebateOutcome(draft.values.directionResult)
+  const automaticSummary = buildDebateSummary(assumptions, directionResult, language)
+  const summaryCustomized = Boolean(draft.values.summaryCustomized)
+  const customSummary = String(draft.values.whatChanged).trim()
+  const displayedSummary = summaryCustomized && customSummary ? customSummary : automaticSummary
   const guide = debateGuide[isThai ? 'th' : 'en']
   const optionEntries = useQuery({ queryKey: ['phase-entries', project.id, 'O'], queryFn: () => getPhaseEntries(project.id, 'O') })
   const optionSource = entriesToRecord(optionEntries.data)
@@ -95,11 +128,21 @@ export function DebatePhase({ project }: { project: ProjectRow }) {
   const alignmentStatus = normalizeAlignmentStatus(draft.values.alignmentStatus)
   const alignmentNote = String(draft.values.alignmentNote)
   const resetAlignment = () => draft.setField('alignmentConfirmed', false)
-  const completion = useMutation({ mutationFn: async () => { await draft.saveAll(); return completePhase(project.id, 'D') }, onSuccess: async () => { await queryClient.invalidateQueries({ queryKey: ['project', project.id] }); navigate(`/projects/${project.id}/E`) } })
-  function updateAssumption(index: number, patch: Partial<Assumption>) { draft.setField('assumptions', assumptions.map((item, itemIndex) => itemIndex === index ? { ...item, ...patch } : item) as unknown as Json); resetAlignment() }
+  const completion = useMutation({ mutationFn: async () => { await draft.saveAll({ whatChanged: displayedSummary }); return completePhase(project.id, 'D') }, onSuccess: async () => { await queryClient.invalidateQueries({ queryKey: ['project', project.id] }); navigate(`/projects/${project.id}/E`) } })
+  function updateAssumption(index: number, patch: Partial<DebateAssumption>) { draft.setField('assumptions', assumptions.map((item, itemIndex) => itemIndex === index ? { ...item, ...patch } : item) as unknown as Json); resetAlignment() }
+  function setStance(index: number, stance: DebateStance) {
+    const current = assumptions[index]
+    if (!current || !stance || current.stance === stance) return
+    updateAssumption(index, withDebateStance(current, stance))
+  }
+  function setReason(index: number, value: string) {
+    const current = assumptions[index]
+    if (!current?.stance) return
+    updateAssumption(index, withDebateReason(current, value))
+  }
   function addAssumption() {
     if (assumptions.length >= MAX_ASSUMPTIONS) return
-    draft.setField('assumptions', [...assumptions, blankAssumption()] as unknown as Json)
+    draft.setField('assumptions', [...assumptions, blankDebateAssumption()] as unknown as Json)
     resetAlignment()
   }
   function removeAssumption(index: number) {
@@ -108,7 +151,7 @@ export function DebatePhase({ project }: { project: ProjectRow }) {
     resetAlignment()
   }
   const alignmentReady = alignmentIsReady({ status: alignmentStatus, note: alignmentNote, confirmed: Boolean(draft.values.alignmentConfirmed) })
-  const ready = assumptions.every((item) => item.text.trim() && item.stance && item.why.trim() && (item.stance !== 'challenge' || item.change.trim())) && Boolean(String(draft.values.directionResult)) && Boolean(String(draft.values.whatChanged).trim()) && optionEntries.isSuccess && alignmentReady
+  const ready = assumptions.every((item) => item.text.trim() && item.stance && debateReason(item).trim() && (item.stance !== 'challenge' || item.change.trim())) && Boolean(directionResult) && Boolean(displayedSummary) && optionEntries.isSuccess && alignmentReady
 
   return (
     <JourneyLayout project={project} phase="D" phaseName="DEBATE" chatContext={draft.values} saveState={draft.saveState}>
@@ -144,20 +187,30 @@ export function DebatePhase({ project }: { project: ProjectRow }) {
               {assumptions.length > MIN_ASSUMPTIONS ? <button className="assumption-card__remove" type="button" onClick={() => removeAssumption(index)} aria-label={`${isThai ? 'ลบสมมติฐานข้อที่' : 'Remove assumption'} ${index + 1}`}><X aria-hidden="true" size={17} /> {isThai ? 'ลบ' : 'REMOVE'}</button> : null}
               <FormField label={isThai ? `Direction นี้ตั้งอยู่บนสมมติฐานว่า… ${index + 1}` : `DIRECTION ASSUMES THAT… ${index + 1}`} guideKey="debate.assumption" required><textarea rows={3} value={assumption.text} onChange={(event) => updateAssumption(index, { text: event.target.value })} /></FormField>
               <div className="stance-buttons">
-                <button className={assumption.stance === 'agree' ? 'is-active' : ''} type="button" onClick={() => updateAssumption(index, { stance: 'agree', change: '' })}><strong>{isThai ? 'ยอมรับสมมติฐานนี้' : 'WE AGREE'}</strong><small>{guide.agree}</small></button>
-                <button className={assumption.stance === 'challenge' ? 'is-active challenge' : ''} type="button" onClick={() => updateAssumption(index, { stance: 'challenge' })}><strong>{isThai ? 'ท้าทายสมมติฐานนี้' : 'WE CHALLENGE'}</strong><small>{guide.challenge}</small></button>
+                <button className={assumption.stance === 'agree' ? 'is-active' : ''} type="button" onClick={() => setStance(index, 'agree')}><strong>{isThai ? 'เดินหน้าต่อชั่วคราว' : 'PROCEED FOR NOW'}</strong><small>{guide.agree}</small></button>
+                <button className={assumption.stance === 'challenge' ? 'is-active challenge' : ''} type="button" onClick={() => setStance(index, 'challenge')}><strong>{isThai ? 'ปรับ Direction' : 'ADJUST DIRECTION'}</strong><small>{guide.challenge}</small></button>
               </div>
-              {assumption.stance ? <div className={`form-grid ${assumption.stance === 'challenge' ? 'form-grid--two' : ''} challenge-fields`}><FormField label={assumption.stance === 'agree' ? (isThai ? 'ทำไมคุณจึงยอมรับความเสี่ยงนี้?' : 'WHY ARE YOU ACCEPTING THIS RISK?') : (isThai ? 'ทำไมคุณจึงท้าทายสมมติฐานนี้?' : 'WHY DO YOU CHALLENGE IT?')} guideKey={assumption.stance === 'agree' ? 'debate.agreeReason' : 'debate.challengeReason'} required><textarea rows={3} value={assumption.why} onChange={(event) => updateAssumption(index, { why: event.target.value })} /></FormField>{assumption.stance === 'challenge' ? <FormField label={isThai ? 'ควรเปลี่ยนอะไร?' : 'WHAT SHOULD CHANGE?'} guideKey="debate.change" required><textarea rows={3} value={assumption.change} onChange={(event) => updateAssumption(index, { change: event.target.value })} /></FormField> : null}</div> : null}
+              {assumption.stance ? <div className={`form-grid ${assumption.stance === 'challenge' ? 'form-grid--two' : ''} challenge-fields`}><FormField label={assumption.stance === 'agree' ? (isThai ? 'เหตุผลที่ความเสี่ยงนี้ยอมรับได้' : 'WHY IS THIS RISK ACCEPTABLE FOR NOW?') : (isThai ? 'เหตุผลที่ต้องปรับ Direction' : 'WHY MUST THE DIRECTION BE ADJUSTED?')} guideKey={assumption.stance === 'agree' ? 'debate.agreeReason' : 'debate.challengeReason'} required><textarea rows={3} value={debateReason(assumption)} onChange={(event) => setReason(index, event.target.value)} /></FormField>{assumption.stance === 'challenge' ? <FormField label={isThai ? 'จะเปลี่ยนอะไร?' : 'WHAT WILL CHANGE?'} guideKey="debate.change" required><textarea rows={3} value={assumption.change} onChange={(event) => updateAssumption(index, { change: event.target.value })} /></FormField> : null}</div> : null}
             </article>
           ))}
         </div>
         <button className="add-list-item assumption-add" type="button" disabled={assumptions.length >= MAX_ASSUMPTIONS} onClick={addAssumption}><Plus aria-hidden="true" size={17} /> {isThai ? 'เพิ่มสมมติฐาน' : 'ADD ASSUMPTION'} ({assumptions.length}/{MAX_ASSUMPTIONS})</button>
       </PhaseSection>
-      <PhaseSection step="02" title={isThai ? 'พิจารณา Direction อีกครั้งกับ Chat' : 'RECONSIDER WITH CHAT'} description={isThai ? 'ใช้บริบทที่ยืนยันแล้วและคำท้าทายของคุณพิจารณา Direction ใหม่' : 'Reconsider the direction using locked context and your challenges.'}>
-        <div className="choice-grid choice-grid--two">
-          {['OUR DIRECTION STAYED THE SAME', 'WE CHANGED OUR DIRECTION'].map((option) => <label className={draft.values.directionResult === option ? 'simple-choice is-active' : 'simple-choice'} key={option}><input type="radio" name="direction-result" checked={draft.values.directionResult === option} onChange={() => { draft.setField('directionResult', option); resetAlignment() }} />{isThai ? (option === 'OUR DIRECTION STAYED THE SAME' ? 'ใช้ Direction เดิมต่อ' : 'เปลี่ยน Direction') : option}</label>)}
+      <PhaseSection step="02" title={isThai ? 'ข้อสรุปหลังตรวจสมมติฐาน' : 'DECIDE THE OVERALL IMPACT'} description={isThai ? 'ไม่ต้องเขียนเหตุผลซ้ำ เลือกเพียงว่าคำตอบด้านบนส่งผลต่อ Direction ระดับใด แล้วตรวจสรุปที่ระบบรวบรวมให้' : 'Do not repeat your reasoning. Choose the overall impact on the direction, then verify the automatically assembled summary.'}>
+        <div className="choice-grid choice-grid--three">
+          {debateOutcomes.map((option) => <label className={directionResult === option ? 'simple-choice debate-outcome-choice is-active' : 'simple-choice debate-outcome-choice'} key={option}><input type="radio" name="direction-result" checked={directionResult === option} onChange={() => { draft.setField('directionResult', option); resetAlignment() }} /><span><strong>{debateOutcomeLabel(option, language)}</strong><small>{outcomeDescriptions[language][option]}</small></span></label>)}
         </div>
-        <FormField label={isThai ? 'อะไรเปลี่ยนไป และเพราะอะไร?' : 'WHAT CHANGED AND WHY?'} guideKey="debate.whatChanged" required><textarea rows={4} value={String(draft.values.whatChanged)} onChange={(event) => { draft.setField('whatChanged', event.target.value); resetAlignment() }} /></FormField>
+        <section className="debate-summary" aria-labelledby="debate-summary-title">
+          <header>
+            <div><span>{isThai ? 'รวบรวมจากคำตอบด้านบน' : 'ASSEMBLED FROM YOUR DECISIONS'}</span><h3 id="debate-summary-title">{isThai ? 'สรุปอัตโนมัติ' : 'AUTOMATIC SUMMARY'}</h3></div>
+            <div className="debate-summary__actions">
+              <button type="button" onClick={() => { if (!summaryCustomized) { draft.setField('whatChanged', automaticSummary); draft.setField('summaryCustomized', true) } setSummaryEditing((current) => !current); resetAlignment() }}>{summaryEditing ? (isThai ? 'แก้ไขเสร็จแล้ว' : 'DONE EDITING') : (isThai ? 'แก้ไขสรุป' : 'EDIT SUMMARY')}</button>
+              {summaryCustomized ? <button type="button" onClick={() => { draft.setField('summaryCustomized', false); draft.setField('whatChanged', ''); setSummaryEditing(false); resetAlignment() }}>{isThai ? 'ใช้สรุปอัตโนมัติ' : 'USE AUTOMATIC SUMMARY'}</button> : null}
+            </div>
+          </header>
+          {summaryEditing ? <textarea rows={6} value={String(draft.values.whatChanged)} onChange={(event) => { draft.setField('whatChanged', event.target.value); resetAlignment() }} /> : <p>{displayedSummary || (isThai ? 'เลือกผลต่อ Direction เพื่อดูสรุปที่ระบบรวบรวมให้' : 'Choose the direction outcome to see the automatically assembled summary.')}</p>}
+          <small>{isThai ? 'ระบบจะส่งสรุปนี้ต่อไปยัง Step E, Journal และ PRD' : 'This summary will flow to Step E, the Journal, and the PRD.'}</small>
+        </section>
       </PhaseSection>
       <CrossStepAlignment
         step="03"
@@ -178,8 +231,8 @@ export function DebatePhase({ project }: { project: ProjectRow }) {
         onNoteChange={(note) => { draft.setField('alignmentNote', note); resetAlignment() }}
         onConfirmedChange={(confirmed) => draft.setField('alignmentConfirmed', confirmed)}
       />
-      <ReviewGate title={isThai ? 'ตรวจความพร้อมหลังการท้าทาย' : 'DEBATE COMPLETE'} question={isThai ? 'คุณได้ท้าทายสิ่งที่ AI คาดไว้ และบันทึกเหตุผลของมนุษย์แล้วหรือยัง?' : 'Have you challenged AI assumptions and recorded the human reasoning?'} actions={<ArcadeButton disabled={!ready || completion.isPending} onClick={() => completion.mutate()}>{completion.isPending ? (isThai ? 'กำลังยืนยัน…' : 'LOCKING…') : (isThai ? 'กำหนด Direction' : 'ESTABLISH DIRECTION')} <ArrowRight aria-hidden="true" size={18} /></ArcadeButton>}>
-        <p>{isThai ? 'ข้อเสนอเดิม สมมติฐาน เหตุผล และผลลัพธ์ใหม่จะอยู่ใน Journal โดยไม่เขียนทับกัน' : 'The original proposal, assumptions, reasoning, and revised result remain in the Journal.'}</p>
+      <ReviewGate title={isThai ? 'ตรวจความพร้อมหลังตรวจสมมติฐาน' : 'DEBATE COMPLETE'} question={isThai ? 'คุณตัดสินใจครบทุกข้อและตรวจสรุปผลต่อ Direction แล้วหรือยัง?' : 'Have you decided every item and reviewed the overall impact on the direction?'} actions={<ArcadeButton disabled={!ready || completion.isPending} onClick={() => completion.mutate()}>{completion.isPending ? (isThai ? 'กำลังยืนยัน…' : 'LOCKING…') : (isThai ? 'กำหนด Direction' : 'ESTABLISH DIRECTION')} <ArrowRight aria-hidden="true" size={18} /></ArcadeButton>}>
+        <p>{isThai ? 'ระบบจะส่งต่อสมมติฐาน การตัดสินใจ เหตุผล และสิ่งที่จะเปลี่ยน โดยไม่ให้คุณเขียนซ้ำ' : 'The app carries forward each assumption, decision, reason, and change without asking you to repeat them.'}</p>
         {completion.isError ? <p className="field-error" role="alert">{isThai ? 'บันทึก Debate ไม่สำเร็จ กรุณาลองใหม่' : 'Could not save the debate. Please try again.'}</p> : null}
       </ReviewGate>
     </JourneyLayout>
