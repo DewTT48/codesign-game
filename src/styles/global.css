@@ -6622,6 +6622,8 @@ a.mission-node__content:focus-visible {
 
 .mission-name {
   font-size: 14px;
+  line-height: 1.4;
+  text-wrap: balance;
 }
 
 .meter-note {
@@ -7486,7 +7488,6 @@ a.mission-node__content:focus-visible {
   .arcade-button,
   .text-action,
   .mission-badge,
-  .mission-name,
   .solid-meter__header strong,
   .solid-meter__label,
   .role-callout strong,

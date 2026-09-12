@@ -26,7 +26,7 @@ export function MissionMap({ activeMission = 'C', compact, projectId, viewedMiss
     PRD: 'ชุดส่งต่องาน',
     I: 'สร้างแอป',
     G: 'ข้อเสนอแนะ',
-    N: 'รอบถัดไป',
+    N: 'เลือกสิ่งที่จะปรับ',
   }
   return (
     <section

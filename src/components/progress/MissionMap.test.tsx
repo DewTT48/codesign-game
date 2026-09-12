@@ -19,6 +19,7 @@ describe('MissionMap', () => {
     expect(nodes[5]).toHaveClass('is-active')
     expect(nodes[5]).not.toHaveClass('is-complete')
     expect(nodes.slice(6).every((node) => node.classList.contains('is-locked'))).toBe(true)
+    expect(screen.getByText('เลือกสิ่งที่จะปรับ')).toBeInTheDocument()
   })
 
   it('links only completed missions to their read-only history', () => {

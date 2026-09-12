@@ -7,5 +7,5 @@ export const missions = [
   { key: 'PRD', name: 'Handoff' },
   { key: 'I', name: 'Implement' },
   { key: 'G', name: 'Feedback' },
-  { key: 'N', name: 'Next' },
+  { key: 'N', name: 'Next iteration' },
 ]
