@@ -5934,7 +5934,7 @@ a.mission-node__content:focus-visible {
 
 .specify-intro ol {
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(6, minmax(0, 1fr));
   gap: 12px;
   margin: 0;
   padding: 0;
@@ -5953,6 +5953,14 @@ a.mission-node__content:focus-visible {
   line-height: 1.55;
 }
 
+.specify-intro li:nth-child(-n + 3) {
+  grid-column: span 2;
+}
+
+.specify-intro li:nth-child(n + 4) {
+  grid-column: span 3;
+}
+
 .specify-intro li strong {
   color: var(--accent-dark);
   font-family: var(--font-display);
@@ -5961,6 +5969,8 @@ a.mission-node__content:focus-visible {
 
 .specify-intro li > span {
   min-width: 0;
+  overflow-wrap: normal;
+  word-break: normal;
 }
 
 .specify-intro > p {
@@ -7134,6 +7144,14 @@ a.mission-node__content:focus-visible {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  .specify-intro li:nth-child(n) {
+    grid-column: auto;
+  }
+
+  .specify-intro li:last-child {
+    grid-column: 1 / -1;
+  }
+
   .debate-guide {
     padding: 18px;
     box-shadow: 5px 5px 0 var(--magenta);
@@ -7430,6 +7448,14 @@ a.mission-node__content:focus-visible {
   .specify-intro ol,
   .spec-import__source-guide ol {
     grid-template-columns: minmax(0, 1fr);
+  }
+
+  .specify-intro li:last-child {
+    grid-column: auto;
+  }
+
+  .specify-intro .keep-together {
+    white-space: normal;
   }
 
   .spec-import__header,
