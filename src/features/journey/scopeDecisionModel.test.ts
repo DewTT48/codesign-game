@@ -16,6 +16,18 @@ describe('scopeDecisionModel', () => {
     expect(result.nonGoals).toEqual(['ระบบสมาชิก', 'บันทึกความคืบหน้า'])
   })
 
+  it('allows more than eight must-haves because eight is guidance, not a limit', () => {
+    const existing = Array.from({ length: 8 }, (_, index) => `Must-have ${index + 1}`)
+    const result = moveScopeDecision({
+      mustHaves: existing,
+      nonGoals: ['Must-have 9'],
+    }, 'non-goal', 0, 'must-have')
+
+    expect(result.mustHaves).toHaveLength(9)
+    expect(result.mustHaves.at(-1)).toBe('Must-have 9')
+    expect(result.nonGoals).toEqual([])
+  })
+
   it('reports only the same complete decision across both statuses', () => {
     expect(findExactScopeConflicts(
       ['บันทึกความคืบหน้ารายวัน', 'Complete a daily mission and record feedback'],

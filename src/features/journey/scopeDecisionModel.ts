@@ -11,7 +11,7 @@ export type ScopeConflict = {
   nonGoalIndex: number
 }
 
-export const MAX_MUST_HAVES = 8
+export const SUGGESTED_MAX_MUST_HAVES = 8
 
 export function normalizeScopeList(value: unknown): string[] {
   return Array.isArray(value)
@@ -30,8 +30,6 @@ export function moveScopeDecision(
   const source = from === 'must-have' ? lists.mustHaves : lists.nonGoals
   const item = source[index]
   if (item === undefined) return lists
-  if (to === 'must-have' && lists.mustHaves.length >= MAX_MUST_HAVES) return lists
-
   return from === 'must-have'
     ? {
         mustHaves: lists.mustHaves.filter((_, itemIndex) => itemIndex !== index),

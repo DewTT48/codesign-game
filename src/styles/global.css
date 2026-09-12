@@ -5597,6 +5597,32 @@ a.mission-node__content:focus-visible {
   padding: 8px 12px;
 }
 
+.scope-count-guidance {
+  display: grid;
+  gap: 5px;
+  margin-top: 16px;
+  padding: 14px 16px;
+  color: var(--muted);
+  background: color-mix(in srgb, var(--accent) 10%, var(--deep-3));
+  border: 2px solid var(--accent);
+}
+
+.scope-count-guidance strong,
+.scope-count-guidance span {
+  font-family: var(--font-body);
+  letter-spacing: 0;
+}
+
+.scope-count-guidance strong {
+  color: var(--accent);
+  font-size: 16px;
+}
+
+.scope-count-guidance span {
+  font-size: 15px;
+  line-height: 1.55;
+}
+
 .scope-review-points {
   margin-bottom: 22px;
   padding: 20px;

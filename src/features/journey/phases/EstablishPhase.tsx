@@ -13,9 +13,9 @@ import { JourneyLayout } from '../JourneyLayout'
 import { FieldGuideDetails, FormField, PhaseSection, ReviewGate } from '../PhaseFormComponents'
 import {
   findExactScopeConflicts,
-  MAX_MUST_HAVES,
   moveScopeDecision,
   normalizeScopeList,
+  SUGGESTED_MAX_MUST_HAVES,
   type ScopeStatus,
 } from '../scopeDecisionModel'
 import { usePhaseDraft } from '../usePhaseDraft'
@@ -62,7 +62,6 @@ export function EstablishPhase({ project }: { project: ProjectRow }) {
   const addScopeItem = (status: ScopeStatus) => {
     const key = status === 'must-have' ? 'mustHaves' : 'nonGoals'
     const list = status === 'must-have' ? mustHaves : nonGoals
-    if (status === 'must-have' && list.length >= MAX_MUST_HAVES) return
     draft.setField(key, [...list, ''] as unknown as Json)
     resetValidations()
   }
@@ -163,6 +162,9 @@ function ScopeDecisionBoard({ mustHaves, nonGoals, onChange, onRemove, onAdd, on
     ...mustHaves.map((text, index) => ({ text, index, status: 'must-have' as const })),
     ...nonGoals.map((text, index) => ({ text, index, status: 'non-goal' as const })),
   ]
+  const mustHaveCount = mustHaves.filter((item) => item.trim()).length
+  const nonGoalCount = nonGoals.filter((item) => item.trim()).length
+  const hasManyMustHaves = mustHaveCount > SUGGESTED_MAX_MUST_HAVES
 
   return <section className="scope-decision-board">
     <header>
@@ -188,17 +190,21 @@ function ScopeDecisionBoard({ mustHaves, nonGoals, onChange, onRemove, onAdd, on
         <div className="scope-decision-item__main">
           <input value={item.text} onChange={(event) => onChange(item.status, item.index, event.target.value)} aria-label={`${isThai ? 'รายการ Scope' : 'Scope item'} ${position + 1}`} />
           <div className="scope-status-buttons" role="group" aria-label={`${isThai ? 'สถานะของรายการ' : 'Status for item'} ${position + 1}`}>
-            <button type="button" className={item.status === 'must-have' ? 'is-active' : ''} aria-pressed={item.status === 'must-have'} disabled={item.status === 'non-goal' && mustHaves.length >= MAX_MUST_HAVES} onClick={() => onStatusChange(item.status, item.index, 'must-have')}>{isThai ? 'ต้องมีใน Version แรก' : 'MUST HAVE'}</button>
+            <button type="button" className={item.status === 'must-have' ? 'is-active' : ''} aria-pressed={item.status === 'must-have'} onClick={() => onStatusChange(item.status, item.index, 'must-have')}>{isThai ? 'ต้องมีใน Version แรก' : 'MUST HAVE'}</button>
             <button type="button" className={item.status === 'non-goal' ? 'is-active' : ''} aria-pressed={item.status === 'non-goal'} onClick={() => onStatusChange(item.status, item.index, 'non-goal')}>{isThai ? 'ยังไม่ทำใน Version นี้' : 'NOT IN THIS VERSION'}</button>
           </div>
         </div>
         <button className="scope-decision-item__remove" type="button" onClick={() => onRemove(item.status, item.index)} aria-label={`${isThai ? 'ลบรายการ Scope' : 'Remove scope item'} ${position + 1}`}><X size={17} /> {isThai ? 'ลบ' : 'REMOVE'}</button>
       </li>)}
     </ol>
+    {hasManyMustHaves ? <div className="scope-count-guidance" role="note">
+      <strong>{isThai ? `มี Must Have ${mustHaveCount} ข้อ` : `${mustHaveCount} MUST-HAVES`}</strong>
+      <span>{isThai ? `ลองตรวจว่าบางข้อเป็นรายละเอียดที่ควรนำไปกำหนดต่อใน Step S หรือไม่ คุณยังบันทึกและทำงานต่อได้ตามปกติ` : `Consider whether some items are details better defined in Step S. You can still save and continue normally.`}</span>
+    </div> : null}
     <footer>
-      <div><strong>{isThai ? 'สถานะปัจจุบัน' : 'CURRENT STATUS'}</strong><span>{isThai ? `ต้องมี ${mustHaves.filter((item) => item.trim()).length} · ยังไม่ทำ ${nonGoals.filter((item) => item.trim()).length}` : `${mustHaves.filter((item) => item.trim()).length} must-have · ${nonGoals.filter((item) => item.trim()).length} not in this version`}</span></div>
+      <div><strong>{isThai ? 'สถานะปัจจุบัน' : 'CURRENT STATUS'}</strong><span>{isThai ? `ต้องมี ${mustHaveCount} · ยังไม่ทำ ${nonGoalCount}` : `${mustHaveCount} must-have · ${nonGoalCount} not in this version`}</span></div>
       <div className="scope-add-actions">
-        <button type="button" disabled={mustHaves.length >= MAX_MUST_HAVES} onClick={() => onAdd('must-have')}><Plus size={17} /> {isThai ? 'เพิ่ม Must Have' : 'ADD MUST-HAVE'} ({mustHaves.length}/{MAX_MUST_HAVES})</button>
+        <button type="button" onClick={() => onAdd('must-have')}><Plus size={17} /> {isThai ? 'เพิ่ม Must Have' : 'ADD MUST-HAVE'}</button>
         <button type="button" onClick={() => onAdd('non-goal')}><Plus size={17} /> {isThai ? 'เพิ่ม Non-goal' : 'ADD NON-GOAL'}</button>
       </div>
     </footer>
