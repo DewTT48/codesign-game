@@ -15,7 +15,7 @@ import { ExperienceSelector } from '../specify/ExperienceSelector'
 import { GuidedRuleField } from '../specify/GuidedRuleField'
 import { SpecifyImportPanel } from '../specify/SpecifyImportPanel'
 import type { OwnerSpecificationImport, SpecifyMarkdownImport } from '../specify/markdownImport'
-import { getProductRulePresets, resolveProductRuleText } from '../specify/productRuleModel'
+import { getProductRuleAdvisory, getProductRulePresets, resolveProductRuleText } from '../specify/productRuleModel'
 import {
   countCompleteDays,
   createDailyContent,
@@ -270,7 +270,7 @@ export function SpecifyPhase({ project }: { project: ProjectRow }) {
               <span>{isThai ? 'กติกาที่กำหนดพฤติกรรมของ Product' : 'RULES THAT DEFINE PRODUCT BEHAVIOR'}</span>
               <h3 id="product-rules-title">{isThai ? 'เขียนสิ่งที่ Product นี้ต้องทำจริง' : 'Describe what this product must actually do'}</h3>
             </div>
-            <p>{isThai ? 'ตัวอย่างเป็นเพียงจุดเริ่มต้น คุณเขียนกติกาแบบอื่นได้ และควรตรวจว่าไม่ขัดกับขอบเขตที่ยืนยันใน Step E' : 'Examples are starting points, not fixed choices. Write a different rule when needed, and keep it consistent with the scope confirmed in Step E.'}</p>
+            <p>{isThai ? 'ตัวอย่างเป็นเพียงจุดเริ่มต้น คุณเขียนกติกาแบบอื่นได้ ระบบจะเตือนผลกระทบของตัวอย่างมาตรฐานบางแบบ แต่คำตอบที่เขียนเองยังต้องตรวจว่าไม่ขัดกับ Step E' : 'Examples are starting points, not fixed choices. The product flags impacts of some standard patterns, but custom rules still need to be checked against Step E.'}</p>
           </header>
           <div className="product-rules__grid">
             <GuidedRuleField
@@ -279,6 +279,7 @@ export function SpecifyPhase({ project }: { project: ProjectRow }) {
               question={isThai ? 'เมื่อผู้ใช้กลับมายังรายการที่เคยทำแล้ว ระบบควรให้ทำอะไรได้บ้าง?' : 'What can users do when they return to an item they previously worked on?'}
               value={returnRuleText}
               examples={getProductRulePresets('return', language)}
+              advisory={getProductRuleAdvisory('return', returnRuleText, language)?.message}
               isThai={isThai}
               onChange={(value) => setSpecificationField('returnRule', value)}
             />
@@ -288,6 +289,7 @@ export function SpecifyPhase({ project }: { project: ProjectRow }) {
               question={isThai ? 'ผู้ใช้เข้าถึงแต่ละวันหรือแต่ละส่วนของ Product ได้อย่างไร?' : 'How do users access each day or section of the product?'}
               value={sequenceRuleText}
               examples={getProductRulePresets('sequence', language)}
+              advisory={getProductRuleAdvisory('sequence', sequenceRuleText, language)?.message}
               isThai={isThai}
               onChange={(value) => setSpecificationField('sequenceRule', value)}
             />
@@ -297,6 +299,7 @@ export function SpecifyPhase({ project }: { project: ProjectRow }) {
               question={isThai ? 'ระบบต้องจำข้อมูลอะไร เก็บไว้ที่ไหน และนานแค่ไหน?' : 'What data must be retained, where is it kept, and for how long?'}
               value={storageRuleText}
               examples={getProductRulePresets('storage', language)}
+              advisory={getProductRuleAdvisory('storage', storageRuleText, language)?.message}
               isThai={isThai}
               onChange={(value) => setSpecificationField('storageRule', value)}
             />

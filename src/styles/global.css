@@ -6023,7 +6023,7 @@ a.mission-node__content:focus-visible {
 
 .product-rules__intro span,
 .guided-rule-field__examples > span,
-.guided-rule-field__answer > span {
+.guided-rule-field__answer label > span {
   font-family: var(--font-display);
   font-size: 12px;
   line-height: 1.55;
@@ -6065,8 +6065,8 @@ a.mission-node__content:focus-visible {
   justify-content: space-between;
 }
 
-.guided-rule-field__title > label {
-  display: block;
+.guided-rule-field__title > h4 {
+  margin: 0;
   color: var(--white);
   font-family: var(--font-body);
   font-size: 20px;
@@ -6097,7 +6097,7 @@ a.mission-node__content:focus-visible {
 }
 
 .guided-rule-field__examples > span,
-.guided-rule-field__answer > span {
+.guided-rule-field__answer label > span {
   color: var(--accent);
 }
 
@@ -6132,6 +6132,10 @@ a.mission-node__content:focus-visible {
   gap: 9px;
 }
 
+.guided-rule-field__answer label {
+  display: block;
+}
+
 .guided-rule-field__answer textarea {
   width: 100%;
   min-height: 104px;
@@ -6142,6 +6146,27 @@ a.mission-node__content:focus-visible {
   font-family: var(--font-body);
   font-size: 17px;
   line-height: 1.6;
+}
+
+.guided-rule-field__advisory {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 9px;
+  align-items: start;
+  margin: 0;
+  padding: 10px 12px;
+  color: var(--ink);
+  background: #fff0dc;
+  border-left: 5px solid var(--accent);
+  font-family: var(--font-body);
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.55;
+}
+
+.guided-rule-field__advisory svg {
+  margin-top: 2px;
+  color: var(--accent-dark);
 }
 
 .content-arc-grid {
@@ -8150,7 +8175,7 @@ a.mission-node__content:focus-visible {
   .rule-select-grid > label > span,
   .product-rules__intro span,
   .guided-rule-field__examples > span,
-  .guided-rule-field__answer > span,
+  .guided-rule-field__answer label > span,
   .phase-history__readonly,
   .phase-history__hero > div:nth-child(2) > span,
   .phase-history__nav > span,

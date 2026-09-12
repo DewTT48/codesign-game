@@ -27,4 +27,17 @@ describe('handoff companion files', () => {
     expect(markdown).toContain('Never request or handle the owner\'s password')
     expect(markdown).toContain('publish through GitHub Pages')
   })
+
+  it('uses the owner rules in the Codex brief instead of hardcoding browser storage', () => {
+    const markdown = assembleStartWithCodex(project, 'ready', {
+      returnRule: 'no-revisit',
+      sequenceRule: 'Users can complete the items in any order.',
+      storageRule: 'Users export a file and import it later to restore progress.',
+    })
+
+    expect(markdown).toContain('Users cannot return to an item after completing it.')
+    expect(markdown).toContain('Users can complete the items in any order.')
+    expect(markdown).toContain('Users export a file and import it later to restore progress.')
+    expect(markdown).not.toContain('Store progress only in the browser/device as specified')
+  })
 })

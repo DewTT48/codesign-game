@@ -2,6 +2,10 @@ import type { AppLanguage } from '../../i18n/LanguageContext'
 
 export type ProductRuleKind = 'return' | 'sequence' | 'storage'
 
+export type ProductRuleAdvisory = {
+  message: string
+}
+
 const legacyRuleText: Record<ProductRuleKind, Record<string, Record<AppLanguage, string>>> = {
   return: {
     'allow-edit': {
@@ -72,14 +76,20 @@ const rulePresets: Record<ProductRuleKind, Record<AppLanguage, string[]>> = {
     th: [
       legacyRuleText.storage['browser-device'].th,
       legacyRuleText.storage['session-only'].th,
-      'ระบบให้ผู้ใช้ดาวน์โหลดข้อมูลเป็นไฟล์เก็บไว้',
+      'ระบบให้ผู้ใช้ส่งออกข้อมูลเป็นไฟล์ และนำไฟล์กลับมาเพื่อกู้คืนความคืบหน้าได้',
     ],
     en: [
       legacyRuleText.storage['browser-device'].en,
       legacyRuleText.storage['session-only'].en,
-      'The product lets users download their data as a file.',
+      'The product lets users export their data as a file and import it later to restore progress.',
     ],
   },
+}
+
+const matchesRule = (value: unknown, candidates: string[]) => {
+  if (typeof value !== 'string') return false
+  const normalized = value.trim().toLocaleLowerCase()
+  return candidates.some((candidate) => candidate.toLocaleLowerCase() === normalized)
 }
 
 export function resolveProductRuleText(kind: ProductRuleKind, value: unknown, language: AppLanguage) {
@@ -90,4 +100,65 @@ export function resolveProductRuleText(kind: ProductRuleKind, value: unknown, la
 
 export function getProductRulePresets(kind: ProductRuleKind, language: AppLanguage) {
   return [...rulePresets[kind][language]]
+}
+
+export function getProductRuleAdvisory(kind: ProductRuleKind, value: unknown, language: AppLanguage): ProductRuleAdvisory | null {
+  if (kind === 'return' && matchesRule(value, [
+    'no-revisit',
+    legacyRuleText.return['no-revisit'].th,
+    legacyRuleText.return['no-revisit'].en,
+  ])) {
+    return {
+      message: language === 'th'
+        ? 'ผลกระทบที่ต้องยืนยัน: ผู้ใช้จะกลับมาอ่านคำตอบหรือทบทวนหลักฐานเดิมหลังทำเสร็จไม่ได้'
+        : 'Confirm this impact: users will not be able to return to read earlier responses or review prior evidence.',
+    }
+  }
+
+  if (kind === 'return' && matchesRule(value, [
+    'ผู้ใช้เริ่มทำรายการเดิมใหม่ได้',
+    'Users can restart an earlier item.',
+  ])) {
+    return {
+      message: language === 'th'
+        ? 'ต้องระบุเพิ่ม: เมื่อเริ่มใหม่ ระบบจะแทนที่คำตอบเดิมหรือเก็บคำตอบเดิมไว้เป็นประวัติ'
+        : 'Clarify what happens on restart: replace the earlier response or retain it as history.',
+    }
+  }
+
+  if (kind === 'sequence' && matchesRule(value, [
+    'ระบบเปิดรายการตามวันหรือเวลาที่กำหนด',
+    'The product makes items available on a defined date or schedule.',
+  ])) {
+    return {
+      message: language === 'th'
+        ? 'ต้องระบุเพิ่ม: วันหรือเวลาเริ่มต้น เขตเวลา และสิ่งที่เกิดขึ้นเมื่อนาฬิกาของอุปกรณ์คลาดเคลื่อน'
+        : 'Clarify the start date or time, time zone, and what happens if the device clock is inaccurate.',
+    }
+  }
+
+  if (kind === 'storage' && matchesRule(value, [
+    'session-only',
+    legacyRuleText.storage['session-only'].th,
+    legacyRuleText.storage['session-only'].en,
+  ])) {
+    return {
+      message: language === 'th'
+        ? 'ผลกระทบสูง: เมื่อปิด Browser ความคืบหน้าจะหาย จึงอาจทำให้ผู้ใช้ทำ Product 21 วันต่อเนื่องไม่ได้'
+        : 'High impact: closing the browser removes progress, which may prevent a continuous 21-day journey.',
+    }
+  }
+
+  if (kind === 'storage' && matchesRule(value, [
+    'ระบบให้ผู้ใช้ส่งออกข้อมูลเป็นไฟล์ และนำไฟล์กลับมาเพื่อกู้คืนความคืบหน้าได้',
+    'The product lets users export their data as a file and import it later to restore progress.',
+  ])) {
+    return {
+      message: language === 'th'
+        ? 'ต้องระบุเพิ่ม: ผู้ใช้ส่งออกไฟล์เมื่อใด และระบบให้เลือกไฟล์กลับมาเพื่อกู้คืนความคืบหน้าที่จุดใด'
+        : 'Clarify when users export the file and where they can import it to restore progress.',
+    }
+  }
+
+  return null
 }

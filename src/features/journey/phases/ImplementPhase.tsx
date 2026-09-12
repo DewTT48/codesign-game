@@ -33,8 +33,14 @@ export function ImplementPhase({ project }: { project: ProjectRow }) {
   const [selectedPackageFile, setSelectedPackageFile] = useState('START_WITH_CODEX.md')
   const snapshot = useQuery({ queryKey: ['prd-snapshot', project.id], queryFn: () => getLatestPrdSnapshot(project.id) })
   const prdEntries = useQuery({ queryKey: ['phase-entries', project.id, 'PRD'], queryFn: () => getPhaseEntries(project.id, 'PRD') })
+  const specifyEntries = useQuery({ queryKey: ['phase-entries', project.id, 'S'], queryFn: () => getPhaseEntries(project.id, 'S') })
   const readiness = String(draft.values.githubReadiness) as GitHubReadiness
-  const startWithCodex = assembleStartWithCodex(project, readiness)
+  const specifyValue = (fieldKey: string) => specifyEntries.data?.find((entry) => entry.fieldKey === fieldKey)?.content
+  const startWithCodex = assembleStartWithCodex(project, readiness, {
+    returnRule: specifyValue('returnRule'),
+    sequenceRule: specifyValue('sequenceRule'),
+    storageRule: specifyValue('storageRule'),
+  })
   const alignmentStatus = normalizeAlignmentStatus(draft.values.alignmentStatus)
   const alignmentNote = String(draft.values.alignmentNote)
   const resetAlignment = () => draft.setField('alignmentConfirmed', false)
@@ -61,14 +67,14 @@ export function ImplementPhase({ project }: { project: ProjectRow }) {
     { fileName: 'CODESIGN_HANDOFF.md', description: isThai ? 'Product decisions และขอบเขตงานที่ Lock แล้ว' : 'Locked product decisions and scope', content: snapshot.data?.markdown_content || fallbackEntry('markdownDraft') },
     { fileName: 'CONTENT_PACK.md', description: isThai ? 'เนื้อหา แบบฝึก และการบันทึกครบ 21 วัน' : 'All 21 days of content, exercises, and records', content: snapshot.data?.content_pack || fallbackEntry('contentPackDraft') },
     { fileName: 'EXPERIENCE_DIRECTION.md', description: isThai ? 'Theme และแนวทางกำกับประสบการณ์' : 'Theme and experience guardrails', content: snapshot.data?.experience_direction || fallbackEntry('experienceDirectionDraft') },
-    { fileName: 'START_WITH_CODEX.md', description: isThai ? 'คำสั่งเริ่มงานที่ปรับตามความพร้อม GitHub ของคุณ' : 'Starting brief adapted to your GitHub readiness', content: startWithCodex },
+    { fileName: 'START_WITH_CODEX.md', description: isThai ? 'คำสั่งเริ่มงานตามกติกา Product และความพร้อม GitHub ของคุณ' : 'Starting brief adapted to the product rules and your GitHub readiness', content: startWithCodex },
   ]
   const activePackageFile = packageFiles.find((file) => file.fileName === selectedPackageFile) ?? packageFiles[3]
   const packageReady = packageFiles.every((file) => file.content.trim())
-  const packageLoadError = snapshot.isError || prdEntries.isError || (!snapshot.isLoading && !prdEntries.isLoading && !packageReady)
+  const packageLoadError = snapshot.isError || prdEntries.isError || specifyEntries.isError || (!snapshot.isLoading && !prdEntries.isLoading && !specifyEntries.isLoading && !packageReady)
   const prdReviewOutcome = prdEntries.data?.find((entry) => entry.fieldKey === 'reviewOutcomeV2')?.content
   const alignmentReady = alignmentIsReady({ status: alignmentStatus, note: alignmentNote, confirmed: Boolean(draft.values.alignmentConfirmed) })
-  const ready = Boolean(draft.values.workingApp && String(draft.values.appUrl).trim() && String(draft.values.repositoryUrl).trim() && packageReady && snapshot.isSuccess && prdEntries.isSuccess && alignmentReady)
+  const ready = Boolean(draft.values.workingApp && String(draft.values.appUrl).trim() && String(draft.values.repositoryUrl).trim() && packageReady && snapshot.isSuccess && prdEntries.isSuccess && specifyEntries.isSuccess && alignmentReady)
 
   const downloadPackageFile = (fileName: string, content: string) => {
     const url = URL.createObjectURL(new Blob([content], { type: 'text/markdown;charset=utf-8' }))
@@ -133,7 +139,7 @@ export function ImplementPhase({ project }: { project: ProjectRow }) {
       </PhaseSection>
 
       <PhaseSection step="I3" title={isThai ? 'ประกอบชุด 4 ไฟล์สำหรับ Codex' : 'ASSEMBLE THE FOUR-FILE CODEX PACKAGE'} description={isThai ? 'สามไฟล์แรกคือ Snapshot ที่ Lock จาก PRD ส่วน START_WITH_CODEX.md ถูกสร้างในขั้นนี้ตามความพร้อม GitHub ที่คุณเลือก' : 'The first three files are the locked PRD snapshot. START_WITH_CODEX.md is generated here from your GitHub readiness.'}>
-        {(snapshot.isLoading || prdEntries.isLoading) ? <p>{isThai ? 'กำลังโหลดไฟล์ที่ Lock ไว้…' : 'LOADING LOCKED FILES…'}</p> : null}
+        {(snapshot.isLoading || prdEntries.isLoading || specifyEntries.isLoading) ? <p>{isThai ? 'กำลังโหลดไฟล์ที่ Lock ไว้…' : 'LOADING LOCKED FILES…'}</p> : null}
         {packageLoadError ? <p className="field-error" role="alert">{isThai ? 'โหลดชุดไฟล์หลักไม่ครบ กรุณากลับไปตรวจ PRD ก่อนส่งต่อ' : 'THE LOCKED SOURCE PACKAGE COULD NOT BE LOADED COMPLETELY.'}</p> : null}
         <div className="implement-package-grid" aria-label={isThai ? 'ชุดไฟล์สำหรับ Codex' : 'Codex package files'}>
           {packageFiles.map((file) => <div key={file.fileName} className={selectedPackageFile === file.fileName ? 'is-active' : ''}>
@@ -169,7 +175,7 @@ export function ImplementPhase({ project }: { project: ProjectRow }) {
         step="I5"
         sourceStep="PRD"
         targetStep="I"
-        loading={snapshot.isLoading || prdEntries.isLoading}
+        loading={snapshot.isLoading || prdEntries.isLoading || specifyEntries.isLoading}
         loadError={packageLoadError}
         items={[
           { label: isThai ? 'ชุดส่งต่องานที่ใช้สร้าง' : 'SOURCE PACKAGE', value: [`PRD v${snapshot.data?.version ?? '—'}`, 'CODESIGN_HANDOFF.md', 'CONTENT_PACK.md', 'EXPERIENCE_DIRECTION.md', 'START_WITH_CODEX.md'] },

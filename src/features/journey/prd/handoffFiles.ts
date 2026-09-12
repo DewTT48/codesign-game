@@ -89,12 +89,15 @@ ${options.map((option) => `- **${option.name}:** ${option.mood || 'No mood recor
 `
 }
 
-export function assembleStartWithCodex(project: ProjectRow, readiness: GitHubReadiness = 'unsure') {
+export function assembleStartWithCodex(project: ProjectRow, readiness: GitHubReadiness = 'unsure', specify: SpecifyData = {}) {
   const readinessInstruction = {
     ready: 'The owner already has a GitHub account. Confirm the intended account, then guide repository creation and GitHub Pages setup.',
     'need-account': 'The owner does not yet have a GitHub account. Explain GitHub in plain language and guide account creation before repository setup.',
     unsure: 'The owner is unsure about GitHub. First explain what an account, repository, commit, push, and GitHub Pages mean; then help them determine whether an account already exists.',
   }[readiness]
+  const returnRule = resolveProductRuleText('return', specify.returnRule, 'en') || 'Not specified'
+  const sequenceRule = resolveProductRuleText('sequence', specify.sequenceRule, 'en') || 'Not specified'
+  const storageRule = resolveProductRuleText('storage', specify.storageRule, 'en') || 'Not specified'
 
   return `# START WITH CODEX — ${project.title}
 
@@ -107,6 +110,14 @@ Help a non-technical product owner turn the attached CODESIGN handoff into a wor
 3. \`EXPERIENCE_DIRECTION.md\` — the owner-selected visual and interaction direction
 
 Treat these files as the source of truth. Do not silently invent a behavior that changes the product. Mark any material ambiguity as **PRODUCT DECISION REQUIRED** and ask one clear question.
+
+## Locked Product Rules
+
+- **Returning to earlier work:** ${returnRule}
+- **Accessing days or sections:** ${sequenceRule}
+- **Retaining and restoring data:** ${storageRule}
+
+Implement these rules as written. If one conflicts with Must Have, Not in This Version, or another locked constraint, stop and mark the conflict as **PRODUCT DECISION REQUIRED** instead of choosing a rule yourself.
 
 ## GitHub Readiness
 
@@ -125,7 +136,7 @@ GitHub is the online home for the project files and their change history. GitHub
 2. Identify only genuine product-decision gaps. Do not turn implementation preferences into questions.
 3. Create the project and repository with a clear README.
 4. Build the complete 21-day standalone web app.
-5. Store progress only in the browser/device as specified; do not add Auth, backend, cloud database, embedded AI, analytics, or paid services.
+5. Implement return, access, and data retention behavior exactly as stated in the Locked Product Rules. Do not infer Auth, a backend, cloud storage, embedded AI, analytics, or paid services unless an owner-approved locked decision explicitly requires it.
 6. Test the full journey on desktop, tablet, and mobile, including keyboard use, empty states, returning to the app, and Thai text wrapping where relevant.
 7. Show the owner a preview, fix implementation issues, then publish through GitHub Pages.
 8. Return the repository URL, public app URL, test summary, and any remaining limitations.
