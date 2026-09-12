@@ -4,6 +4,7 @@ import {
   normalizeDailyContent,
   normalizeExperienceOptions,
 } from '../specify/specifyModel'
+import { resolveProductRuleText } from '../specify/productRuleModel'
 
 export type GitHubReadiness = 'ready' | 'need-account' | 'unsure'
 
@@ -15,6 +16,8 @@ const value = (input: Json | undefined, fallback = 'Not specified') =>
 const list = (input: Json | undefined) => (Array.isArray(input) ? input : [])
   .filter((item): item is string => typeof item === 'string' && Boolean(item.trim()))
   .map((item) => item.trim())
+
+const sentence = (input: string) => /[.!?…]$/.test(input) ? input : `${input}.`
 
 export function assembleContentPack(specify: SpecifyData) {
   const arcs = normalizeContentArcs(specify.contentArcs)
@@ -134,15 +137,15 @@ Start by reading the three handoff files and giving the owner a short readiness 
 export function defaultAcceptanceCriteria(specify: SpecifyData) {
   const custom = list(specify.acceptanceCriteria)
   if (custom.length) return custom
-  const returnRule = value(specify.returnRule, 'allow-edit')
-  const sequenceRule = value(specify.sequenceRule, 'sequential')
-  const storageRule = value(specify.storageRule, 'browser-device')
+  const returnRule = resolveProductRuleText('return', specify.returnRule, 'en') || 'Not specified'
+  const sequenceRule = resolveProductRuleText('sequence', specify.sequenceRule, 'en') || 'Not specified'
+  const storageRule = resolveProductRuleText('storage', specify.storageRule, 'en') || 'Not specified'
   return [
     'The user can open and complete all 21 days with the supplied content, exercise, reflection, and record prompt.',
     `A day is complete only when: ${value(specify.dailyCompletionRule)}`,
-    `Earlier days follow the locked return rule: ${returnRule}.`,
-    `Day access follows the locked sequence rule: ${sequenceRule}.`,
-    `Progress follows the locked storage rule: ${storageRule}.`,
+    `Earlier days follow the locked return rule: ${sentence(returnRule)}`,
+    `Day access follows the locked sequence rule: ${sentence(sequenceRule)}`,
+    `Progress follows the locked storage rule: ${sentence(storageRule)}`,
     'The selected experience direction remains readable and usable on desktop, tablet, and mobile.',
   ]
 }

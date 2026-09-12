@@ -8,9 +8,9 @@ describe('Specify Markdown import', () => {
     brandCopy: '21 DAYS OF',
     journeySummary: 'เปิด App → รับภารกิจ → บันทึกผล',
     dailyCompletionRule: 'ลงมือทำและบันทึกผล',
-    returnRule: 'allow-edit' as const,
-    sequenceRule: 'sequential' as const,
-    storageRule: 'browser-device' as const,
+    returnRule: 'ผู้ใช้กลับมาอ่านและแก้ไขคำตอบเดิมได้',
+    sequenceRule: 'ผู้ใช้ต้องทำรายการก่อนหน้าให้สำเร็จ จึงเปิดรายการถัดไปได้',
+    storageRule: 'ระบบจำคำตอบและความคืบหน้าไว้ใน Browser ของอุปกรณ์นี้',
     dailyDuration: '5–10 นาที',
     contentArcs: [
       { range: 'DAY 01–07', title: 'เห็นความเป็นไปได้', goal: 'ฝึกสังเกต' },
@@ -28,6 +28,22 @@ describe('Specify Markdown import', () => {
     const result = parseSpecifyMarkdown(serializeOwnerSpecification(ownerSpecification))
 
     expect(result.ownerSpecification).toEqual(ownerSpecification)
+    expect(result.warnings).toEqual([])
+  })
+
+  it('keeps legacy rule codes importable for existing handoff files', () => {
+    const legacy = serializeOwnerSpecification({
+      ...ownerSpecification,
+      returnRule: 'allow-edit',
+      sequenceRule: 'sequential',
+      storageRule: 'browser-device',
+    })
+
+    const result = parseSpecifyMarkdown(legacy)
+
+    expect(result.ownerSpecification?.returnRule).toBe('allow-edit')
+    expect(result.ownerSpecification?.sequenceRule).toBe('sequential')
+    expect(result.ownerSpecification?.storageRule).toBe('browser-device')
     expect(result.warnings).toEqual([])
   })
 

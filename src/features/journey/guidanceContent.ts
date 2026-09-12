@@ -1,6 +1,7 @@
 import type { AppLanguage } from '../i18n/LanguageContext'
 import { resolveDebateSummary } from './debateModel'
 import type { PrdSource } from './journey.service'
+import { resolveProductRuleText } from './specify/productRuleModel'
 
 export type FieldGuide = {
   question: string
@@ -212,6 +213,12 @@ E → S NOTE: ${sourceValue(source, 'S', 'alignmentNote')}`
     ? `${baseNonGoals}\n\n===== CROSS-STEP ALIGNMENT — OWNER CONFIRMED =====\n${alignmentRecord}`
     : baseNonGoals
   const debateOptions = formatOptionsForPrompt(source)
+  const currentReturnRule = resolveProductRuleText('return', current.returnRule, language) || '—'
+  const currentSequenceRule = resolveProductRuleText('sequence', current.sequenceRule, language) || '—'
+  const currentStorageRule = resolveProductRuleText('storage', current.storageRule, language) || '—'
+  const lockedReturnRule = resolveProductRuleText('return', source.S?.returnRule, language) || '—'
+  const lockedSequenceRule = resolveProductRuleText('sequence', source.S?.sequenceRule, language) || '—'
+  const lockedStorageRule = resolveProductRuleText('storage', source.S?.storageRule, language) || '—'
 
   const guides: Record<string, Localized<PhaseGuide>> = {
     C: {
@@ -372,9 +379,9 @@ PRODUCT LANGUAGE: ${text(current.productLanguage)}
 BRAND COPY — DO NOT TRANSLATE: ${text(current.brandCopy)}
 PRIMARY JOURNEY: ${text(current.journeySummary)}
 ONE DAY IS COMPLETE WHEN: ${text(current.dailyCompletionRule)}
-RETURN RULE: ${text(current.returnRule)}
-DAY SEQUENCE: ${text(current.sequenceRule)}
-SAVE BEHAVIOR: ${text(current.storageRule)}
+RETURN RULE: ${currentReturnRule}
+DAY SEQUENCE: ${currentSequenceRule}
+SAVE BEHAVIOR: ${currentStorageRule}
 TIME PER DAY: ${text(current.dailyDuration)}
 
 CONTENT BLUEPRINT
@@ -419,6 +426,7 @@ DAILY RECORD PATTERN: ${text(current.recordPattern)}
 16. สร้าง Markdown ตาม Template ด้านล่างเฉพาะเมื่อผมยืนยันร่างทั้งหมดแล้ว และพิมพ์ “สร้างไฟล์ CODESIGN_SPEC.md”
 17. ห้ามสร้างไฟล์, Markdown Template ที่กรอกแล้ว หรือ Code Block ก่อนครบทั้งสองเงื่อนไข
 18. ตอนสร้าง Markdown ห้ามเปลี่ยนชื่อหัวข้อหรือชื่อ Field
+19. RETURN_RULE, DAY_SEQUENCE และ SAVE_BEHAVIOR ต้องเป็นประโยคกติกาที่ Product Owner ยืนยันแล้ว ห้ามเปลี่ยนเป็นรหัสตัวเลือกหรือจำกัดไว้เฉพาะตัวอย่าง
 
 OWNER SPECIFICATION TEMPLATE — สรุปการตัดสินใจจากบทสนทนาเพื่อให้ CODESIGN เติมช่อง S1–S2:
 <!-- CODESIGN:OWNER_SPEC:v1 -->
@@ -427,9 +435,9 @@ PRODUCT_LANGUAGE: th | en | bilingual
 BRAND_COPY:
 PRIMARY_JOURNEY:
 ONE_DAY_COMPLETE_WHEN:
-RETURN_RULE: allow-edit | read-only | no-revisit
-DAY_SEQUENCE: sequential | allow-skip
-SAVE_BEHAVIOR: browser-device | session-only
+RETURN_RULE:
+DAY_SEQUENCE:
+SAVE_BEHAVIOR:
 TIME_PER_DAY:
 ARC_1_TITLE:
 ARC_1_GOAL:
@@ -505,9 +513,9 @@ PRODUCT LANGUAGE: ${text(current.productLanguage)}
 BRAND COPY — DO NOT TRANSLATE: ${text(current.brandCopy)}
 PRIMARY JOURNEY: ${text(current.journeySummary)}
 ONE DAY IS COMPLETE WHEN: ${text(current.dailyCompletionRule)}
-RETURN RULE: ${text(current.returnRule)}
-DAY SEQUENCE: ${text(current.sequenceRule)}
-SAVE BEHAVIOR: ${text(current.storageRule)}
+RETURN RULE: ${currentReturnRule}
+DAY SEQUENCE: ${currentSequenceRule}
+SAVE BEHAVIOR: ${currentStorageRule}
 TIME PER DAY: ${text(current.dailyDuration)}
 
 CONTENT BLUEPRINT
@@ -552,6 +560,7 @@ STAGE 5 — CREATE THE FILE ONLY ON COMMAND
 16. Generate the Markdown below only after I have approved the complete draft and typed “CREATE CODESIGN_SPEC.md”.
 17. Do not produce the filled Markdown, a file, or a code block before both conditions are met.
 18. When generating Markdown, preserve every heading and field name exactly.
+19. RETURN_RULE, DAY_SEQUENCE, and SAVE_BEHAVIOR must each contain the complete owner-approved rule as a plain-language sentence. Never replace it with an enum code or restrict it to the examples.
 
 OWNER SPECIFICATION TEMPLATE — summarize accepted decisions so CODESIGN can populate S1–S2:
 <!-- CODESIGN:OWNER_SPEC:v1 -->
@@ -560,9 +569,9 @@ PRODUCT_LANGUAGE: th | en | bilingual
 BRAND_COPY:
 PRIMARY_JOURNEY:
 ONE_DAY_COMPLETE_WHEN:
-RETURN_RULE: allow-edit | read-only | no-revisit
-DAY_SEQUENCE: sequential | allow-skip
-SAVE_BEHAVIOR: browser-device | session-only
+RETURN_RULE:
+DAY_SEQUENCE:
+SAVE_BEHAVIOR:
 TIME_PER_DAY:
 ARC_1_TITLE:
 ARC_1_GOAL:
@@ -616,7 +625,7 @@ After receiving the file-creation command and completing all three sections, cre
         principle: 'PRD ต้องสะท้อนการตัดสินใจที่คุณทำไว้ โดยไม่ให้ AI เติม Product rule ที่ขาดหาย',
         hint: 'ไฟล์ทั้ง 3 ฉบับถูกสร้างแล้ว ขั้นนี้ให้ตรวจความสอดคล้อง หากต้องเปลี่ยน Product decision ให้กลับไป Revision ที่ E หรือ S แทนการแก้เฉพาะไฟล์',
         chatGoal: 'ตรวจไฟล์ที่ CODESIGN ประกอบไว้แล้วทั้ง 3 ฉบับ และบอกทางต่อที่ถูกต้อง: ยืนยันไฟล์เดิม แก้เฉพาะไฟล์ หรือกลับไป Revision',
-        prompt: `ช่วยตรวจชุดส่งต่องานของ “21 DAYS OF ${topic}” ในฐานะ Handoff reviewer\n\nสิ่งสำคัญ: Prompt นี้มี Locked Owner Decisions และไฟล์ร่างทั้ง 3 ฉบับอยู่แล้ว งานของคุณคือ Review ความสอดคล้อง ไม่ใช่สร้าง Product ใหม่จากศูนย์\n\n===== LOCKED OWNER DECISIONS — SOURCE OF TRUTH =====\nWHO: ${who}\nGOAL: ${goal}\nSUCCESS: ${success}\nCONTEXT: ${context}\nCONSTRAINTS: ${constraints}\nDIRECTION: ${direction}\nMUST HAVE: ${mustHaves}\nNOT IN THIS VERSION: ${nonGoals}\nPRIMARY JOURNEY: ${sourceValue(source, 'S', 'journeySummary')}\nONE DAY IS COMPLETE WHEN: ${sourceValue(source, 'S', 'dailyCompletionRule')}\nRETURN RULE: ${sourceValue(source, 'S', 'returnRule')}\nSEQUENCE RULE: ${sourceValue(source, 'S', 'sequenceRule')}\nSTORAGE RULE: ${sourceValue(source, 'S', 'storageRule')}\nPRODUCT LANGUAGE: ${sourceValue(source, 'S', 'productLanguage')}\n\n===== CODESIGN_HANDOFF.md =====\n${text(current.handoff)}\n\n===== CONTENT_PACK.md =====\n${text(current.contentPack)}\n\n===== EXPERIENCE_DIRECTION.md =====\n${text(current.experienceDirection)}\n\n===== REVIEW RULES =====\n1. อ่าน Locked Owner Decisions และทั้ง 3 ไฟล์ก่อนสรุป ห้าม Review เพียงไฟล์เดียว\n2. ให้ Locked Owner Decisions เป็น Source of truth หากไฟล์ไม่ตรงกับข้อมูลที่ Lock แล้ว ให้ถือว่าเป็น Assembly mismatch\n3. แยกความต่างด้านถ้อยคำที่ไม่เปลี่ยนความหมาย ออกจากความต่างที่ทำให้ผู้พัฒนาสร้าง Behavior ต่างกันจริง\n4. อ้างชื่อไฟล์และหัวข้อที่เกี่ยวข้อง ห้ามเดาที่มา เพิ่ม Feature, เพิ่ม Product rule หรือตัดสินใจแทนเจ้าของ Product\n5. START_WITH_CODEX.md ยังไม่อยู่ในขั้นนี้และห้ามสร้าง เพราะจะสร้างใน Step Implement หลังระบุความพร้อมเรื่อง GitHub\n\n===== FIRST RESPONSE — เลือกเพียงหนึ่งสถานะ =====\nA. READY TO LOCK\nใช้เมื่อไม่พบความขัดแย้งที่เปลี่ยน Product หรือการสร้าง ผู้ใช้ไม่ต้องอัปโหลดไฟล์ใหม่\n\nB. FILE UPDATE REQUIRED\nใช้เมื่อเป็น ASSEMBLY MISMATCH / TESTABILITY / EDITORIAL ONLY ที่แก้ไฟล์ให้ตรงกับ Owner Decisions เดิมได้ โดยไม่เพิ่มหรือเปลี่ยน Product decision\n\nC. REVISION REQUIRED — STEP E หรือ STEP S\nใช้เมื่อจำเป็นต้องเพิ่มหรือเปลี่ยน Product decision ห้ามแก้ให้จบเฉพาะในไฟล์ PRD\n- STEP E: ผู้ใช้หลัก, Goal, Direction, Must Have, Non-goal หรือขอบเขต Product\n- STEP S: Journey, กติกาแต่ละวัน, เนื้อหา 21 วัน, แบบฝึก, การบันทึก, Theme หรือ Experience\n\n===== CONVERSATION FLOW =====\n- เริ่มด้วย STATUS และเหตุผลสั้น ๆ\n- แสดงเฉพาะประเด็นที่กระทบการสร้างจริงสูงสุดไม่เกิน 3 ข้อ ไม่ต้องถามเรื่อง Editorial ที่แก้ให้ตรงกับข้อมูลเดิมได้\n- หากต้องถาม ให้ถามทีละหนึ่งคำถามและรอคำตอบ\n- หากเป็น READY TO LOCK ให้หยุดหลังสรุปและบอกให้กลับไปยืนยันไฟล์เดิมใน CODESIGN\n- หากเป็น REVISION REQUIRED ให้ระบุ Step E หรือ S พร้อมสิ่งที่ต้องกลับไปตัดสินใจ ห้ามสร้างไฟล์แก้ไข และรอให้ผู้ใช้กลับไปทำ Revision ใน CODESIGN\n- หากเป็น FILE UPDATE REQUIRED ให้สรุป EXACT EDITS แยกตามชื่อไฟล์และรอการยืนยัน\n- หลังผมยืนยันและพิมพ์ UPDATE HANDOFF FILES เท่านั้น ให้สร้างไฟล์ฉบับเต็มล่าสุดทั้ง 3 ไฟล์ชื่อ CODESIGN_HANDOFF.md, CONTENT_PACK.md และ EXPERIENCE_DIRECTION.md แม้บางไฟล์ไม่มีการเปลี่ยนแปลง\n- ห้ามย่อ ตัดหัวข้อ หรือเปลี่ยนชื่อไฟล์ หากสร้างไฟล์ดาวน์โหลดไม่ได้ ให้คืน Markdown ฉบับเต็มเป็น 3 code blocks ที่กำกับชื่อไฟล์ชัดเจน`,
+        prompt: `ช่วยตรวจชุดส่งต่องานของ “21 DAYS OF ${topic}” ในฐานะ Handoff reviewer\n\nสิ่งสำคัญ: Prompt นี้มี Locked Owner Decisions และไฟล์ร่างทั้ง 3 ฉบับอยู่แล้ว งานของคุณคือ Review ความสอดคล้อง ไม่ใช่สร้าง Product ใหม่จากศูนย์\n\n===== LOCKED OWNER DECISIONS — SOURCE OF TRUTH =====\nWHO: ${who}\nGOAL: ${goal}\nSUCCESS: ${success}\nCONTEXT: ${context}\nCONSTRAINTS: ${constraints}\nDIRECTION: ${direction}\nMUST HAVE: ${mustHaves}\nNOT IN THIS VERSION: ${nonGoals}\nPRIMARY JOURNEY: ${sourceValue(source, 'S', 'journeySummary')}\nONE DAY IS COMPLETE WHEN: ${sourceValue(source, 'S', 'dailyCompletionRule')}\nRETURN RULE: ${lockedReturnRule}\nSEQUENCE RULE: ${lockedSequenceRule}\nSTORAGE RULE: ${lockedStorageRule}\nPRODUCT LANGUAGE: ${sourceValue(source, 'S', 'productLanguage')}\n\n===== CODESIGN_HANDOFF.md =====\n${text(current.handoff)}\n\n===== CONTENT_PACK.md =====\n${text(current.contentPack)}\n\n===== EXPERIENCE_DIRECTION.md =====\n${text(current.experienceDirection)}\n\n===== REVIEW RULES =====\n1. อ่าน Locked Owner Decisions และทั้ง 3 ไฟล์ก่อนสรุป ห้าม Review เพียงไฟล์เดียว\n2. ให้ Locked Owner Decisions เป็น Source of truth หากไฟล์ไม่ตรงกับข้อมูลที่ Lock แล้ว ให้ถือว่าเป็น Assembly mismatch\n3. แยกความต่างด้านถ้อยคำที่ไม่เปลี่ยนความหมาย ออกจากความต่างที่ทำให้ผู้พัฒนาสร้าง Behavior ต่างกันจริง\n4. อ้างชื่อไฟล์และหัวข้อที่เกี่ยวข้อง ห้ามเดาที่มา เพิ่ม Feature, เพิ่ม Product rule หรือตัดสินใจแทนเจ้าของ Product\n5. START_WITH_CODEX.md ยังไม่อยู่ในขั้นนี้และห้ามสร้าง เพราะจะสร้างใน Step Implement หลังระบุความพร้อมเรื่อง GitHub\n\n===== FIRST RESPONSE — เลือกเพียงหนึ่งสถานะ =====\nA. READY TO LOCK\nใช้เมื่อไม่พบความขัดแย้งที่เปลี่ยน Product หรือการสร้าง ผู้ใช้ไม่ต้องอัปโหลดไฟล์ใหม่\n\nB. FILE UPDATE REQUIRED\nใช้เมื่อเป็น ASSEMBLY MISMATCH / TESTABILITY / EDITORIAL ONLY ที่แก้ไฟล์ให้ตรงกับ Owner Decisions เดิมได้ โดยไม่เพิ่มหรือเปลี่ยน Product decision\n\nC. REVISION REQUIRED — STEP E หรือ STEP S\nใช้เมื่อจำเป็นต้องเพิ่มหรือเปลี่ยน Product decision ห้ามแก้ให้จบเฉพาะในไฟล์ PRD\n- STEP E: ผู้ใช้หลัก, Goal, Direction, Must Have, Non-goal หรือขอบเขต Product\n- STEP S: Journey, กติกาแต่ละวัน, เนื้อหา 21 วัน, แบบฝึก, การบันทึก, Theme หรือ Experience\n\n===== CONVERSATION FLOW =====\n- เริ่มด้วย STATUS และเหตุผลสั้น ๆ\n- แสดงเฉพาะประเด็นที่กระทบการสร้างจริงสูงสุดไม่เกิน 3 ข้อ ไม่ต้องถามเรื่อง Editorial ที่แก้ให้ตรงกับข้อมูลเดิมได้\n- หากต้องถาม ให้ถามทีละหนึ่งคำถามและรอคำตอบ\n- หากเป็น READY TO LOCK ให้หยุดหลังสรุปและบอกให้กลับไปยืนยันไฟล์เดิมใน CODESIGN\n- หากเป็น REVISION REQUIRED ให้ระบุ Step E หรือ S พร้อมสิ่งที่ต้องกลับไปตัดสินใจ ห้ามสร้างไฟล์แก้ไข และรอให้ผู้ใช้กลับไปทำ Revision ใน CODESIGN\n- หากเป็น FILE UPDATE REQUIRED ให้สรุป EXACT EDITS แยกตามชื่อไฟล์และรอการยืนยัน\n- หลังผมยืนยันและพิมพ์ UPDATE HANDOFF FILES เท่านั้น ให้สร้างไฟล์ฉบับเต็มล่าสุดทั้ง 3 ไฟล์ชื่อ CODESIGN_HANDOFF.md, CONTENT_PACK.md และ EXPERIENCE_DIRECTION.md แม้บางไฟล์ไม่มีการเปลี่ยนแปลง\n- ห้ามย่อ ตัดหัวข้อ หรือเปลี่ยนชื่อไฟล์ หากสร้างไฟล์ดาวน์โหลดไม่ได้ ให้คืน Markdown ฉบับเต็มเป็น 3 code blocks ที่กำกับชื่อไฟล์ชัดเจน`,
         followUps: ['ถ้าไม่มีประเด็นที่เปลี่ยนการสร้าง ให้สรุป READY TO LOCK', 'ถ้าแก้ได้โดยไม่เปลี่ยน Product decision ให้สรุป FILE UPDATE REQUIRED', 'ถ้าต้องเปลี่ยนขอบเขตหรือรายละเอียด Product ให้ระบุ REVISION REQUIRED — STEP E หรือ STEP S'],
         bringBack: 'นำสถานะจาก Chat กลับมาเลือกใน CODESIGN หากเป็น FILE UPDATE REQUIRED ให้อัปโหลดไฟล์เต็มทั้ง 3 ฉบับ แต่หากเป็น REVISION REQUIRED ให้กลับไปแก้ Step E หรือ S ก่อน',
       },
@@ -625,7 +634,7 @@ After receiving the file-creation command and completing all three sections, cre
         principle: 'The PRD must reflect your decisions without letting AI invent missing product rules.',
         hint: 'The three files already exist. Review consistency here; if a product decision must change, return to a revision in E or S instead of editing only the files.',
         chatGoal: 'Review the three assembled files and route the result correctly: keep the current files, update files only, or return to a revision.',
-        prompt: `Review the handoff package for “21 DAYS OF ${topic}” as a Handoff reviewer.\n\nImportant: this prompt already includes the Locked Owner Decisions and all three draft files. Review their consistency; do not redesign the product from scratch.\n\n===== LOCKED OWNER DECISIONS — SOURCE OF TRUTH =====\nWHO: ${who}\nGOAL: ${goal}\nSUCCESS: ${success}\nCONTEXT: ${context}\nCONSTRAINTS: ${constraints}\nDIRECTION: ${direction}\nMUST HAVE: ${mustHaves}\nNOT IN THIS VERSION: ${nonGoals}\nPRIMARY JOURNEY: ${sourceValue(source, 'S', 'journeySummary')}\nONE DAY IS COMPLETE WHEN: ${sourceValue(source, 'S', 'dailyCompletionRule')}\nRETURN RULE: ${sourceValue(source, 'S', 'returnRule')}\nSEQUENCE RULE: ${sourceValue(source, 'S', 'sequenceRule')}\nSTORAGE RULE: ${sourceValue(source, 'S', 'storageRule')}\nPRODUCT LANGUAGE: ${sourceValue(source, 'S', 'productLanguage')}\n\n===== CODESIGN_HANDOFF.md =====\n${text(current.handoff)}\n\n===== CONTENT_PACK.md =====\n${text(current.contentPack)}\n\n===== EXPERIENCE_DIRECTION.md =====\n${text(current.experienceDirection)}\n\n===== REVIEW RULES =====\n1. Read the locked decisions and all three files before reporting. Never review only one file.\n2. Treat Locked Owner Decisions as the source of truth. A file that diverges from them is an assembly mismatch.\n3. Distinguish harmless wording differences from conflicts that would change the implemented behavior.\n4. Cite the affected filename and section. Do not invent features, product rules, or owner decisions.\n5. Do not create START_WITH_CODEX.md; it belongs to Implement after GitHub readiness is selected.\n\n===== FIRST RESPONSE — CHOOSE ONE STATUS =====\nA. READY TO LOCK\nUse when no conflict materially changes the product or build. No new upload is required.\n\nB. FILE UPDATE REQUIRED\nUse for ASSEMBLY MISMATCH / TESTABILITY / EDITORIAL ONLY issues that can be corrected to match existing owner decisions without changing the product.\n\nC. REVISION REQUIRED — STEP E or STEP S\nUse when a product decision must be added or changed. Do not resolve it only inside the PRD files.\n- STEP E: primary user, goal, direction, must-have, non-goal, or product scope\n- STEP S: journey, daily rules, 21-day content, exercises, records, theme, or experience\n\n===== CONVERSATION FLOW =====\n- Begin with one STATUS and a short reason.\n- Show no more than three material build-impact issues. Do not ask editorial questions that can be aligned to existing decisions.\n- Ask at most one owner question at a time and wait.\n- For READY TO LOCK, stop after the summary and tell me to confirm the current files in CODESIGN.\n- For REVISION REQUIRED, name Step E or S and the decision to revisit. Do not rewrite files; wait for me to complete the revision in CODESIGN.\n- For FILE UPDATE REQUIRED, list EXACT EDITS by filename and wait for approval.\n- Only after I approve and type UPDATE HANDOFF FILES, return complete current versions of CODESIGN_HANDOFF.md, CONTENT_PACK.md, and EXPERIENCE_DIRECTION.md, including unchanged files.\n- Do not shorten, omit sections, or rename files. If downloads are unavailable, return three complete fenced Markdown blocks labeled with the exact filenames.`,
+        prompt: `Review the handoff package for “21 DAYS OF ${topic}” as a Handoff reviewer.\n\nImportant: this prompt already includes the Locked Owner Decisions and all three draft files. Review their consistency; do not redesign the product from scratch.\n\n===== LOCKED OWNER DECISIONS — SOURCE OF TRUTH =====\nWHO: ${who}\nGOAL: ${goal}\nSUCCESS: ${success}\nCONTEXT: ${context}\nCONSTRAINTS: ${constraints}\nDIRECTION: ${direction}\nMUST HAVE: ${mustHaves}\nNOT IN THIS VERSION: ${nonGoals}\nPRIMARY JOURNEY: ${sourceValue(source, 'S', 'journeySummary')}\nONE DAY IS COMPLETE WHEN: ${sourceValue(source, 'S', 'dailyCompletionRule')}\nRETURN RULE: ${lockedReturnRule}\nSEQUENCE RULE: ${lockedSequenceRule}\nSTORAGE RULE: ${lockedStorageRule}\nPRODUCT LANGUAGE: ${sourceValue(source, 'S', 'productLanguage')}\n\n===== CODESIGN_HANDOFF.md =====\n${text(current.handoff)}\n\n===== CONTENT_PACK.md =====\n${text(current.contentPack)}\n\n===== EXPERIENCE_DIRECTION.md =====\n${text(current.experienceDirection)}\n\n===== REVIEW RULES =====\n1. Read the locked decisions and all three files before reporting. Never review only one file.\n2. Treat Locked Owner Decisions as the source of truth. A file that diverges from them is an assembly mismatch.\n3. Distinguish harmless wording differences from conflicts that would change the implemented behavior.\n4. Cite the affected filename and section. Do not invent features, product rules, or owner decisions.\n5. Do not create START_WITH_CODEX.md; it belongs to Implement after GitHub readiness is selected.\n\n===== FIRST RESPONSE — CHOOSE ONE STATUS =====\nA. READY TO LOCK\nUse when no conflict materially changes the product or build. No new upload is required.\n\nB. FILE UPDATE REQUIRED\nUse for ASSEMBLY MISMATCH / TESTABILITY / EDITORIAL ONLY issues that can be corrected to match existing owner decisions without changing the product.\n\nC. REVISION REQUIRED — STEP E or STEP S\nUse when a product decision must be added or changed. Do not resolve it only inside the PRD files.\n- STEP E: primary user, goal, direction, must-have, non-goal, or product scope\n- STEP S: journey, daily rules, 21-day content, exercises, records, theme, or experience\n\n===== CONVERSATION FLOW =====\n- Begin with one STATUS and a short reason.\n- Show no more than three material build-impact issues. Do not ask editorial questions that can be aligned to existing decisions.\n- Ask at most one owner question at a time and wait.\n- For READY TO LOCK, stop after the summary and tell me to confirm the current files in CODESIGN.\n- For REVISION REQUIRED, name Step E or S and the decision to revisit. Do not rewrite files; wait for me to complete the revision in CODESIGN.\n- For FILE UPDATE REQUIRED, list EXACT EDITS by filename and wait for approval.\n- Only after I approve and type UPDATE HANDOFF FILES, return complete current versions of CODESIGN_HANDOFF.md, CONTENT_PACK.md, and EXPERIENCE_DIRECTION.md, including unchanged files.\n- Do not shorten, omit sections, or rename files. If downloads are unavailable, return three complete fenced Markdown blocks labeled with the exact filenames.`,
         followUps: ['If nothing changes the build, return READY TO LOCK.', 'If existing decisions can resolve the issue, return FILE UPDATE REQUIRED.', 'If product scope or specification must change, return REVISION REQUIRED — STEP E or STEP S.'],
         bringBack: 'Choose the Chat status in CODESIGN. Upload all three complete files only for FILE UPDATE REQUIRED; for REVISION REQUIRED, return to Step E or S first.',
       },

@@ -86,9 +86,9 @@ describe('guided content', () => {
       brandCopy: '21 DAYS OF',
       journeySummary: 'Open app → Complete activity → See progress',
       dailyCompletionRule: 'Save one reflection',
-      returnRule: 'allow-edit',
-      sequenceRule: 'sequential',
-      storageRule: 'browser-device',
+      returnRule: 'Users can return to read and edit an earlier response.',
+      sequenceRule: 'Users complete each day in order.',
+      storageRule: 'The product saves progress in this device browser.',
       dailyDuration: '10 minutes',
       contentArcs: [{ range: 'DAY 01–07', title: 'Notice', goal: 'Build awareness' }],
       contentPattern: 'One short idea',
@@ -107,6 +107,8 @@ describe('guided content', () => {
     expect(guide.prompt).toContain('APPROVE COMPLETE DRAFT')
     expect(guide.prompt).toContain('CREATE CODESIGN_SPEC.md')
     expect(guide.prompt).toContain('ALIGNMENT_WITH_STEP_E: aligned | clarifies | revision')
+    expect(guide.prompt).toContain('must each contain the complete owner-approved rule as a plain-language sentence')
+    expect(guide.prompt).not.toContain('allow-edit | read-only | no-revisit')
     expect(guide.prompt).toContain('never continue by silently changing the scope')
     expect(guide.prompt).toContain('D → E STATUS:')
     expect(guide.prompt).not.toContain('type FINALIZE')

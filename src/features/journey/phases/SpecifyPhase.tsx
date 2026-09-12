@@ -12,8 +12,10 @@ import { FormField, PhaseSection, ReviewGate } from '../PhaseFormComponents'
 import { ReorderableList } from '../ReorderableList'
 import { DailyContentEditor } from '../specify/DailyContentEditor'
 import { ExperienceSelector } from '../specify/ExperienceSelector'
+import { GuidedRuleField } from '../specify/GuidedRuleField'
 import { SpecifyImportPanel } from '../specify/SpecifyImportPanel'
 import type { OwnerSpecificationImport, SpecifyMarkdownImport } from '../specify/markdownImport'
+import { getProductRulePresets, resolveProductRuleText } from '../specify/productRuleModel'
 import {
   countCompleteDays,
   createDailyContent,
@@ -37,9 +39,9 @@ const initialSpecify = {
   brandCopy: '21 DAYS OF',
   journeySummary: '',
   dailyCompletionRule: '',
-  returnRule: 'allow-edit',
-  sequenceRule: 'sequential',
-  storageRule: 'browser-device',
+  returnRule: '',
+  sequenceRule: '',
+  storageRule: '',
   dailyDuration: '5–10 นาที',
   contentArcs: starterContentArcs as unknown as Json,
   contentPattern: '',
@@ -82,7 +84,7 @@ const initialSpecify = {
 }
 
 export function SpecifyPhase({ project }: { project: ProjectRow }) {
-  const { isThai } = useLanguage()
+  const { language, isThai } = useLanguage()
   const draft = usePhaseDraft({ projectId: project.id, phase: 'S', initialValues: initialSpecify })
   const navigate = useNavigate()
   const queryClient = useQueryClient()
@@ -100,10 +102,16 @@ export function SpecifyPhase({ project }: { project: ProjectRow }) {
   const inheritedDirection = String(inherited.data?.E?.direction ?? '').trim()
   const inheritedMustHaves = asStringList(inherited.data?.E?.mustHaves)
   const inheritedNonGoals = asStringList(inherited.data?.E?.nonGoals)
+  const returnRuleText = resolveProductRuleText('return', draft.values.returnRule, language)
+  const sequenceRuleText = resolveProductRuleText('sequence', draft.values.sequenceRule, language)
+  const storageRuleText = resolveProductRuleText('storage', draft.values.storageRule, language)
 
   const issues = [
     !journeySummary && (isThai ? 'อธิบายเส้นทางหลักของผู้ใช้' : 'Describe the primary user journey'),
     !String(draft.values.dailyCompletionRule).trim() && (isThai ? 'กำหนดว่าอะไรทำให้หนึ่งวันสำเร็จ' : 'Define what completes one day'),
+    !returnRuleText && (isThai ? 'กำหนดกติกาการกลับมาใช้งาน' : 'Define the rule for returning to earlier work'),
+    !sequenceRuleText && (isThai ? 'กำหนดกติกาการเข้าถึงเนื้อหา' : 'Define the content access rule'),
+    !storageRuleText && (isThai ? 'กำหนดกติกาการบันทึกข้อมูล' : 'Define the data retention rule'),
     arcs.some((arc) => !arc.title.trim() || !arc.goal.trim()) && (isThai ? 'ตั้งชื่อและเป้าหมายของ Content ทั้ง 3 ช่วง' : 'Name and define all three content arcs'),
     !String(draft.values.contentPattern).trim() && (isThai ? 'กำหนดรูปแบบเนื้อหาประจำวัน' : 'Define the daily content pattern'),
     !String(draft.values.exercisePattern).trim() && (isThai ? 'กำหนดรูปแบบแบบฝึก' : 'Define the exercise pattern'),
@@ -128,7 +136,11 @@ export function SpecifyPhase({ project }: { project: ProjectRow }) {
 
   const completion = useMutation({
     mutationFn: async () => {
-      await draft.saveAll()
+      await draft.saveAll({
+        returnRule: returnRuleText,
+        sequenceRule: sequenceRuleText,
+        storageRule: storageRuleText,
+      })
       return completePhase(project.id, 'S')
     },
     onSuccess: async () => {
@@ -200,7 +212,18 @@ export function SpecifyPhase({ project }: { project: ProjectRow }) {
   }
 
   return (
-    <JourneyLayout project={project} phase="S" phaseName="SPECIFY" chatContext={draft.values} saveState={draft.saveState}>
+    <JourneyLayout
+      project={project}
+      phase="S"
+      phaseName="SPECIFY"
+      chatContext={{
+        ...draft.values,
+        returnRule: returnRuleText,
+        sequenceRule: sequenceRuleText,
+        storageRule: storageRuleText,
+      }}
+      saveState={draft.saveState}
+    >
       <section className="specify-intro">
         <span>{isThai ? 'เริ่มจาก Prompt ด้านบน แล้วนำไฟล์ที่ AI สร้างกลับมา' : 'START WITH THE PROMPT ABOVE, THEN BRING BACK THE AI-GENERATED FILE'}</span>
         <h2>{isThai ? 'CODESIGN เตรียม Prompt ให้ — คุณนำไปคุยกับ AI และนำผลลัพธ์กลับมา' : 'CODESIGN PREPARES THE PROMPT — YOU TAKE IT TO AI AND BRING THE RESULT BACK.'}</h2>
@@ -241,11 +264,44 @@ export function SpecifyPhase({ project }: { project: ProjectRow }) {
         <FormField label={isThai ? 'หนึ่งวันถือว่าสำเร็จเมื่อ…' : 'ONE DAY IS COMPLETE WHEN…'} required hint={isThai ? 'ระบุการกระทำที่สังเกตและตรวจได้' : 'Use an observable, testable action'}>
           <textarea rows={2} value={String(draft.values.dailyCompletionRule)} onChange={(event) => setSpecificationField('dailyCompletionRule', event.target.value)} />
         </FormField>
-        <div className="form-grid form-grid--three rule-select-grid">
-          <label><span>{isThai ? 'ย้อนกลับมาแก้คำตอบ' : 'RETURN TO EARLIER DAYS'}</span><select value={String(draft.values.returnRule)} onChange={(event) => setSpecificationField('returnRule', event.target.value)}><option value="allow-edit">{isThai ? 'กลับมาอ่านและแก้ได้' : 'READ AND EDIT'}</option><option value="read-only">{isThai ? 'กลับมาอ่านได้อย่างเดียว' : 'READ ONLY'}</option><option value="no-revisit">{isThai ? 'ย้อนกลับไม่ได้' : 'NO REVISIT'}</option></select></label>
-          <label><span>{isThai ? 'ลำดับการทำ' : 'DAY SEQUENCE'}</span><select value={String(draft.values.sequenceRule)} onChange={(event) => setSpecificationField('sequenceRule', event.target.value)}><option value="sequential">{isThai ? 'ทำตามลำดับ' : 'IN ORDER'}</option><option value="allow-skip">{isThai ? 'เลือกหรือข้ามวันได้' : 'ALLOW SKIPPING'}</option></select></label>
-          <label><span>{isThai ? 'การจำข้อมูล' : 'SAVE BEHAVIOR'}</span><select value={String(draft.values.storageRule)} onChange={(event) => setSpecificationField('storageRule', event.target.value)}><option value="browser-device">{isThai ? 'จำไว้ใน Browser เครื่องนี้' : 'SAVE IN THIS BROWSER'}</option><option value="session-only">{isThai ? 'เก็บเฉพาะตอนเปิดใช้งาน' : 'THIS SESSION ONLY'}</option></select></label>
-        </div>
+        <section className="product-rules" aria-labelledby="product-rules-title">
+          <header className="product-rules__intro">
+            <div>
+              <span>{isThai ? 'กติกาที่กำหนดพฤติกรรมของ Product' : 'RULES THAT DEFINE PRODUCT BEHAVIOR'}</span>
+              <h3 id="product-rules-title">{isThai ? 'เขียนสิ่งที่ Product นี้ต้องทำจริง' : 'Describe what this product must actually do'}</h3>
+            </div>
+            <p>{isThai ? 'ตัวอย่างเป็นเพียงจุดเริ่มต้น คุณเขียนกติกาแบบอื่นได้ และควรตรวจว่าไม่ขัดกับขอบเขตที่ยืนยันใน Step E' : 'Examples are starting points, not fixed choices. Write a different rule when needed, and keep it consistent with the scope confirmed in Step E.'}</p>
+          </header>
+          <div className="product-rules__grid">
+            <GuidedRuleField
+              id="return-rule"
+              title={isThai ? 'กติกาการกลับมาใช้งาน' : 'RETURNING TO EARLIER WORK'}
+              question={isThai ? 'เมื่อผู้ใช้กลับมายังรายการที่เคยทำแล้ว ระบบควรให้ทำอะไรได้บ้าง?' : 'What can users do when they return to an item they previously worked on?'}
+              value={returnRuleText}
+              examples={getProductRulePresets('return', language)}
+              isThai={isThai}
+              onChange={(value) => setSpecificationField('returnRule', value)}
+            />
+            <GuidedRuleField
+              id="sequence-rule"
+              title={isThai ? 'กติกาการเข้าถึงเนื้อหา' : 'ACCESSING CONTENT'}
+              question={isThai ? 'ผู้ใช้เข้าถึงแต่ละวันหรือแต่ละส่วนของ Product ได้อย่างไร?' : 'How do users access each day or section of the product?'}
+              value={sequenceRuleText}
+              examples={getProductRulePresets('sequence', language)}
+              isThai={isThai}
+              onChange={(value) => setSpecificationField('sequenceRule', value)}
+            />
+            <GuidedRuleField
+              id="storage-rule"
+              title={isThai ? 'กติกาการบันทึกข้อมูล' : 'RETAINING DATA'}
+              question={isThai ? 'ระบบต้องจำข้อมูลอะไร เก็บไว้ที่ไหน และนานแค่ไหน?' : 'What data must be retained, where is it kept, and for how long?'}
+              value={storageRuleText}
+              examples={getProductRulePresets('storage', language)}
+              isThai={isThai}
+              onChange={(value) => setSpecificationField('storageRule', value)}
+            />
+          </div>
+        </section>
       </PhaseSection>
 
       <PhaseSection step="S2" title={isThai ? 'ตรวจโครงสร้างเนื้อหา' : 'REVIEW CONTENT BLUEPRINT'} description={isThai ? 'ตรวจว่าเนื้อหา 3 ช่วง แบบฝึก และสิ่งที่บันทึกตรงกับข้อสรุปจากบทสนทนา' : 'Check that the three arcs, exercises, and records match the conversation.'}>

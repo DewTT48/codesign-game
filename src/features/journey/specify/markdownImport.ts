@@ -5,9 +5,9 @@ export type OwnerSpecificationImport = {
   brandCopy: string
   journeySummary: string
   dailyCompletionRule: string
-  returnRule: 'allow-edit' | 'read-only' | 'no-revisit' | ''
-  sequenceRule: 'sequential' | 'allow-skip' | ''
-  storageRule: 'browser-device' | 'session-only' | ''
+  returnRule: string
+  sequenceRule: string
+  storageRule: string
   dailyDuration: string
   contentArcs: ContentArc[]
   contentPattern: string
@@ -62,9 +62,9 @@ export function parseSpecifyMarkdown(source: string): SpecifyMarkdownImport {
     brandCopy: ownerFields.BRAND_COPY,
     journeySummary: ownerFields.PRIMARY_JOURNEY,
     dailyCompletionRule: ownerFields.ONE_DAY_COMPLETE_WHEN,
-    returnRule: normalizeChoice(ownerFields.RETURN_RULE, ['allow-edit', 'read-only', 'no-revisit'] as const),
-    sequenceRule: normalizeChoice(ownerFields.DAY_SEQUENCE, ['sequential', 'allow-skip'] as const),
-    storageRule: normalizeChoice(ownerFields.SAVE_BEHAVIOR, ['browser-device', 'session-only'] as const),
+    returnRule: ownerFields.RETURN_RULE.trim(),
+    sequenceRule: ownerFields.DAY_SEQUENCE.trim(),
+    storageRule: ownerFields.SAVE_BEHAVIOR.trim(),
     dailyDuration: ownerFields.TIME_PER_DAY,
     contentArcs: [
       { range: 'DAY 01–07', title: ownerFields.ARC_1_TITLE, goal: ownerFields.ARC_1_GOAL },
@@ -118,9 +118,6 @@ export function parseSpecifyMarkdown(source: string): SpecifyMarkdownImport {
   const warnings: string[] = []
   if (!ownerSpecification && !days.length && !experienceOptions.length) warnings.push('NO_SUPPORTED_SECTIONS')
   if (ownerFields && ownerLabels.some((label) => !ownerFields[label].trim())) warnings.push('OWNER_SPEC_INCOMPLETE')
-  if (ownerFields && ownerSpecification && (!ownerSpecification.productLanguage || !ownerSpecification.returnRule || !ownerSpecification.sequenceRule || !ownerSpecification.storageRule)) {
-    warnings.push('OWNER_RULE_INVALID')
-  }
   if (days.length && days.length < 21) warnings.push('CONTENT_PACK_INCOMPLETE')
   if (experienceOptions.length && experienceOptions.length < 3) warnings.push('THEME_OPTIONS_INCOMPLETE')
   if (days.some((day) => dailyLabels.some((label) => !day[fieldForDailyLabel(label)].trim()))) {

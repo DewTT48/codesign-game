@@ -37,7 +37,6 @@ export function SpecifyImportPanel({ onApplyImport }: Props) {
   const warningText = (warning: string) => ({
     NO_SUPPORTED_SECTIONS: isThai ? 'ยังไม่พบข้อมูลตาม Template ของ CODESIGN' : 'No supported CODESIGN sections were found.',
     OWNER_SPEC_INCOMPLETE: isThai ? 'ข้อมูลสำหรับ S1–S2 ยังไม่ครบ ระบบจะเติมเฉพาะ Field ที่พบ' : 'The S1–S2 specification is incomplete. Only fields found in the file will be applied.',
-    OWNER_RULE_INVALID: isThai ? 'กติกาบางข้อไม่ได้ใช้ค่าตาม Template โปรดตรวจ Dropdown หลังนำเข้า' : 'Some product rules do not use supported template values. Review the dropdowns after import.',
     CONTENT_PACK_INCOMPLETE: isThai ? 'Content Pack ยังไม่ครบ 21 วัน สามารถนำเข้าวันที่พบก่อนได้' : 'The Content Pack has fewer than 21 days. You can still import the available days.',
     THEME_OPTIONS_INCOMPLETE: isThai ? 'พบ Theme น้อยกว่า 3 ตัวเลือก' : 'Fewer than three theme options were found.',
     DAY_FIELDS_MISSING: isThai ? 'บางวันมีข้อมูลไม่ครบ ระบบจะแสดงช่องที่ยังขาดหลังนำเข้า' : 'Some days have missing fields. The editor will show what still needs work.',

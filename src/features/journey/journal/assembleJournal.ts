@@ -7,6 +7,7 @@ import {
   normalizeDailyContent,
   normalizeExperienceOptions,
 } from '../specify/specifyModel'
+import { resolveProductRuleText } from '../specify/productRuleModel'
 
 const text = (value: Json | undefined, fallback = 'Not recorded') =>
   typeof value === 'string' && value.trim() ? value.trim() : fallback
@@ -37,13 +38,16 @@ export function assembleJournal(project: ProjectRow, data: JourneyExportData): s
   const experienceOptions = normalizeExperienceOptions(s.experienceOptions)
   const selectedExperience = experienceOptions.find((option) => option.name === text(s.selectedExperience, ''))
   const debateOwnerSummary = d.summaryCustomized !== false ? text(d.whatChanged, '') : ''
+  const returnRule = resolveProductRuleText('return', s.returnRule, 'en')
+  const sequenceRule = resolveProductRuleText('sequence', s.sequenceRule, 'en')
+  const storageRule = resolveProductRuleText('storage', s.storageRule, 'en')
   const specificationSummary = isCurrentSpecification ? `### Journey & Rules
 
 - **Primary journey:** ${text(s.journeySummary)}
 - **One day is complete when:** ${text(s.dailyCompletionRule)}
-- **Return rule:** ${text(s.returnRule)}
-- **Sequence rule:** ${text(s.sequenceRule)}
-- **Storage rule:** ${text(s.storageRule)}
+- **Return rule:** ${returnRule || 'Not recorded'}
+- **Sequence rule:** ${sequenceRule || 'Not recorded'}
+- **Storage rule:** ${storageRule || 'Not recorded'}
 - **Product language:** ${text(s.productLanguage)}
 
 ### Content Blueprint

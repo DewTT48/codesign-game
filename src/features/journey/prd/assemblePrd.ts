@@ -7,6 +7,7 @@ import {
   normalizeDailyContent,
   normalizeExperienceOptions,
 } from '../specify/specifyModel'
+import { resolveProductRuleText } from '../specify/productRuleModel'
 import { defaultAcceptanceCriteria } from './handoffFiles'
 
 type ScreenSpec = { name?: string; sees?: string; actions?: string; next?: string }
@@ -74,6 +75,9 @@ function assembleCurrentPrd(project: ProjectRow, source: PrdSource) {
   const themes = normalizeExperienceOptions(specify.experienceOptions)
   const selectedTheme = themes.find((theme) => theme.name === text(specify.selectedExperience, ''))
   const acceptance = defaultAcceptanceCriteria(specify)
+  const returnRule = resolveProductRuleText('return', specify.returnRule, 'en')
+  const sequenceRule = resolveProductRuleText('sequence', specify.sequenceRule, 'en')
+  const storageRule = resolveProductRuleText('storage', specify.storageRule, 'en')
 
   return `# CODESIGN HANDOFF — ${project.title}
 
@@ -113,9 +117,9 @@ ${bullets(list(establish.nonGoals))}
 
 - **Primary journey:** ${text(specify.journeySummary)}
 - **One day is complete when:** ${text(specify.dailyCompletionRule)}
-- **Return to earlier days:** ${text(specify.returnRule)}
-- **Day sequence:** ${text(specify.sequenceRule)}
-- **Save behavior:** ${text(specify.storageRule)}
+- **Return to earlier days:** ${returnRule || 'Not specified'}
+- **Day sequence:** ${sequenceRule || 'Not specified'}
+- **Save behavior:** ${storageRule || 'Not specified'}
 - **Expected time per day:** ${text(specify.dailyDuration)}
 - **Product language:** ${text(specify.productLanguage)}
 - **Copy that must remain unchanged:** ${text(specify.brandCopy)}
