@@ -59,9 +59,9 @@ export function SpecifyImportPanel({ onApplyImport }: Props) {
         <div>
           <span>{isThai ? 'หลังตรวจและยืนยันร่าง — นำงานกลับมา' : 'AFTER REVIEW AND APPROVAL — BRING THE WORK BACK'}</span>
           <h3 id="spec-import-title">{isThai ? 'อัปโหลดไฟล์ CODESIGN_SPEC.md' : 'Upload CODESIGN_SPEC.md'}</h3>
-          <p>{isThai ? 'สร้างไฟล์หลังยืนยันร่างแล้ว ไฟล์เดียวจะช่วยเติมข้อมูล S1–S4 ให้ตรวจและแก้ไขต่อ' : 'Create the file only after approving the draft. One file populates S1–S4 for review and editing.'}</p>
+          <p>{isThai ? 'ไฟล์นี้ต้องดาวน์โหลดจาก AI ภายนอก หลังคุณตรวจและยืนยันร่างทั้งหมดแล้ว' : 'Download this file from the external AI after you have reviewed and approved the complete draft.'}</p>
         </div>
-        <button className="spec-import__upload" type="button" onClick={() => fileRef.current?.click()}><FileUp size={18} /> {isThai ? 'เลือกไฟล์ .MD' : 'CHOOSE .MD FILE'}</button>
+        <button className="spec-import__upload" type="button" onClick={() => fileRef.current?.click()}><FileUp size={18} /> {isThai ? 'อัปโหลดไฟล์จาก AI' : 'UPLOAD FILE FROM AI'}</button>
         <input
           ref={fileRef}
           className="visually-hidden"
@@ -70,6 +70,14 @@ export function SpecifyImportPanel({ onApplyImport }: Props) {
           onChange={(event) => void loadFile(event.target.files?.[0])}
         />
       </header>
+      <section className="spec-import__source-guide" aria-label={isThai ? 'ที่มาของไฟล์ CODESIGN_SPEC.md' : 'Where CODESIGN_SPEC.md comes from'}>
+        <strong>{isThai ? 'ไฟล์นี้มาจากไหน?' : 'WHERE DOES THIS FILE COME FROM?'}</strong>
+        <ol>
+          <li><b>01</b><span>{isThai ? 'กลับไปที่บทสนทนากับ AI หลังตรวจร่างครบ' : 'Return to the AI conversation after reviewing the full draft.'}</span></li>
+          <li><b>02</b><span>{isThai ? 'พิมพ์ “ยืนยันร่างทั้งหมด” แล้ว “สร้างไฟล์ CODESIGN_SPEC.md”' : 'Type “APPROVE COMPLETE DRAFT”, then “CREATE CODESIGN_SPEC.md”.'}</span></li>
+          <li><b>03</b><span>{isThai ? 'ดาวน์โหลดไฟล์ .md ที่ AI สร้าง แล้วกลับมากดปุ่มอัปโหลดด้านบน' : 'Download the .md file created by AI, then return and use the upload button above.'}</span></li>
+        </ol>
+      </section>
       <p className="privacy-reminder">
         {isThai
           ? 'ก่อนส่งข้อมูลให้ AI ภายนอก โปรดนำข้อมูลส่วนบุคคล ข้อมูลลูกค้า และข้อมูลลับขององค์กรออก ไฟล์ที่อัปโหลดจะถูกอ่านเพื่อเติมแบบฟอร์มนี้'
@@ -78,11 +86,12 @@ export function SpecifyImportPanel({ onApplyImport }: Props) {
       {sourceName ? <p className="spec-import__file"><FileUp size={17} /> {isThai ? 'ไฟล์ที่ตรวจ:' : 'File checked:'} <strong>{sourceName}</strong></p> : null}
 
       <details className="spec-import__paste">
-        <summary>{isThai ? 'Chat สร้างไฟล์ไม่ได้? วาง Markdown แทน' : 'Chat cannot create a file? Paste Markdown instead'}</summary>
+        <summary>{isThai ? 'AI ไม่มีปุ่มดาวน์โหลดไฟล์? วาง Markdown แทน' : 'No file download from AI? Paste Markdown instead'}</summary>
+        <p>{isThai ? 'ขอให้ AI แสดง Markdown ทั้งหมดใน Code Block เดียว แล้วคัดลอกเนื้อหาทั้งหมดมาวางด้านล่าง จากนั้นกด “ตรวจ Markdown ก่อนนำเข้า”' : 'Ask AI to return all Markdown in one code block. Paste the complete content below, then select “Preview Markdown”.'}</p>
         <textarea
           rows={9}
           value={markdown}
-          placeholder={isThai ? 'วาง Markdown ทั้งหมดที่ได้จาก Chat ที่นี่…' : 'Paste the complete Markdown returned by Chat here…'}
+          placeholder={isThai ? 'วาง Markdown ทั้งหมดที่ได้จาก AI ที่นี่…' : 'Paste the complete Markdown returned by AI here…'}
           onChange={(event) => {
             setMarkdown(event.target.value)
             setSourceName('')

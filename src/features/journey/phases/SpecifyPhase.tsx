@@ -202,20 +202,21 @@ export function SpecifyPhase({ project }: { project: ProjectRow }) {
   return (
     <JourneyLayout project={project} phase="S" phaseName="SPECIFY" chatContext={draft.values} saveState={draft.saveState}>
       <section className="specify-intro">
-        <span>{isThai ? 'ขั้นตอนการทำภารกิจนี้' : 'HOW THIS MISSION WORKS'}</span>
-        <h2>{isThai ? 'เลือกแนวทาง ตรวจร่าง แล้วค่อยสร้างไฟล์กลับมา CODESIGN' : 'Choose a direction, review the draft, then create the file for CODESIGN.'}</h2>
+        <span>{isThai ? 'เริ่มจาก Prompt ด้านบน แล้วนำไฟล์ที่ AI สร้างกลับมา' : 'START WITH THE PROMPT ABOVE, THEN BRING BACK THE AI-GENERATED FILE'}</span>
+        <h2>{isThai ? 'CODESIGN เตรียม Prompt ให้ — คุณนำไปคุยกับ AI และนำผลลัพธ์กลับมา' : 'CODESIGN PREPARES THE PROMPT — YOU TAKE IT TO AI AND BRING THE RESULT BACK.'}</h2>
         <ol>
-          <li><strong>01</strong>{isThai ? 'ให้ AI เสนอ 3 แนวทางก่อน แล้วคุณเป็นคนเลือก' : 'Ask AI for three directions, then make the choice.'}</li>
-          <li><strong>02</strong>{isThai ? 'ตรวจร่างเนื้อหาทีละ 7 วัน และขอแก้จนเข้าใจตรงกัน' : 'Review content in seven-day batches and revise it together.'}</li>
-          <li><strong>03</strong>{isThai ? 'ยืนยันร่างทั้งหมด แล้วจึงสั่งสร้าง CODESIGN_SPEC.md' : 'Approve the complete draft, then request CODESIGN_SPEC.md.'}</li>
-          <li><strong>04</strong>{isThai ? 'อัปโหลดไฟล์ ตรวจ แก้ และยืนยันใน CODESIGN' : 'Upload, review, edit, and confirm it in CODESIGN.'}</li>
+          <li><strong>01</strong><span>{isThai ? 'กด “เริ่มที่นี่: เปิด Prompt สำหรับ AI” ด้านบน แล้วกด “คัดลอก Prompt”' : 'Open “Start here: AI Prompt” above, then copy the prompt.'}</span></li>
+          <li><strong>02</strong><span>{isThai ? 'เปิด AI ที่คุณเลือก เช่น ChatGPT, Gemini หรือ Claude แล้ววาง Prompt เพื่อเริ่มสนทนา' : 'Open an AI of your choice, such as ChatGPT, Gemini, or Claude, then paste the prompt.'}</span></li>
+          <li><strong>03</strong><span>{isThai ? 'เลือกแนวทาง ตรวจร่างทีละ 7 วัน และขอแก้จนตรงกับสิ่งที่คุณต้องการ' : 'Choose a direction and review the draft in seven-day batches until it matches your intent.'}</span></li>
+          <li><strong>04</strong><span>{isThai ? <>เมื่อพอใจ พิมพ์ “ยืนยันร่างทั้งหมด” แล้วพิมพ์ “สร้างไฟล์ CODESIGN_SPEC.md”</> : <>When ready, type “APPROVE COMPLETE DRAFT”, then “CREATE CODESIGN_SPEC.md”.</>}</span></li>
+          <li><strong>05</strong><span>{isThai ? 'ดาวน์โหลดไฟล์จาก AI แล้วกลับมาอัปโหลดด้านล่าง หากไม่มีไฟล์ให้คัดลอก Markdown มาวางแทน' : 'Download the file from AI and upload it below. If no file is available, paste the Markdown instead.'}</span></li>
         </ol>
-        <p>{isThai ? 'CODESIGN ไม่ได้ส่งข้อมูลไปหา AI และจะไม่เลือกแทนคุณ' : 'CODESIGN does not send data to AI and will not choose for you.'}</p>
+        <p>{isThai ? 'ไฟล์ไม่ได้ถูกสร้างใน CODESIGN: ระบบเตรียม Prompt ให้ แต่คุณต้องนำ Prompt ไปใช้กับ AI ภายนอกด้วยตัวเอง' : 'The file is not created inside CODESIGN. CODESIGN prepares the prompt, and you take it to an external AI yourself.'}</p>
       </section>
 
       <SpecifyImportPanel onApplyImport={applyImport} />
 
-      <PhaseSection step="S1" title={isThai ? 'ตรวจเส้นทางและกติกาของ Product' : 'REVIEW JOURNEY & PRODUCT RULES'} description={isThai ? 'ตรวจสิ่งที่นำเข้าจาก Chat แล้วแก้เฉพาะจุดที่ไม่ตรงกับการตัดสินใจของคุณ' : 'Review the imported decisions and edit anything that does not match your intent.'}>
+      <PhaseSection step="S1" title={isThai ? 'ตรวจเส้นทางและกติกาของ Product' : 'REVIEW JOURNEY & PRODUCT RULES'} description={isThai ? 'ตรวจสิ่งที่นำเข้าจาก AI แล้วแก้เฉพาะจุดที่ไม่ตรงกับการตัดสินใจของคุณ' : 'Review the imported decisions and edit anything that does not match your intent.'}>
         <FormField label={isThai ? 'ภาษาของ Product' : 'PRODUCT LANGUAGE'} required hint={isThai ? 'ภาษาที่ผู้ใช้ปลายทางจะเห็นใน Product นี้' : 'The language shown in the product you are building'}>
           <div className="choice-grid choice-grid--three">
             {[

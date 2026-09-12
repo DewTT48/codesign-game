@@ -12,8 +12,10 @@ describe('SpecifyImportPanel', () => {
       </LanguageProvider>,
     )
 
-    fireEvent.click(screen.getByText('Chat สร้างไฟล์ไม่ได้? วาง Markdown แทน'))
-    fireEvent.change(screen.getByPlaceholderText('วาง Markdown ทั้งหมดที่ได้จาก Chat ที่นี่…'), {
+    expect(screen.getByText('ไฟล์นี้มาจากไหน?')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'อัปโหลดไฟล์จาก AI' })).toBeInTheDocument()
+    fireEvent.click(screen.getByText('AI ไม่มีปุ่มดาวน์โหลดไฟล์? วาง Markdown แทน'))
+    fireEvent.change(screen.getByPlaceholderText('วาง Markdown ทั้งหมดที่ได้จาก AI ที่นี่…'), {
       target: {
         value: `<!-- CODESIGN:OWNER_SPEC:v1 -->
 ## OWNER SPECIFICATION

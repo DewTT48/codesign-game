@@ -100,15 +100,17 @@ export function JourneyLayout({
         <button type="button" onClick={() => setOpenHelp('hint')}>
           <Lightbulb aria-hidden="true" size={18} /> {isThai ? 'คำใบ้เพื่อช่วยคิด' : 'NEED A THINKING HINT?'}
         </button>
-        <button type="button" onClick={() => setOpenHelp('chat')}>
-          <MessageSquareText aria-hidden="true" size={18} /> {isThai ? 'คุยกับ Chat อย่างไร?' : 'HOW CAN I ASK CHAT?'}
+        <button className={phase === 'S' ? 'guidance-action--primary' : undefined} type="button" onClick={() => setOpenHelp('chat')}>
+          <MessageSquareText aria-hidden="true" size={18} /> {phase === 'S'
+            ? (isThai ? 'เริ่มที่นี่: เปิด Prompt สำหรับ AI' : 'START HERE: OPEN THE AI PROMPT')
+            : (isThai ? 'คุยกับ Chat อย่างไร?' : 'HOW CAN I ASK CHAT?')}
         </button>
       </div>
 
       {openHelp ? (
         <aside className={`help-panel help-panel--${openHelp}`}>
           <div className="help-panel__header">
-            <span>{openHelp === 'hint' ? (isThai ? 'คำใบ้เพื่อช่วยคิด' : 'THINKING HINT') : (isThai ? 'ชุดคำสั่งสำหรับ Chat' : 'CHAT PROMPT KIT')}</span>
+            <span>{openHelp === 'hint' ? (isThai ? 'คำใบ้เพื่อช่วยคิด' : 'THINKING HINT') : (phase === 'S' ? (isThai ? 'Prompt สำหรับ AI ภายนอก' : 'EXTERNAL AI PROMPT') : (isThai ? 'ชุดคำสั่งสำหรับ Chat' : 'CHAT PROMPT KIT'))}</span>
             <button type="button" aria-label={isThai ? 'ปิดคำแนะนำ' : 'Close guidance'} onClick={() => setOpenHelp(null)}>
               <X aria-hidden="true" size={18} />
             </button>

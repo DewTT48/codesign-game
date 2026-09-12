@@ -3129,6 +3129,20 @@ a.mission-node__content:focus-visible {
   border-color: var(--accent);
 }
 
+.guidance-actions .guidance-action--primary {
+  color: var(--ink);
+  background: var(--positive);
+  border-color: var(--white);
+  box-shadow: 4px 4px 0 var(--accent-dark);
+}
+
+.guidance-actions .guidance-action--primary:hover,
+.guidance-actions .guidance-action--primary:focus-visible {
+  color: var(--ink);
+  background: var(--accent);
+  border-color: var(--white);
+}
+
 .help-panel {
   margin-top: 14px;
   padding: 22px;
@@ -5920,7 +5934,7 @@ a.mission-node__content:focus-visible {
 
 .specify-intro ol {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 12px;
   margin: 0;
   padding: 0;
@@ -5943,6 +5957,10 @@ a.mission-node__content:focus-visible {
   color: var(--accent-dark);
   font-family: var(--font-display);
   font-size: 12px;
+}
+
+.specify-intro li > span {
+  min-width: 0;
 }
 
 .specify-intro > p {
@@ -6049,6 +6067,50 @@ a.mission-node__content:focus-visible {
   line-height: 1.55;
 }
 
+.spec-import__source-guide {
+  margin: 16px 0;
+  padding: 16px;
+  background: color-mix(in srgb, var(--positive) 16%, var(--white));
+  border: 2px solid var(--positive);
+}
+
+.spec-import__source-guide > strong {
+  display: block;
+  font-family: var(--font-body);
+  font-size: 17px;
+}
+
+.spec-import__source-guide ol {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.spec-import__source-guide li {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 8px;
+  align-items: start;
+  padding: 11px;
+  background: var(--white);
+  border: 2px solid var(--line);
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+.spec-import__source-guide li > b {
+  color: var(--accent-dark);
+  font-family: var(--font-display);
+  font-size: 10px;
+}
+
+.spec-import__source-guide li > span {
+  min-width: 0;
+}
+
 .spec-import button,
 .day-editor-card footer button {
   min-height: 46px;
@@ -6104,6 +6166,13 @@ a.mission-node__content:focus-visible {
   font-weight: 700;
   line-height: 1.5;
   cursor: pointer;
+}
+
+.spec-import__paste > p {
+  margin: 10px 0 0;
+  color: #385369;
+  font-size: 15px;
+  line-height: 1.55;
 }
 
 .spec-import__paste textarea {
@@ -7060,6 +7129,11 @@ a.mission-node__content:focus-visible {
     transform: none;
   }
 
+  .specify-intro ol,
+  .spec-import__source-guide ol {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .debate-guide {
     padding: 18px;
     box-shadow: 5px 5px 0 var(--magenta);
@@ -7353,7 +7427,8 @@ a.mission-node__content:focus-visible {
     padding: 16px;
   }
 
-  .specify-intro ol {
+  .specify-intro ol,
+  .spec-import__source-guide ol {
     grid-template-columns: minmax(0, 1fr);
   }
 
