@@ -142,7 +142,7 @@ export function JourneyLayout({
                   : copyState === 'failed'
                     ? (isThai ? 'คัดลอกไม่สำเร็จ' : 'COPY FAILED')
                     : phase === 'I'
-                      ? (isThai ? 'คัดลอกคำสั่งสำหรับ Codex' : 'COPY INSTRUCTIONS FOR CODEX')
+                      ? (isThai ? 'คัดลอก Prompt เปิดงาน' : 'COPY STARTING PROMPT')
                       : (isThai ? 'คัดลอก Prompt' : 'COPY PROMPT')}
               </button>
               <section>
@@ -162,7 +162,7 @@ export function JourneyLayout({
                 <p>{guide.bringBack}</p>
               </section>
               <small>{phase === 'I'
-                ? (isThai ? 'ใช้คำสั่งนี้ใน Codex พร้อมแนบไฟล์ทั้ง 4 ฉบับก่อนเริ่มสร้าง' : 'USE THESE INSTRUCTIONS IN CODEX WITH ALL FOUR FILES ATTACHED')
+                ? (isThai ? 'ใช้ Prompt นี้ใน Codex พร้อมแนบไฟล์ทั้ง 4 ฉบับก่อนเริ่มสร้าง' : 'USE THIS PROMPT IN CODEX WITH ALL FOUR FILES ATTACHED')
                 : (isThai ? 'ใช้เป็นจุดเริ่มต้นและปรับตามการสนทนาจริง ไม่ใช่คำสั่งบังคับ' : 'A CONVERSATION STARTER — ADAPT IT TO THE REAL DISCUSSION')}</small>
             </div>
           )}

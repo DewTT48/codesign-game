@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { ArrowRight, Check, Clipboard, Download, ExternalLink, FileCode2, Github, ShieldCheck } from 'lucide-react'
+import { ArrowRight, Check, Download, ExternalLink, FileCode2, Github, ShieldCheck } from 'lucide-react'
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { ArcadeButton } from '../../../components/ui/ArcadeButton'
@@ -87,15 +87,6 @@ export function ImplementPhase({ project }: { project: ProjectRow }) {
     setFeedback(isThai ? `ดาวน์โหลด ${fileName} แล้ว` : `${fileName} DOWNLOADED`)
   }
 
-  const copyCodexGuide = async () => {
-    try {
-      await navigator.clipboard.writeText(startWithCodex)
-      setFeedback(isThai ? 'คัดลอกคำสั่งเริ่มงานกับ Codex แล้ว' : 'CODEX STARTING BRIEF COPIED')
-    } catch {
-      setFeedback(isThai ? 'คัดลอกไม่สำเร็จ — กรุณาดาวน์โหลดไฟล์แทน' : 'COPY FAILED — DOWNLOAD THE FILE INSTEAD')
-    }
-  }
-
   const readinessChoices: Array<{ value: GitHubReadiness; title: string; description: string }> = [
     { value: 'ready', title: isThai ? 'มีบัญชี GitHub และเข้าใช้ได้' : 'I HAVE A GITHUB ACCOUNT', description: isThai ? 'Codex จะพาสร้าง Repository และตั้งค่า Publish' : 'Codex will guide repository creation and publishing.' },
     { value: 'need-account', title: isThai ? 'ยังไม่มีบัญชี GitHub' : 'I NEED AN ACCOUNT', description: isThai ? 'Codex จะอธิบายและพาเปิดบัญชีทีละขั้น' : 'Codex will explain and guide account setup.' },
@@ -152,10 +143,7 @@ export function ImplementPhase({ project }: { project: ProjectRow }) {
           <h3>{activePackageFile.fileName}</h3>
           <MarkdownPreview markdown={activePackageFile.content} />
         </div>
-        <div className="codex-handoff-actions">
-          <button type="button" onClick={() => void copyCodexGuide()}><Clipboard size={19} /> {isThai ? 'คัดลอกคำสั่งสำหรับ Codex' : 'COPY INSTRUCTIONS FOR CODEX'}</button>
-          {feedback ? <span role="status">{feedback}</span> : null}
-        </div>
+        {feedback ? <div className="codex-handoff-actions"><span role="status">{feedback}</span></div> : null}
         <ol className="implementation-steps">
           {steps.map((step, index) => <li key={step}><span>{String(index + 1).padStart(2, '0')}</span>{step}</li>)}
         </ol>
