@@ -22,7 +22,7 @@ describe('handoff companion files', () => {
   })
 
   it('adapts GitHub guidance for an owner without an account', () => {
-    const markdown = assembleStartWithCodex(project, 'need-account')
+    const markdown = assembleStartWithCodex(project, 'need-account', { productLanguage: 'en' })
     expect(markdown).toContain('does not yet have a GitHub account')
     expect(markdown).toContain('Never request or handle the owner\'s password')
     expect(markdown).toContain('publish through GitHub Pages')
@@ -30,6 +30,7 @@ describe('handoff companion files', () => {
 
   it('uses the owner rules in the Codex brief instead of hardcoding browser storage', () => {
     const markdown = assembleStartWithCodex(project, 'ready', {
+      productLanguage: 'en',
       returnRule: 'no-revisit',
       sequenceRule: 'Users can complete the items in any order.',
       storageRule: 'Users export a file and import it later to restore progress.',
@@ -39,5 +40,21 @@ describe('handoff companion files', () => {
     expect(markdown).toContain('Users can complete the items in any order.')
     expect(markdown).toContain('Users export a file and import it later to restore progress.')
     expect(markdown).not.toContain('Store progress only in the browser/device as specified')
+  })
+
+  it('creates a reviewable Thai Codex brief for a Thai product', () => {
+    const markdown = assembleStartWithCodex(project, 'ready', {
+      productLanguage: 'th',
+      returnRule: 'no-revisit',
+      sequenceRule: 'ผู้ใช้ทำรายการตามลำดับ',
+      storageRule: 'บันทึกความคืบหน้าไว้ใน Browser ของอุปกรณ์นี้',
+    })
+
+    expect(markdown).toContain('# เริ่มสร้างด้วย CODEX')
+    expect(markdown).toContain('## ภาษาในการทำงาน')
+    expect(markdown).toContain('สนทนา อธิบายความคืบหน้า และถามคำถามกับผู้ใช้เป็นภาษาไทย')
+    expect(markdown).toContain('Product นี้กำหนดให้หน้าจอที่ผู้ใช้เห็นเป็นภาษาไทย')
+    expect(markdown).toContain('ผู้ใช้ไม่สามารถย้อนกลับไปยังรายการที่ทำเสร็จแล้ว')
+    expect(markdown).toContain('PRODUCT DECISION REQUIRED')
   })
 })

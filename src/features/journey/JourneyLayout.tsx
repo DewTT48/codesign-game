@@ -100,17 +100,25 @@ export function JourneyLayout({
         <button type="button" onClick={() => setOpenHelp('hint')}>
           <Lightbulb aria-hidden="true" size={18} /> {isThai ? 'คำใบ้เพื่อช่วยคิด' : 'NEED A THINKING HINT?'}
         </button>
-        <button className={phase === 'S' ? 'guidance-action--primary' : undefined} type="button" onClick={() => setOpenHelp('chat')}>
+        <button className={phase === 'S' || phase === 'I' ? 'guidance-action--primary' : undefined} type="button" onClick={() => setOpenHelp('chat')}>
           <MessageSquareText aria-hidden="true" size={18} /> {phase === 'S'
             ? (isThai ? 'เริ่มที่นี่: เปิด Prompt สำหรับ AI' : 'START HERE: OPEN THE AI PROMPT')
-            : (isThai ? 'คุยกับ Chat อย่างไร?' : 'HOW CAN I ASK CHAT?')}
+            : phase === 'I'
+              ? (isThai ? 'เริ่มสร้าง App กับ Codex' : 'START BUILDING WITH CODEX')
+              : (isThai ? 'คุยกับ Chat อย่างไร?' : 'HOW CAN I ASK CHAT?')}
         </button>
       </div>
 
       {openHelp ? (
         <aside className={`help-panel help-panel--${openHelp}`}>
           <div className="help-panel__header">
-            <span>{openHelp === 'hint' ? (isThai ? 'คำใบ้เพื่อช่วยคิด' : 'THINKING HINT') : (phase === 'S' ? (isThai ? 'Prompt สำหรับ AI ภายนอก' : 'EXTERNAL AI PROMPT') : (isThai ? 'ชุดคำสั่งสำหรับ Chat' : 'CHAT PROMPT KIT'))}</span>
+            <span>{openHelp === 'hint'
+              ? (isThai ? 'คำใบ้เพื่อช่วยคิด' : 'THINKING HINT')
+              : phase === 'S'
+                ? (isThai ? 'Prompt สำหรับ AI ภายนอก' : 'EXTERNAL AI PROMPT')
+                : phase === 'I'
+                  ? (isThai ? 'คำสั่งสำหรับเริ่มงานใน Codex' : 'CODEX STARTING INSTRUCTIONS')
+                  : (isThai ? 'ชุดคำสั่งสำหรับ Chat' : 'CHAT PROMPT KIT')}</span>
             <button type="button" aria-label={isThai ? 'ปิดคำแนะนำ' : 'Close guidance'} onClick={() => setOpenHelp(null)}>
               <X aria-hidden="true" size={18} />
             </button>
@@ -122,6 +130,10 @@ export function JourneyLayout({
                 <strong>{isThai ? 'Prompt นี้มีข้อมูลพร้อมแล้ว' : 'THIS PROMPT IS READY'}</strong>
                 <p>{isThai ? 'รวมการตัดสินใจที่ Lock แล้วและไฟล์ร่าง CODESIGN_HANDOFF.md, CONTENT_PACK.md และ EXPERIENCE_DIRECTION.md คุณไม่ต้องแนบไฟล์เพิ่มในรอบตรวจนี้' : 'It includes the locked decisions and drafts of CODESIGN_HANDOFF.md, CONTENT_PACK.md, and EXPERIENCE_DIRECTION.md. No separate attachment is needed for this review.'}</p>
               </section> : null}
+              {phase === 'I' ? <section className="prompt-kit__included">
+                <strong>{isThai ? 'ใช้คำสั่งนี้กับ Codex' : 'USE THIS IN CODEX'}</strong>
+                <p>{isThai ? 'ดาวน์โหลดไฟล์ทั้ง 4 ฉบับจาก Step I จากนั้นเปิด Task ใหม่ใน Codex แนบไฟล์ทั้งหมด และวาง Prompt ด้านล่างเพื่อเริ่มสร้าง App' : 'Download all four files from Step I. Then open a new task in Codex, attach every file, and paste the prompt below to begin building the app.'}</p>
+              </section> : null}
               <pre>{guide.prompt}</pre>
               <button className="prompt-copy" type="button" onClick={copyPrompt}>
                 {copyState === 'copied' ? <Check size={17} /> : <Copy size={17} />}
@@ -129,17 +141,29 @@ export function JourneyLayout({
                   ? (isThai ? 'คัดลอกแล้ว' : 'COPIED')
                   : copyState === 'failed'
                     ? (isThai ? 'คัดลอกไม่สำเร็จ' : 'COPY FAILED')
-                    : (isThai ? 'คัดลอก Prompt' : 'COPY PROMPT')}
+                    : phase === 'I'
+                      ? (isThai ? 'คัดลอกคำสั่งสำหรับ Codex' : 'COPY INSTRUCTIONS FOR CODEX')
+                      : (isThai ? 'คัดลอก Prompt' : 'COPY PROMPT')}
               </button>
               <section>
-                <strong>{phase === 'PRD' ? (isThai ? 'สถานะที่ Chat ต้องเลือก' : 'EXPECTED CHAT STATUS') : (isThai ? 'คำถามต่อยอด' : 'GO DEEPER')}</strong>
+                <strong>{phase === 'PRD'
+                  ? (isThai ? 'สถานะที่ Chat ต้องเลือก' : 'EXPECTED CHAT STATUS')
+                  : phase === 'I'
+                    ? (isThai ? 'สิ่งที่ให้ Codex ทำต่อ' : 'CONTINUE WITH CODEX')
+                    : (isThai ? 'คำถามต่อยอด' : 'GO DEEPER')}</strong>
                 <ul>{guide.followUps.map((item) => <li key={item}>{item}</li>)}</ul>
               </section>
               <section className="prompt-kit__bring-back">
-                <strong>{phase === 'PRD' ? (isThai ? 'กลับมาทำอะไรใน CODESIGN' : 'WHAT TO DO IN CODESIGN') : (isThai ? 'นำอะไรกลับมากรอก' : 'BRING BACK')}</strong>
+                <strong>{phase === 'PRD'
+                  ? (isThai ? 'กลับมาทำอะไรใน CODESIGN' : 'WHAT TO DO IN CODESIGN')
+                  : phase === 'I'
+                    ? (isThai ? 'กลับมาบันทึกอะไรใน CODESIGN' : 'WHAT TO RECORD IN CODESIGN')
+                    : (isThai ? 'นำอะไรกลับมากรอก' : 'BRING BACK')}</strong>
                 <p>{guide.bringBack}</p>
               </section>
-              <small>{isThai ? 'ใช้เป็นจุดเริ่มต้นและปรับตามการสนทนาจริง ไม่ใช่คำสั่งบังคับ' : 'A CONVERSATION STARTER — ADAPT IT TO THE REAL DISCUSSION'}</small>
+              <small>{phase === 'I'
+                ? (isThai ? 'ใช้คำสั่งนี้ใน Codex พร้อมแนบไฟล์ทั้ง 4 ฉบับก่อนเริ่มสร้าง' : 'USE THESE INSTRUCTIONS IN CODEX WITH ALL FOUR FILES ATTACHED')
+                : (isThai ? 'ใช้เป็นจุดเริ่มต้นและปรับตามการสนทนาจริง ไม่ใช่คำสั่งบังคับ' : 'A CONVERSATION STARTER — ADAPT IT TO THE REAL DISCUSSION')}</small>
             </div>
           )}
         </aside>

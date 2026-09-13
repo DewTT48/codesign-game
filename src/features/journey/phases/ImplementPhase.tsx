@@ -37,6 +37,7 @@ export function ImplementPhase({ project }: { project: ProjectRow }) {
   const readiness = String(draft.values.githubReadiness) as GitHubReadiness
   const specifyValue = (fieldKey: string) => specifyEntries.data?.find((entry) => entry.fieldKey === fieldKey)?.content
   const startWithCodex = assembleStartWithCodex(project, readiness, {
+    productLanguage: specifyValue('productLanguage'),
     returnRule: specifyValue('returnRule'),
     sequenceRule: specifyValue('sequenceRule'),
     storageRule: specifyValue('storageRule'),
@@ -67,7 +68,7 @@ export function ImplementPhase({ project }: { project: ProjectRow }) {
     { fileName: 'CODESIGN_HANDOFF.md', description: isThai ? 'Product decisions และขอบเขตงานที่ Lock แล้ว' : 'Locked product decisions and scope', content: snapshot.data?.markdown_content || fallbackEntry('markdownDraft') },
     { fileName: 'CONTENT_PACK.md', description: isThai ? 'เนื้อหา แบบฝึก และการบันทึกครบ 21 วัน' : 'All 21 days of content, exercises, and records', content: snapshot.data?.content_pack || fallbackEntry('contentPackDraft') },
     { fileName: 'EXPERIENCE_DIRECTION.md', description: isThai ? 'Theme และแนวทางกำกับประสบการณ์' : 'Theme and experience guardrails', content: snapshot.data?.experience_direction || fallbackEntry('experienceDirectionDraft') },
-    { fileName: 'START_WITH_CODEX.md', description: isThai ? 'คำสั่งเริ่มงานตามกติกา Product และความพร้อม GitHub ของคุณ' : 'Starting brief adapted to the product rules and your GitHub readiness', content: startWithCodex },
+    { fileName: 'START_WITH_CODEX.md', description: isThai ? 'คำสั่งเริ่มงานในภาษาของ Product พร้อมกติกาและความพร้อม GitHub' : 'Starting instructions in the product language, adapted to its rules and your GitHub readiness', content: startWithCodex },
   ]
   const activePackageFile = packageFiles.find((file) => file.fileName === selectedPackageFile) ?? packageFiles[3]
   const packageReady = packageFiles.every((file) => file.content.trim())
@@ -138,7 +139,7 @@ export function ImplementPhase({ project }: { project: ProjectRow }) {
         </div>
       </PhaseSection>
 
-      <PhaseSection step="I3" title={isThai ? 'ประกอบชุด 4 ไฟล์สำหรับ Codex' : 'ASSEMBLE THE FOUR-FILE CODEX PACKAGE'} description={isThai ? 'สามไฟล์แรกคือ Snapshot ที่ Lock จาก PRD ส่วน START_WITH_CODEX.md ถูกสร้างในขั้นนี้ตามความพร้อม GitHub ที่คุณเลือก' : 'The first three files are the locked PRD snapshot. START_WITH_CODEX.md is generated here from your GitHub readiness.'}>
+      <PhaseSection step="I3" title={isThai ? 'ประกอบชุด 4 ไฟล์สำหรับ Codex' : 'ASSEMBLE THE FOUR-FILE CODEX PACKAGE'} description={isThai ? 'สามไฟล์แรกคือ Snapshot ที่ Lock จาก PRD ส่วน START_WITH_CODEX.md ถูกสร้างในขั้นนี้ตามภาษาของ Product จาก Step S และความพร้อม GitHub ที่คุณเลือก' : 'The first three files are the locked PRD snapshot. START_WITH_CODEX.md is generated from the product language selected in Step S and your GitHub readiness.'}>
         {(snapshot.isLoading || prdEntries.isLoading || specifyEntries.isLoading) ? <p>{isThai ? 'กำลังโหลดไฟล์ที่ Lock ไว้…' : 'LOADING LOCKED FILES…'}</p> : null}
         {packageLoadError ? <p className="field-error" role="alert">{isThai ? 'โหลดชุดไฟล์หลักไม่ครบ กรุณากลับไปตรวจ PRD ก่อนส่งต่อ' : 'THE LOCKED SOURCE PACKAGE COULD NOT BE LOADED COMPLETELY.'}</p> : null}
         <div className="implement-package-grid" aria-label={isThai ? 'ชุดไฟล์สำหรับ Codex' : 'Codex package files'}>
@@ -152,7 +153,7 @@ export function ImplementPhase({ project }: { project: ProjectRow }) {
           <MarkdownPreview markdown={activePackageFile.content} />
         </div>
         <div className="codex-handoff-actions">
-          <button type="button" onClick={() => void copyCodexGuide()}><Clipboard size={19} /> {isThai ? 'คัดลอกคำสั่งเริ่มงาน' : 'COPY STARTING BRIEF'}</button>
+          <button type="button" onClick={() => void copyCodexGuide()}><Clipboard size={19} /> {isThai ? 'คัดลอกคำสั่งสำหรับ Codex' : 'COPY INSTRUCTIONS FOR CODEX'}</button>
           {feedback ? <span role="status">{feedback}</span> : null}
         </div>
         <ol className="implementation-steps">

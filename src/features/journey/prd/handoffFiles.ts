@@ -90,18 +90,92 @@ ${options.map((option) => `- **${option.name}:** ${option.mood || 'No mood recor
 }
 
 export function assembleStartWithCodex(project: ProjectRow, readiness: GitHubReadiness = 'unsure', specify: SpecifyData = {}) {
+  const productLanguage = value(specify.productLanguage, 'en')
+  const useThaiInstructions = productLanguage === 'th' || productLanguage === 'bilingual'
+  const ruleLanguage = useThaiInstructions ? 'th' : 'en'
+  const returnRule = resolveProductRuleText('return', specify.returnRule, ruleLanguage) || (useThaiInstructions ? 'ยังไม่ได้ระบุ' : 'Not specified')
+  const sequenceRule = resolveProductRuleText('sequence', specify.sequenceRule, ruleLanguage) || (useThaiInstructions ? 'ยังไม่ได้ระบุ' : 'Not specified')
+  const storageRule = resolveProductRuleText('storage', specify.storageRule, ruleLanguage) || (useThaiInstructions ? 'ยังไม่ได้ระบุ' : 'Not specified')
+
+  if (useThaiInstructions) {
+    const readinessInstruction = {
+      ready: 'เจ้าของ Product มีบัญชี GitHub และเข้าใช้งานได้แล้ว ให้ยืนยันบัญชีที่จะใช้ จากนั้นพาสร้าง Repository และตั้งค่า GitHub Pages',
+      'need-account': 'เจ้าของ Product ยังไม่มีบัญชี GitHub ให้อธิบาย GitHub ด้วยภาษาง่ายและพาเปิดบัญชีก่อนสร้าง Repository',
+      unsure: 'เจ้าของ Product ยังไม่แน่ใจเรื่อง GitHub ให้อธิบายความหมายของ Account, Repository, Commit, Push และ GitHub Pages ก่อน แล้วจึงช่วยตรวจว่ามีบัญชีอยู่แล้วหรือไม่',
+    }[readiness]
+    const productLanguageInstruction = productLanguage === 'bilingual'
+      ? 'Product นี้กำหนดให้หน้าจอรองรับทั้งภาษาไทยและภาษาอังกฤษ'
+      : 'Product นี้กำหนดให้หน้าจอที่ผู้ใช้เห็นเป็นภาษาไทย'
+
+    return `# เริ่มสร้างด้วย CODEX — ${project.title}
+
+เอกสารนี้คือคำสั่งเริ่มต้นสำหรับให้ Codex เปลี่ยนชุดส่งต่องานจาก CODESIGN ให้เป็น Web App ที่ใช้งานได้จริง โดยพาเจ้าของ Product ที่ไม่ใช่นักพัฒนาทำงานทีละขั้น
+
+## ภาษาในการทำงาน
+
+- สนทนา อธิบายความคืบหน้า และถามคำถามกับผู้ใช้เป็นภาษาไทย
+- ${productLanguageInstruction}
+- คงชื่อไฟล์ โค้ด คำสั่ง Terminal และชื่อทางเทคนิคไว้ในรูปแบบเดิม
+- หากผู้ใช้ขอภาษาอื่นภายหลัง ให้ใช้ภาษาที่ผู้ใช้ร้องขอ
+
+## อ่านไฟล์เหล่านี้ก่อน
+
+1. \`CODESIGN_HANDOFF.md\` — การตัดสินใจเกี่ยวกับ Product และข้อจำกัดในการสร้าง
+2. \`CONTENT_PACK.md\` — เนื้อหา แบบฝึก คำถามสะท้อนคิด และกติกาการบันทึกครบทั้ง 21 วัน
+3. \`EXPERIENCE_DIRECTION.md\` — ทิศทางภาพและปฏิสัมพันธ์ที่เจ้าของ Product เลือก
+
+ให้ถือทั้งสามไฟล์เป็น source of truth ห้ามเติมพฤติกรรมที่เปลี่ยน Product โดยไม่แจ้ง หากพบความกำกวมที่มีผลต่อ Product ให้ระบุ **PRODUCT DECISION REQUIRED** และถามผู้ใช้ครั้งละหนึ่งคำถามที่ชัดเจน
+
+## กติกา Product ที่ยืนยันแล้ว
+
+- **การกลับไปยังรายการก่อนหน้า:** ${returnRule}
+- **การเข้าถึงวันหรือส่วนต่าง ๆ:** ${sequenceRule}
+- **การบันทึกและเรียกคืนข้อมูล:** ${storageRule}
+
+ทำตามกติกาเหล่านี้ตามที่เขียนไว้ หากข้อใดขัดกับ Must Have, Not in This Version หรือข้อจำกัดอื่นที่ยืนยันแล้ว ให้หยุดและระบุ **PRODUCT DECISION REQUIRED** ห้ามเลือกกติกาแทนเจ้าของ Product
+
+## ความพร้อมด้าน GitHub
+
+${readinessInstruction}
+
+GitHub คือบ้านออนไลน์ของไฟล์โครงการและประวัติการเปลี่ยนแปลง ส่วน GitHub Pages คือบริการที่เผยแพร่ Web App นี้ให้เปิดผ่าน Public URL
+
+- พาเจ้าของ Product ทำทีละขั้น และอธิบายคำที่ยังไม่คุ้นก่อนใช้งาน
+- ห้ามขอหรือจัดการ Password, Verification code, Recovery code หรือข้อมูลลับของ Two-factor authentication
+- หยุดรอให้เจ้าของ Product ทำขั้นตอน Sign in, CAPTCHA, Email verification หรือการยืนยันความปลอดภัยด้วยตนเอง
+- ไม่บังคับให้เจ้าของ Product ใช้ Terminal หาก Codex สามารถทำขั้นตอนนั้นได้อย่างปลอดภัย
+
+## ภารกิจการสร้าง
+
+1. สรุป Product, เส้นทางหลักของผู้ใช้, กติกาที่ทำให้หนึ่งวันสำเร็จ และทิศทางประสบการณ์โดยย่อ
+2. ระบุเฉพาะช่องว่างที่เป็น Product decision จริง ห้ามเปลี่ยนความชอบด้าน implementation ให้กลายเป็นคำถาม
+3. สร้างโครงการและ Repository พร้อม README ที่เข้าใจง่าย
+4. สร้าง Standalone Web App ให้ครบทั้ง 21 วัน
+5. ทำกติกาการกลับมา การเข้าถึง และการบันทึกข้อมูลตามหัวข้อ “กติกา Product ที่ยืนยันแล้ว” อย่างเคร่งครัด ห้ามอนุมานว่าต้องมี Auth, Backend, Cloud storage, AI ในตัว App, Analytics หรือบริการเสียเงิน เว้นแต่มีการตัดสินใจที่ยืนยันแล้วระบุไว้
+6. ทดสอบเส้นทางทั้งหมดบน Desktop, Tablet และ Mobile รวมถึง Keyboard, Empty state, การกลับมาใช้ App และการตัดคำภาษาไทย
+7. แสดง Preview ให้เจ้าของ Product ตรวจ แก้ปัญหาด้าน implementation แล้วจึง Publish ผ่าน GitHub Pages
+8. ส่งกลับ Repository URL, Public App URL, สรุปผลการทดสอบ และข้อจำกัดที่ยังเหลืออยู่
+
+เริ่มจากอ่านไฟล์ส่งต่อทั้งสามฉบับ แล้วสรุปความพร้อมให้เจ้าของ Product เป็นภาษาไทยแบบสั้นและเข้าใจง่าย จากนั้นดำเนินการขั้นถัดไปที่ปลอดภัยและเป็นประโยชน์ที่สุด
+`
+  }
+
   const readinessInstruction = {
     ready: 'The owner already has a GitHub account. Confirm the intended account, then guide repository creation and GitHub Pages setup.',
     'need-account': 'The owner does not yet have a GitHub account. Explain GitHub in plain language and guide account creation before repository setup.',
     unsure: 'The owner is unsure about GitHub. First explain what an account, repository, commit, push, and GitHub Pages mean; then help them determine whether an account already exists.',
   }[readiness]
-  const returnRule = resolveProductRuleText('return', specify.returnRule, 'en') || 'Not specified'
-  const sequenceRule = resolveProductRuleText('sequence', specify.sequenceRule, 'en') || 'Not specified'
-  const storageRule = resolveProductRuleText('storage', specify.storageRule, 'en') || 'Not specified'
 
   return `# START WITH CODEX — ${project.title}
 
 Help a non-technical product owner turn the attached CODESIGN handoff into a working web app.
+
+## Working Language
+
+- Communicate, explain progress, and ask questions in English.
+- Build the user-facing product in English, as selected in Step S.
+- Keep filenames, code, terminal commands, and technical identifiers in their original form.
+- If the user later requests another language, follow their request.
 
 ## Read These Files First
 
