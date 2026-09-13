@@ -4517,6 +4517,124 @@ a.mission-node__content:focus-visible {
   list-style: none;
 }
 
+.codex-folder-plan {
+  margin-bottom: 18px;
+  padding: 18px;
+  background: color-mix(in srgb, var(--positive) 10%, var(--deep));
+  border: 3px solid var(--positive);
+  border-left-width: 8px;
+}
+
+.codex-project-terms {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin: 0 0 18px;
+}
+
+.codex-project-terms > div {
+  min-width: 0;
+  padding: 13px;
+  background: var(--deep);
+  border: 2px solid var(--line);
+}
+
+.codex-project-terms dt {
+  color: var(--positive);
+  font-family: var(--font-body);
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.codex-project-terms dd {
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: 15px;
+  line-height: 1.55;
+}
+
+.codex-folder-plan__name {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.codex-folder-plan__name > div {
+  min-width: 0;
+}
+
+.codex-folder-plan__name span,
+.codex-folder-plan__name code {
+  display: block;
+}
+
+.codex-folder-plan__name span {
+  margin-bottom: 7px;
+  color: var(--muted);
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.codex-folder-plan__name code {
+  overflow-wrap: anywhere;
+  color: var(--white);
+  font-family: var(--font-mono);
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.codex-folder-plan__name button {
+  min-height: 44px;
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 13px;
+  color: var(--ink);
+  background: var(--positive);
+  border: 3px solid var(--white);
+  font-family: var(--font-body);
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.codex-folder-plan > p {
+  margin: 14px 0 0;
+  color: var(--muted);
+  font-size: 16px;
+  line-height: 1.65;
+}
+
+.codex-folder-plan > p strong {
+  color: var(--positive);
+}
+
+.implementation-guide {
+  display: grid;
+  gap: 20px;
+}
+
+.implementation-guide h3 {
+  margin: 0 0 10px;
+  color: var(--white);
+  font-family: var(--font-body);
+  font-size: 18px;
+  line-height: 1.5;
+}
+
+.codex-repository-note {
+  margin: 18px 0 0;
+  padding: 14px 16px;
+  color: var(--muted);
+  background: var(--deep);
+  border-left: 7px solid var(--accent);
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.6;
+}
+
 .github-basics {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -7582,6 +7700,20 @@ a.mission-node__content:focus-visible {
   .topbar-actions {
     gap: 8px;
     justify-self: end;
+  }
+
+  .codex-folder-plan__name {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .codex-project-terms {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .codex-folder-plan__name button {
+    width: 100%;
+    justify-content: center;
   }
 
   .creator-credit {

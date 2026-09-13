@@ -19,6 +19,21 @@ const list = (input: Json | undefined) => (Array.isArray(input) ? input : [])
 
 const sentence = (input: string) => /[.!?…]$/.test(input) ? input : `${input}.`
 
+export function suggestProjectFolderName(projectTitle: string, projectId = '') {
+  const titleSlug = projectTitle
+    .normalize('NFKD')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 48)
+    .replace(/-+$/g, '')
+
+  if (titleSlug) return titleSlug.endsWith('-app') ? titleSlug : `${titleSlug}-app`
+
+  const shortId = projectId.replace(/[^a-z0-9]/gi, '').toLowerCase().slice(0, 6)
+  return `codesign-app-${shortId || 'project'}`
+}
+
 export function assembleContentPack(specify: SpecifyData) {
   const arcs = normalizeContentArcs(specify.contentArcs)
   const days = normalizeDailyContent(specify.dailyContent)
@@ -109,7 +124,9 @@ export function assembleStartWithCodex(project: ProjectRow, readiness: GitHubRea
 
     return `# เริ่มสร้างด้วย CODEX — ${project.title}
 
-เอกสารนี้คือคำสั่งเริ่มต้นสำหรับให้ Codex เปลี่ยนชุดส่งต่องานจาก CODESIGN ให้เป็น Web App ที่ใช้งานได้จริง โดยพาเจ้าของ Product ที่ไม่ใช่นักพัฒนาทำงานทีละขั้น
+เอกสารนี้คือคำสั่งเริ่มต้นสำหรับให้ Codex เปลี่ยนชุดส่งต่องานจาก CODESIGN ที่อยู่ใน Project Folder ปัจจุบันให้เป็น Web App ที่ใช้งานได้จริง โดยพาเจ้าของ Product ที่ไม่ใช่นักพัฒนาทำงานทีละขั้น
+
+ทำงานและสร้างไฟล์ทั้งหมดภายใน Project Folder ปัจจุบัน ไม่ต้องขอให้ผู้ใช้แนบไฟล์ทั้ง 4 ฉบับซ้ำ
 
 ## ภาษาในการทำงาน
 
@@ -149,14 +166,14 @@ GitHub คือบ้านออนไลน์ของไฟล์โคร�
 
 1. สรุป Product, เส้นทางหลักของผู้ใช้, กติกาที่ทำให้หนึ่งวันสำเร็จ และทิศทางประสบการณ์โดยย่อ
 2. ระบุเฉพาะช่องว่างที่เป็น Product decision จริง ห้ามเปลี่ยนความชอบด้าน implementation ให้กลายเป็นคำถาม
-3. สร้างโครงการและ Repository พร้อม README ที่เข้าใจง่าย
+3. สร้างโครงสร้าง App ภายใน Project Folder ปัจจุบัน พร้อม README ที่เข้าใจง่าย
 4. สร้าง Standalone Web App ให้ครบทั้ง 21 วัน
 5. ทำกติกาการกลับมา การเข้าถึง และการบันทึกข้อมูลตามหัวข้อ “กติกา Product ที่ยืนยันแล้ว” อย่างเคร่งครัด ห้ามอนุมานว่าต้องมี Auth, Backend, Cloud storage, AI ในตัว App, Analytics หรือบริการเสียเงิน เว้นแต่มีการตัดสินใจที่ยืนยันแล้วระบุไว้
 6. ทดสอบเส้นทางทั้งหมดบน Desktop, Tablet และ Mobile รวมถึง Keyboard, Empty state, การกลับมาใช้ App และการตัดคำภาษาไทย
 7. แสดง Preview ให้เจ้าของ Product ตรวจ แก้ปัญหาด้าน implementation แล้วจึง Publish ผ่าน GitHub Pages
 8. ส่งกลับ Repository URL, Public App URL, สรุปผลการทดสอบ และข้อจำกัดที่ยังเหลืออยู่
 
-เริ่มจากอ่านไฟล์ส่งต่อทั้งสามฉบับ แล้วสรุปความพร้อมให้เจ้าของ Product เป็นภาษาไทยแบบสั้นและเข้าใจง่าย จากนั้นดำเนินการขั้นถัดไปที่ปลอดภัยและเป็นประโยชน์ที่สุด
+เริ่มจากอ่านไฟล์ส่งต่อทั้งสามฉบับใน Project Folder ปัจจุบัน แล้วสรุปความพร้อมให้เจ้าของ Product เป็นภาษาไทยแบบสั้นและเข้าใจง่าย จากนั้นดำเนินการขั้นถัดไปที่ปลอดภัยและเป็นประโยชน์ที่สุด
 `
   }
 
@@ -168,7 +185,9 @@ GitHub คือบ้านออนไลน์ของไฟล์โคร�
 
   return `# START WITH CODEX — ${project.title}
 
-Help a non-technical product owner turn the attached CODESIGN handoff into a working web app.
+Help a non-technical product owner turn the CODESIGN handoff in the current project folder into a working web app.
+
+Work entirely inside the current project folder. Do not ask the owner to attach the four files again.
 
 ## Working Language
 
@@ -208,14 +227,14 @@ GitHub is the online home for the project files and their change history. GitHub
 
 1. Briefly restate the product, primary journey, daily completion rule, and selected experience direction.
 2. Identify only genuine product-decision gaps. Do not turn implementation preferences into questions.
-3. Create the project and repository with a clear README.
+3. Create the app structure inside the current project folder with a clear README.
 4. Build the complete 21-day standalone web app.
 5. Implement return, access, and data retention behavior exactly as stated in the Locked Product Rules. Do not infer Auth, a backend, cloud storage, embedded AI, analytics, or paid services unless an owner-approved locked decision explicitly requires it.
 6. Test the full journey on desktop, tablet, and mobile, including keyboard use, empty states, returning to the app, and Thai text wrapping where relevant.
 7. Show the owner a preview, fix implementation issues, then publish through GitHub Pages.
 8. Return the repository URL, public app URL, test summary, and any remaining limitations.
 
-Start by reading the three handoff files and giving the owner a short readiness summary. Then proceed with the safest useful next step.
+Start by reading the three handoff files in the current project folder and giving the owner a short readiness summary. Then proceed with the safest useful next step.
 `
 }
 

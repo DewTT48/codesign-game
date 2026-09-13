@@ -132,7 +132,7 @@ export function JourneyLayout({
               </section> : null}
               {phase === 'I' ? <section className="prompt-kit__included">
                 <strong>{isThai ? 'ใช้คำสั่งนี้กับ Codex' : 'USE THIS IN CODEX'}</strong>
-                <p>{isThai ? 'ดาวน์โหลดไฟล์ทั้ง 4 ฉบับจาก Step I จากนั้นเปิด Task ใหม่ใน Codex แนบไฟล์ทั้งหมด และวาง Prompt ด้านล่างเพื่อเริ่มสร้าง App' : 'Download all four files from Step I. Then open a new task in Codex, attach every file, and paste the prompt below to begin building the app.'}</p>
+                <p>{isThai ? 'ดาวน์โหลดไฟล์ทั้ง 4 ฉบับ แล้วนำจาก Downloads ไปไว้ใน Folder เดียวกันโดยไม่เปลี่ยนชื่อ เปิด Folder นั้นเป็น Local Project ใน Codex แล้วเปิด Task ใหม่ จากนั้นคัดลอก Prompt ด้านล่างไปวางและส่ง' : 'Download all four files, then move them from Downloads into one folder without renaming them. Open that folder as a local project in Codex, start a new task, then copy, paste, and send the prompt below.'}</p>
               </section> : null}
               <pre>{guide.prompt}</pre>
               <button className="prompt-copy" type="button" onClick={copyPrompt}>
@@ -162,7 +162,7 @@ export function JourneyLayout({
                 <p>{guide.bringBack}</p>
               </section>
               <small>{phase === 'I'
-                ? (isThai ? 'ใช้ Prompt นี้ใน Codex พร้อมแนบไฟล์ทั้ง 4 ฉบับก่อนเริ่มสร้าง' : 'USE THIS PROMPT IN CODEX WITH ALL FOUR FILES ATTACHED')
+                ? (isThai ? 'ไฟล์ทั้ง 4 ต้องอยู่ใน Local Project Folder เดียวกัน ไม่ต้องแนบซ้ำใน Task' : 'KEEP ALL FOUR FILES IN THE SAME LOCAL PROJECT FOLDER; DO NOT ATTACH THEM AGAIN')
                 : (isThai ? 'ใช้เป็นจุดเริ่มต้นและปรับตามการสนทนาจริง ไม่ใช่คำสั่งบังคับ' : 'A CONVERSATION STARTER — ADAPT IT TO THE REAL DISCUSSION')}</small>
             </div>
           )}

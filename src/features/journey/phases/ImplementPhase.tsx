@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { ArrowRight, Check, Download, ExternalLink, FileCode2, Github, ShieldCheck } from 'lucide-react'
+import { ArrowRight, Check, Copy, Download, ExternalLink, FileCode2, Github, ShieldCheck } from 'lucide-react'
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { ArcadeButton } from '../../../components/ui/ArcadeButton'
@@ -10,7 +10,7 @@ import { alignmentIsReady, normalizeAlignmentStatus } from '../crossStepAlignmen
 import { completeImplementation, getLatestPrdSnapshot, getPhaseEntries } from '../journey.service'
 import { JourneyLayout } from '../JourneyLayout'
 import { FormField, PhaseSection, ReviewGate } from '../PhaseFormComponents'
-import { assembleStartWithCodex, type GitHubReadiness } from '../prd/handoffFiles'
+import { assembleStartWithCodex, suggestProjectFolderName, type GitHubReadiness } from '../prd/handoffFiles'
 import { MarkdownPreview } from '../prd/MarkdownPreview'
 import { usePhaseDraft } from '../usePhaseDraft'
 
@@ -30,6 +30,7 @@ export function ImplementPhase({ project }: { project: ProjectRow }) {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const [feedback, setFeedback] = useState('')
+  const [folderCopyState, setFolderCopyState] = useState<'idle' | 'copied' | 'failed'>('idle')
   const [selectedPackageFile, setSelectedPackageFile] = useState('START_WITH_CODEX.md')
   const snapshot = useQuery({ queryKey: ['prd-snapshot', project.id], queryFn: () => getLatestPrdSnapshot(project.id) })
   const prdEntries = useQuery({ queryKey: ['phase-entries', project.id, 'PRD'], queryFn: () => getPhaseEntries(project.id, 'PRD') })
@@ -42,6 +43,7 @@ export function ImplementPhase({ project }: { project: ProjectRow }) {
     sequenceRule: specifyValue('sequenceRule'),
     storageRule: specifyValue('storageRule'),
   })
+  const suggestedFolderName = suggestProjectFolderName(project.title, project.id)
   const alignmentStatus = normalizeAlignmentStatus(draft.values.alignmentStatus)
   const alignmentNote = String(draft.values.alignmentNote)
   const resetAlignment = () => draft.setField('alignmentConfirmed', false)
@@ -87,24 +89,45 @@ export function ImplementPhase({ project }: { project: ProjectRow }) {
     setFeedback(isThai ? `ดาวน์โหลด ${fileName} แล้ว` : `${fileName} DOWNLOADED`)
   }
 
+  const copySuggestedFolderName = async () => {
+    try {
+      await navigator.clipboard.writeText(suggestedFolderName)
+      setFolderCopyState('copied')
+    } catch {
+      setFolderCopyState('failed')
+    }
+    window.setTimeout(() => setFolderCopyState('idle'), 1800)
+  }
+
   const readinessChoices: Array<{ value: GitHubReadiness; title: string; description: string }> = [
     { value: 'ready', title: isThai ? 'มีบัญชี GitHub และเข้าใช้ได้' : 'I HAVE A GITHUB ACCOUNT', description: isThai ? 'Codex จะพาสร้าง Repository และตั้งค่า Publish' : 'Codex will guide repository creation and publishing.' },
     { value: 'need-account', title: isThai ? 'ยังไม่มีบัญชี GitHub' : 'I NEED AN ACCOUNT', description: isThai ? 'Codex จะอธิบายและพาเปิดบัญชีทีละขั้น' : 'Codex will explain and guide account setup.' },
     { value: 'unsure', title: isThai ? 'ไม่แน่ใจ หรือไม่เคยใช้' : 'I AM NOT SURE', description: isThai ? 'Codex จะเริ่มจากตรวจความพร้อมและอธิบายคำสำคัญ' : 'Codex will check readiness and explain the key terms first.' },
   ]
 
-  const steps = isThai ? [
-    'เปิด Codex แล้วแนบไฟล์ Handoff ทั้ง 4 ไฟล์',
-    'ให้ Codex สรุปความเข้าใจและชี้เฉพาะ Product decision ที่ยังขาดจริง',
-    'ให้ Codex สร้าง App และแสดง Preview เพื่อให้คุณตรวจ',
-    'แก้ปัญหาการใช้งานและทดสอบ Desktop, Tablet และ Mobile',
-    'ให้ Codex สร้าง Repository และ Publish ผ่าน GitHub Pages',
+  const folderSteps = isThai ? [
+    `สร้าง Folder ใหม่สำหรับ App นี้ ใช้ชื่อแนะนำ “${suggestedFolderName}” หรือชื่ออื่นที่คุณจำได้ง่าย`,
+    'ดาวน์โหลดไฟล์ทั้ง 4 ฉบับ แล้วนำจาก Downloads ไปไว้ใน Folder นี้โดยคงชื่อไฟล์ตามเดิม',
+    'เปิด Codex แล้วเพิ่ม Folder นี้เป็น Local Project',
   ] : [
-    'Open Codex and attach all four handoff files',
+    `Create a new app folder. Use “${suggestedFolderName}” or any memorable name`,
+    'Download all four files, then move them from Downloads into that folder without renaming them',
+    'Open Codex and add that folder as a local project',
+  ]
+  const codexSteps = isThai ? [
+    'เปิด Task ใหม่ภายใน Local Project',
+    'กลับมาที่ CODESIGN กด “เริ่มสร้าง App กับ Codex” แล้วกด “คัดลอก Prompt เปิดงาน”',
+    'กลับไปที่ Codex วาง Prompt ใน Task แล้วส่ง โดยไม่ต้องแนบไฟล์ซ้ำ',
+    'ตรวจสรุปความเข้าใจ และตอบเฉพาะ Product decision ที่ยังขาดจริง',
+    'ให้ Codex สร้าง App แสดง Preview และทดสอบ Desktop, Tablet และ Mobile',
+    'เมื่อ Preview ผ่านแล้ว ให้ Codex สร้าง Repository และ Publish ผ่าน GitHub Pages',
+  ] : [
+    'Start a new task inside the local project',
+    'Return to CODESIGN, select “Start building with Codex,” then copy the starting prompt',
+    'Return to Codex, paste and send the prompt without attaching the files again',
     'Ask Codex to summarize and flag only genuine product-decision gaps',
-    'Let Codex build the app and show a preview for your review',
-    'Fix usage issues and test desktop, tablet, and mobile',
-    'Let Codex create the repository and publish through GitHub Pages',
+    'Let Codex build the app, show a preview, and test desktop, tablet, and mobile',
+    'After the preview passes, let Codex create the repository and publish through GitHub Pages',
   ]
 
   return (
@@ -133,6 +156,28 @@ export function ImplementPhase({ project }: { project: ProjectRow }) {
       <PhaseSection step="I3" title={isThai ? 'ประกอบชุด 4 ไฟล์สำหรับ Codex' : 'ASSEMBLE THE FOUR-FILE CODEX PACKAGE'} description={isThai ? 'สามไฟล์แรกคือ Snapshot ที่ Lock จาก PRD ส่วน START_WITH_CODEX.md ถูกสร้างในขั้นนี้ตามภาษาของ Product จาก Step S และความพร้อม GitHub ที่คุณเลือก' : 'The first three files are the locked PRD snapshot. START_WITH_CODEX.md is generated from the product language selected in Step S and your GitHub readiness.'}>
         {(snapshot.isLoading || prdEntries.isLoading || specifyEntries.isLoading) ? <p>{isThai ? 'กำลังโหลดไฟล์ที่ Lock ไว้…' : 'LOADING LOCKED FILES…'}</p> : null}
         {packageLoadError ? <p className="field-error" role="alert">{isThai ? 'โหลดชุดไฟล์หลักไม่ครบ กรุณากลับไปตรวจ PRD ก่อนส่งต่อ' : 'THE LOCKED SOURCE PACKAGE COULD NOT BE LOADED COMPLETELY.'}</p> : null}
+        <div className="codex-folder-plan">
+          <dl className="codex-project-terms">
+            <div><dt>FOLDER</dt><dd>{isThai ? 'ที่เก็บไฟล์และ App จริงในเครื่องของคุณ' : 'Where the files and app live on your computer'}</dd></div>
+            <div><dt>LOCAL PROJECT</dt><dd>{isThai ? 'การเปิด Folder ให้ Codex อ่านและแก้ไขไฟล์ได้' : 'Gives Codex access to read and change that folder'}</dd></div>
+            <div><dt>TASK</dt><dd>{isThai ? 'บทสนทนาที่คุณส่ง Prompt เพื่อเริ่มสร้าง App' : 'The conversation where you paste the prompt to start building'}</dd></div>
+          </dl>
+          <div className="codex-folder-plan__name">
+            <div>
+              <span>{isThai ? 'ชื่อ Folder แนะนำ' : 'SUGGESTED FOLDER NAME'}</span>
+              <code>{suggestedFolderName}</code>
+            </div>
+            <button type="button" onClick={copySuggestedFolderName}>
+              {folderCopyState === 'copied' ? <Check size={17} /> : <Copy size={17} />}
+              {folderCopyState === 'copied'
+                ? (isThai ? 'คัดลอกแล้ว' : 'COPIED')
+                : folderCopyState === 'failed'
+                  ? (isThai ? 'คัดลอกไม่สำเร็จ' : 'COPY FAILED')
+                  : (isThai ? 'คัดลอกชื่อแนะนำ' : 'COPY SUGGESTION')}
+            </button>
+          </div>
+          <p><strong>{isThai ? 'ชื่อ Folder เปลี่ยนได้' : 'THE FOLDER NAME IS FLEXIBLE'}</strong>{isThai ? ' ใช้ชื่ออะไรก็ได้ที่จำง่ายและเหมาะกับ App ของคุณ แต่กรุณาคงชื่อไฟล์ทั้ง 4 ฉบับด้านล่างไว้ตามเดิม' : ' Use any memorable name that fits your app, but keep the four filenames below unchanged.'}</p>
+        </div>
         <div className="implement-package-grid" aria-label={isThai ? 'ชุดไฟล์สำหรับ Codex' : 'Codex package files'}>
           {packageFiles.map((file) => <div key={file.fileName} className={selectedPackageFile === file.fileName ? 'is-active' : ''}>
             <button type="button" className="implement-package-grid__preview" onClick={() => setSelectedPackageFile(file.fileName)}><FileCode2 size={20} /><span><strong>{file.fileName}</strong><small>{file.description}</small></span></button>
@@ -144,9 +189,21 @@ export function ImplementPhase({ project }: { project: ProjectRow }) {
           <MarkdownPreview markdown={activePackageFile.content} />
         </div>
         {feedback ? <div className="codex-handoff-actions"><span role="status">{feedback}</span></div> : null}
-        <ol className="implementation-steps">
-          {steps.map((step, index) => <li key={step}><span>{String(index + 1).padStart(2, '0')}</span>{step}</li>)}
-        </ol>
+        <div className="implementation-guide">
+          <section>
+            <h3>{isThai ? 'ก่อนเปิด Codex' : 'BEFORE OPENING CODEX'}</h3>
+            <ol className="implementation-steps">
+              {folderSteps.map((step, index) => <li key={step}><span>{String(index + 1).padStart(2, '0')}</span>{step}</li>)}
+            </ol>
+          </section>
+          <section>
+            <h3>{isThai ? 'เริ่มงานใน Codex' : 'START WORKING IN CODEX'}</h3>
+            <ol className="implementation-steps">
+              {codexSteps.map((step, index) => <li key={step}><span>{String(index + folderSteps.length + 1).padStart(2, '0')}</span>{step}</li>)}
+            </ol>
+          </section>
+        </div>
+        <p className="codex-repository-note">{isThai ? 'ยังไม่ต้องสร้าง Repository เองในตอนนี้ Codex จะพาทำหลังจากคุณตรวจ Preview แล้ว' : 'You do not need to create a repository yet. Codex will guide you after you review the preview.'}</p>
       </PhaseSection>
 
       <PhaseSection step="I4" title={isThai ? 'บันทึกแอปที่ใช้งานได้จริง' : 'RECORD THE WORKING BUILD'} description={isThai ? 'กลับมาบันทึก URL หลังจาก Codex สร้าง ทดสอบ และ Publish สำเร็จ' : 'Return after Codex has built, tested, and published the app.'}>

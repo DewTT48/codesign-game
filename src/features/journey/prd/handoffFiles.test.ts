@@ -1,10 +1,16 @@
 import { describe, expect, it } from 'vitest'
 import type { ProjectRow } from '../../../lib/supabase/database.types'
-import { assembleContentPack, assembleExperienceDirection, assembleStartWithCodex } from './handoffFiles'
+import { assembleContentPack, assembleExperienceDirection, assembleStartWithCodex, suggestProjectFolderName } from './handoffFiles'
 
 const project = { title: '21 DAYS OF WRITING' } as ProjectRow
 
 describe('handoff companion files', () => {
+  it('suggests a changeable folder name from the product title', () => {
+    expect(suggestProjectFolderName('21 DAYS OF Career Growth', '52c03981')).toBe('21-days-of-career-growth-app')
+    expect(suggestProjectFolderName('Career App', '52c03981')).toBe('career-app')
+    expect(suggestProjectFolderName('เส้นทางอาชีพ', '52c03981-01ce')).toBe('codesign-app-52c039')
+  })
+
   it('keeps daily content in a deterministic Markdown structure', () => {
     const markdown = assembleContentPack({
       dailyContent: [{ day: 1, title: 'เริ่มต้น', objective: 'สังเกต', content: 'อ่านสั้น ๆ', exercise: 'ลงมือเขียน', reflection: 'พบอะไร', record: 'หนึ่งประโยค', completion: 'บันทึกคำตอบ', duration: '5 นาที', reviewed: true }],
@@ -26,6 +32,8 @@ describe('handoff companion files', () => {
     expect(markdown).toContain('does not yet have a GitHub account')
     expect(markdown).toContain('Never request or handle the owner\'s password')
     expect(markdown).toContain('publish through GitHub Pages')
+    expect(markdown).toContain('current project folder')
+    expect(markdown).toContain('Do not ask the owner to attach the four files again')
   })
 
   it('uses the owner rules in the Codex brief instead of hardcoding browser storage', () => {
@@ -56,5 +64,6 @@ describe('handoff companion files', () => {
     expect(markdown).toContain('Product นี้กำหนดให้หน้าจอที่ผู้ใช้เห็นเป็นภาษาไทย')
     expect(markdown).toContain('ผู้ใช้ไม่สามารถย้อนกลับไปยังรายการที่ทำเสร็จแล้ว')
     expect(markdown).toContain('PRODUCT DECISION REQUIRED')
+    expect(markdown).toContain('ไม่ต้องขอให้ผู้ใช้แนบไฟล์ทั้ง 4 ฉบับซ้ำ')
   })
 })
