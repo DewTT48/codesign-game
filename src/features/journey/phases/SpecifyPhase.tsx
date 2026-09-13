@@ -375,6 +375,9 @@ export function SpecifyPhase({ project }: { project: ProjectRow }) {
         actions={<ArcadeButton disabled={issues.length > 0 || completion.isPending} onClick={() => completion.mutate()}><LockKeyhole size={18} /> {completion.isPending ? (isThai ? 'กำลังยืนยัน…' : 'SOLIDIFYING…') : (isThai ? 'ยืนยันรายละเอียด' : 'SOLIDIFY SPECIFICATION')}</ArcadeButton>}
       >
         {issues.length ? <><p>{isThai ? `ยังเหลือ ${issues.length} เรื่องก่อนส่งต่อ` : `${issues.length} items remain before handoff`}</p><ul className="spec-quality-list">{issues.map((issue) => <li key={issue}>{issue}</li>)}</ul></> : <p>{isThai ? 'Journey, Content และ Experience พร้อมสำหรับ Final Handoff' : 'Journey, content, and experience are ready for Final Handoff.'}</p>}
+        <p>{isThai
+          ? 'เมื่อคุณยืนยัน Step S แล้ว CODESIGN จะนำคำตอบและการตัดสินใจที่ยืนยันไว้ตั้งแต่ Step C–S มาสร้างไฟล์ร่าง 3 ฉบับโดยอัตโนมัติ เพื่อใช้ตรวจสอบใน Step PRD คุณไม่ต้องสร้างหรืออัปโหลดไฟล์เหล่านี้เพิ่มเพื่อเริ่มขั้นถัดไป'
+          : 'When you confirm Step S, CODESIGN will automatically turn the answers and decisions confirmed across Steps C–S into three draft files for review in Step PRD. You do not need to create or upload these files separately to begin the next step.'}</p>
         {completion.isError ? <p className="field-error" role="alert">{isThai ? 'Solidify ไม่สำเร็จ ข้อมูลยังไม่ถูก Lock' : 'Solidify failed. Your data remains unlocked.'}</p> : null}
       </ReviewGate>
     </JourneyLayout>

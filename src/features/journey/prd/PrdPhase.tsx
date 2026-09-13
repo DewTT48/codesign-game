@@ -249,28 +249,29 @@ export function PrdPhase({ project }: { project: ProjectRow }) {
 
   return (
     <JourneyLayout project={project} phase="PRD" phaseName="FINAL HANDOFF" chatContext={files} saveState={saveState}>
-      <PhaseSection step="01" title={isThai ? 'ไฟล์หลักที่ต้องตรวจให้ตรงกัน' : 'THE THREE SOURCE FILES'} description={isThai ? 'CODESIGN ประกอบการตัดสินใจจากขั้นก่อนหน้าเป็น 3 ไฟล์หลัก ก่อนส่งให้ Codex ต้องตรวจว่าเนื้อหา Product เนื้อหา 21 วัน และประสบการณ์สอดคล้องกัน' : 'CODESIGN assembles earlier decisions into three source files. Review product, content, and experience for consistency before sending them to Codex.'}>
+      <PhaseSection step="01" title={isThai ? 'ไฟล์ร่างที่ CODESIGN สร้างหลังยืนยัน Step S' : 'DRAFTS CREATED AFTER STEP S'} description={isThai ? 'หลังจากคุณยืนยัน Step S แล้ว CODESIGN ได้นำคำตอบและการตัดสินใจที่ยืนยันไว้ตั้งแต่ Step C–S มาสร้างไฟล์ร่าง 3 ฉบับโดยอัตโนมัติ ในการตรวจรอบแรกนี้ คุณไม่ต้องสร้างหรืออัปโหลดไฟล์เพิ่ม' : 'After you confirmed Step S, CODESIGN automatically assembled the answers and decisions confirmed across Steps C–S into three draft files. You do not need to create or upload anything for this first review.'}>
         <div className="prd-checklist" aria-label={isThai ? 'รายการตรวจความพร้อมของ Product' : 'Product definition checklist'}>{checklist.map((item) => <span key={item}><Check size={16} aria-hidden="true" /> {item}</span>)}</div>
+        <p className="prd-checklist-note">{isThai ? 'เครื่องหมายสีเขียวหมายถึงมีข้อมูลต้นทางที่จำเป็นครบแล้ว แต่ยังไม่ได้หมายความว่าไฟล์ทั้ง 3 ฉบับผ่านการตรวจความถูกต้องหรือความสอดคล้อง' : 'Green checks mean the required source information is present. They do not mean the three files have passed accuracy or consistency review.'}</p>
       </PhaseSection>
 
-      <PhaseSection step="02" title={isThai ? 'ให้ Chat ตรวจ แล้วเลือกทางต่อที่ถูกต้อง' : 'LET CHAT REVIEW, THEN CHOOSE THE RIGHT PATH'} description={isThai ? 'Prompt มีการตัดสินใจที่ Lock แล้วและไฟล์ร่างทั้ง 3 ฉบับอยู่แล้ว Chat ต้องบอกว่าพร้อมยืนยัน ต้องแก้เฉพาะไฟล์ หรือต้องกลับไป Revision' : 'The prompt already contains the locked decisions and all three drafts. Chat must say whether they are ready, need file-only corrections, or require a revision.'}>
-        <div className="prd-chat-flow" aria-label={isThai ? 'ขั้นตอนตรวจไฟล์กับ Chat' : 'Chat review steps'}>
-          {(isThai ? ['คัดลอก Prompt ซึ่งรวมข้อมูลและไฟล์แล้ว', 'ให้ Chat เลือกสถานะจาก 3 แบบ', 'ตอบเฉพาะคำถามที่เปลี่ยน Product จริง', 'กลับมาเลือกสถานะเดียวกันใน CODESIGN'] : ['Copy the prompt with all inputs included', 'Have Chat choose one of three statuses', 'Answer only material product questions', 'Choose the same status in CODESIGN']).map((item, index) => <span key={item}><strong>{String(index + 1).padStart(2, '0')}</strong>{item}</span>)}
+      <PhaseSection step="02" title={isThai ? 'ให้ AI ช่วยตรวจความสอดคล้อง' : 'ASK AI TO REVIEW CONSISTENCY'} description={isThai ? 'คัดลอก Prompt ไปคุยกับ AI ที่คุณเลือก เช่น ChatGPT, Gemini หรือ Claude โดยไม่ต้องแนบไฟล์เพิ่ม เพราะ Prompt มีข้อมูลที่ยืนยันแล้วและไฟล์ร่างทั้ง 3 ฉบับรวมอยู่แล้ว' : 'Copy the prompt into the AI you choose, such as ChatGPT, Gemini, or Claude. No attachment is needed because the prompt already includes the confirmed decisions and all three draft files.'}>
+        <div className="prd-chat-flow" aria-label={isThai ? 'ขั้นตอนตรวจไฟล์กับ AI' : 'AI review steps'}>
+          {(isThai ? ['คัดลอก Prompt ที่เตรียมไว้', 'นำ Prompt ไปวางใน AI ที่คุณเลือก', 'คุยจน AI สรุปหนึ่งใน 3 สถานะ', 'กลับมาเลือกสถานะเดียวกันใน CODESIGN'] : ['Copy the prepared prompt', 'Paste it into the AI you choose', 'Continue until the AI returns one of three statuses', 'Choose the same status in CODESIGN']).map((item, index) => <span key={item}><strong>{String(index + 1).padStart(2, '0')}</strong>{item}</span>)}
         </div>
 
-        <div className="prd-review-outcomes" role="group" aria-label={isThai ? 'เลือกผลการตรวจจาก Chat' : 'Choose the Chat review result'}>
+        <div className="prd-review-outcomes" role="group" aria-label={isThai ? 'เลือกผลการตรวจจาก AI' : 'Choose the AI review result'}>
           <button type="button" className={reviewOutcome === 'ready' ? 'is-active is-ready' : ''} aria-pressed={reviewOutcome === 'ready'} onClick={() => void chooseReviewOutcome('ready')}>
-            <Check size={22} /><span><strong>READY TO LOCK</strong><small>{isThai ? 'ไม่พบจุดที่เปลี่ยนการสร้าง ใช้ไฟล์เดิมต่อได้' : 'No build-changing issue; continue with the current files.'}</small></span>
+            <Check size={22} /><span><strong>{isThai ? 'พร้อมใช้ไฟล์เดิม — READY TO LOCK' : 'READY TO LOCK'}</strong><small>{isThai ? 'ข้อมูลสอดคล้องกันแล้ว ไม่ต้องแก้ไฟล์' : 'No build-changing issue; continue with the current files.'}</small></span>
           </button>
           <button type="button" className={reviewOutcome === 'files' ? 'is-active is-files' : ''} aria-pressed={reviewOutcome === 'files'} onClick={() => void chooseReviewOutcome('files')}>
-            <FileUp size={22} /><span><strong>FILE UPDATE REQUIRED</strong><small>{isThai ? 'แก้ให้ตรงกับการตัดสินใจเดิม โดยไม่เปลี่ยน Product' : 'Align the files to existing decisions without changing the product.'}</small></span>
+            <FileUp size={22} /><span><strong>{isThai ? 'ต้องแก้ไฟล์เท่านั้น — FILE UPDATE REQUIRED' : 'FILE UPDATE REQUIRED'}</strong><small>{isThai ? 'การตัดสินใจเดิมยังเหมือนเดิม แต่ต้องปรับข้อความในไฟล์ให้ตรงกัน' : 'Align the files to existing decisions without changing the product.'}</small></span>
           </button>
           <button type="button" className={reviewOutcome === 'revision' ? 'is-active is-revision' : ''} aria-pressed={reviewOutcome === 'revision'} onClick={() => void chooseReviewOutcome('revision')}>
-            <RotateCcw size={22} /><span><strong>REVISION REQUIRED</strong><small>{isThai ? 'ต้องเปลี่ยนการตัดสินใจใน Step E หรือ S ก่อน' : 'A decision in Step E or S must change first.'}</small></span>
+            <RotateCcw size={22} /><span><strong>{isThai ? 'ต้องกลับไปแก้การตัดสินใจ — REVISION REQUIRED' : 'REVISION REQUIRED'}</strong><small>{isThai ? 'พบเรื่องที่เปลี่ยน Product จึงต้องย้อนกลับไปแก้ Step E หรือ S ก่อน' : 'A decision in Step E or S must change first.'}</small></span>
           </button>
         </div>
 
-        {!reviewOutcome ? <p className="prd-review-outcomes__hint">{isThai ? 'คุยกับ Chat ให้ได้ข้อสรุปก่อน แล้วเลือกหนึ่งสถานะด้านบน' : 'Finish the Chat review, then choose one status above.'}</p> : null}
+        {!reviewOutcome ? <p className="prd-review-outcomes__hint">{isThai ? 'คุยกับ AI ให้ได้ข้อสรุปก่อน แล้วเลือกสถานะเดียวกับที่ AI แนะนำ' : 'Finish the AI review, then choose the same status it recommends.'}</p> : null}
         {reviewOutcome === 'ready' ? <div className="prd-review-route prd-review-route--ready">
           <Check size={24} /><div><strong>{isThai ? 'ใช้ไฟล์เดิมต่อได้' : 'KEEP THE CURRENT FILES'}</strong><p>{isThai ? 'ไม่ต้องดาวน์โหลดหรืออัปโหลดไฟล์ใหม่ ไปอ่าน Preview และยืนยันไฟล์เดิมทั้ง 3 ฉบับในขั้นถัดไป' : 'No download or upload is needed. Read and confirm all three current files in the next section.'}</p><a href="#prd-file-review">{isThai ? 'ไปตรวจไฟล์ทั้ง 3 ฉบับ' : 'REVIEW THE THREE FILES'} <ArrowRight size={16} /></a></div>
         </div> : null}
@@ -286,7 +287,7 @@ export function PrdPhase({ project }: { project: ProjectRow }) {
       </PhaseSection>
 
       <div id="prd-file-review">
-      <PhaseSection step="03" title={isThai ? 'ตรวจและแก้ไขไฟล์หลัก 3 ฉบับ' : 'REVIEW THE THREE SOURCE FILES'} description={isThai ? 'เลือกไฟล์ อ่าน Preview จนถึงด้านล่าง แล้วกดยืนยันทีละไฟล์ หากแก้ไขต้องกดบันทึกก่อนตรวจฉบับล่าสุดอีกครั้ง' : 'Choose a file, read its preview to the end, then confirm it. Save any edits before reviewing the latest version again.'}>
+      <PhaseSection step="03" title={isThai ? 'ตรวจและยืนยันไฟล์ทีละฉบับ' : 'REVIEW AND CONFIRM EACH FILE'} description={isThai ? 'เปิดอ่านไฟล์แต่ละฉบับจนจบ แล้วกดยืนยันเมื่อเนื้อหาถูกต้อง หากแก้ไขข้อความ ให้กดบันทึกและตรวจไฟล์ฉบับล่าสุดอีกครั้งก่อนยืนยัน' : 'Read each file to the end and confirm it when the content is correct. If you edit it, save and review the latest version again before confirming.'}>
         <div className="handoff-file-grid" aria-label={isThai ? 'เลือกไฟล์เพื่อตรวจสอบ' : 'Choose a file to review'}>
           {prdFiles.map((file) => <button type="button" className={selectedFile === file.key ? 'is-active' : ''} aria-pressed={selectedFile === file.key} key={file.key} onClick={() => openFile(file.key)}>
             <FileCode2 size={21} />
