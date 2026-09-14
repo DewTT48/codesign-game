@@ -4635,6 +4635,17 @@ a.mission-node__content:focus-visible {
   line-height: 1.6;
 }
 
+.repository-privacy-note {
+  margin: 14px 0 0;
+  padding: 13px 15px;
+  color: var(--positive);
+  background: color-mix(in srgb, var(--positive) 9%, var(--deep));
+  border-left: 7px solid var(--positive);
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.6;
+}
+
 .github-basics {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));

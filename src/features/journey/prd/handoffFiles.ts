@@ -171,7 +171,7 @@ GitHub คือบ้านออนไลน์ของไฟล์โคร�
 5. ทำกติกาการกลับมา การเข้าถึง และการบันทึกข้อมูลตามหัวข้อ “กติกา Product ที่ยืนยันแล้ว” อย่างเคร่งครัด ห้ามอนุมานว่าต้องมี Auth, Backend, Cloud storage, AI ในตัว App, Analytics หรือบริการเสียเงิน เว้นแต่มีการตัดสินใจที่ยืนยันแล้วระบุไว้
 6. ทดสอบเส้นทางทั้งหมดบน Desktop, Tablet และ Mobile รวมถึง Keyboard, Empty state, การกลับมาใช้ App และการตัดคำภาษาไทย
 7. แสดง Preview ให้เจ้าของ Product ตรวจ แก้ปัญหาด้าน implementation แล้วจึง Publish ผ่าน GitHub Pages
-8. ส่งกลับ Repository URL, Public App URL, สรุปผลการทดสอบ และข้อจำกัดที่ยังเหลืออยู่
+8. ส่งกลับ Public App URL สรุปผลการทดสอบ และข้อจำกัดที่ยังเหลืออยู่ ไม่ต้องส่ง Repository URL กลับไปบันทึกใน CODESIGN
 
 เริ่มจากอ่านไฟล์ส่งต่อทั้งสามฉบับใน Project Folder ปัจจุบัน แล้วสรุปความพร้อมให้เจ้าของ Product เป็นภาษาไทยแบบสั้นและเข้าใจง่าย จากนั้นดำเนินการขั้นถัดไปที่ปลอดภัยและเป็นประโยชน์ที่สุด
 `
@@ -232,7 +232,7 @@ GitHub is the online home for the project files and their change history. GitHub
 5. Implement return, access, and data retention behavior exactly as stated in the Locked Product Rules. Do not infer Auth, a backend, cloud storage, embedded AI, analytics, or paid services unless an owner-approved locked decision explicitly requires it.
 6. Test the full journey on desktop, tablet, and mobile, including keyboard use, empty states, returning to the app, and Thai text wrapping where relevant.
 7. Show the owner a preview, fix implementation issues, then publish through GitHub Pages.
-8. Return the repository URL, public app URL, test summary, and any remaining limitations.
+8. Return the public app URL, test summary, and any remaining limitations. Do not return the repository URL for storage in CODESIGN.
 
 Start by reading the three handoff files in the current project folder and giving the owner a short readiness summary. Then proceed with the safest useful next step.
 `

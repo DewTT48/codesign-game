@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { ProjectRow } from '../../lib/supabase/database.types'
-import { startPhaseRevision } from './journey.service'
+import { completeImplementation, startPhaseRevision } from './journey.service'
 
 const supabaseMocks = vi.hoisted(() => ({
   requireSupabase: vi.fn(),
@@ -79,5 +79,25 @@ describe('startPhaseRevision', () => {
     expect(updateQueries[1].update).toHaveBeenCalledWith({ content: '' })
     expect(updateQueries[2].update).toHaveBeenCalledWith({ content: false })
     expect(from).toHaveBeenCalledTimes(5)
+  })
+})
+
+describe('completeImplementation', () => {
+  beforeEach(() => vi.clearAllMocks())
+
+  it('stores the public URL without persisting a repository URL', async () => {
+    const rpc = vi.fn().mockResolvedValue({ data: completedProject, error: null })
+    supabaseMocks.requireSupabase.mockReturnValue({ rpc })
+
+    await completeImplementation({
+      projectId: 'project-1',
+      appUrl: 'https://example.com/app',
+    })
+
+    expect(rpc).toHaveBeenCalledWith('complete_implementation', {
+      target_project_id: 'project-1',
+      target_app_url: 'https://example.com/app',
+      target_repository_url: null,
+    })
   })
 })

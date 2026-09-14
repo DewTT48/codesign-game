@@ -18,7 +18,6 @@ const initialImplement = {
   githubReadiness: 'unsure',
   workingApp: false,
   appUrl: '',
-  repositoryUrl: '',
   alignmentStatus: '',
   alignmentNote: '',
   alignmentConfirmed: false,
@@ -53,7 +52,6 @@ export function ImplementPhase({ project }: { project: ProjectRow }) {
       return completeImplementation({
         projectId: project.id,
         appUrl: String(draft.values.appUrl),
-        repositoryUrl: String(draft.values.repositoryUrl),
       })
     },
     onSuccess: async () => {
@@ -77,7 +75,7 @@ export function ImplementPhase({ project }: { project: ProjectRow }) {
   const packageLoadError = snapshot.isError || prdEntries.isError || specifyEntries.isError || (!snapshot.isLoading && !prdEntries.isLoading && !specifyEntries.isLoading && !packageReady)
   const prdReviewOutcome = prdEntries.data?.find((entry) => entry.fieldKey === 'reviewOutcomeV2')?.content
   const alignmentReady = alignmentIsReady({ status: alignmentStatus, note: alignmentNote, confirmed: Boolean(draft.values.alignmentConfirmed) })
-  const ready = Boolean(draft.values.workingApp && String(draft.values.appUrl).trim() && String(draft.values.repositoryUrl).trim() && packageReady && snapshot.isSuccess && prdEntries.isSuccess && specifyEntries.isSuccess && alignmentReady)
+  const ready = Boolean(draft.values.workingApp && String(draft.values.appUrl).trim() && packageReady && snapshot.isSuccess && prdEntries.isSuccess && specifyEntries.isSuccess && alignmentReady)
 
   const downloadPackageFile = (fileName: string, content: string) => {
     const url = URL.createObjectURL(new Blob([content], { type: 'text/markdown;charset=utf-8' }))
@@ -206,15 +204,13 @@ export function ImplementPhase({ project }: { project: ProjectRow }) {
         <p className="codex-repository-note">{isThai ? 'ยังไม่ต้องสร้าง Repository เองในตอนนี้ Codex จะพาทำหลังจากคุณตรวจ Preview แล้ว' : 'You do not need to create a repository yet. Codex will guide you after you review the preview.'}</p>
       </PhaseSection>
 
-      <PhaseSection step="I4" title={isThai ? 'บันทึกแอปที่ใช้งานได้จริง' : 'RECORD THE WORKING BUILD'} description={isThai ? 'กลับมาบันทึก URL หลังจาก Codex สร้าง ทดสอบ และ Publish สำเร็จ' : 'Return after Codex has built, tested, and published the app.'}>
+      <PhaseSection step="I4" title={isThai ? 'บันทึกแอปที่ใช้งานได้จริง' : 'RECORD THE WORKING BUILD'} description={isThai ? 'กลับมาบันทึกเฉพาะ URL สาธารณะหลังจาก Codex สร้าง ทดสอบ และ Publish สำเร็จ' : 'Return after Codex has built, tested, and published the app. Save only the public URL.'}>
         <label className={draft.values.workingApp ? 'build-confirm is-active' : 'build-confirm'}>
           <input type="checkbox" checked={Boolean(draft.values.workingApp)} onChange={(event) => { draft.setField('workingApp', event.target.checked); resetAlignment() }} />
           <Check size={20} /> {isThai ? 'ฉันทดสอบเส้นทางหลักแล้ว และ App ใช้งานได้จริง' : 'I TESTED THE PRIMARY JOURNEY AND THE APP WORKS'}
         </label>
-        <div className="form-grid form-grid--two">
-          <FormField label={isThai ? 'URL สาธารณะของ App' : 'PUBLIC APP URL'} required><input type="url" value={String(draft.values.appUrl)} onChange={(event) => { draft.setField('appUrl', event.target.value); resetAlignment() }} placeholder="https://username.github.io/project/" /></FormField>
-          <FormField label={isThai ? 'URL ของ GitHub Repository' : 'GITHUB REPOSITORY URL'} required><input type="url" value={String(draft.values.repositoryUrl)} onChange={(event) => { draft.setField('repositoryUrl', event.target.value); resetAlignment() }} placeholder="https://github.com/username/project" /></FormField>
-        </div>
+        <FormField label={isThai ? 'URL สาธารณะของ App' : 'PUBLIC APP URL'} required><input type="url" value={String(draft.values.appUrl)} onChange={(event) => { draft.setField('appUrl', event.target.value); resetAlignment() }} placeholder="https://username.github.io/project/" /></FormField>
+        <p className="repository-privacy-note">{isThai ? 'เพื่อความเป็นส่วนตัว CODESIGN จะไม่ขอและไม่บันทึก URL ของ GitHub Repository' : 'For privacy, CODESIGN does not request or store the GitHub repository URL.'}</p>
       </PhaseSection>
 
       <CrossStepAlignment
@@ -226,7 +222,7 @@ export function ImplementPhase({ project }: { project: ProjectRow }) {
         items={[
           { label: isThai ? 'ชุดส่งต่องานที่ใช้สร้าง' : 'SOURCE PACKAGE', value: [`PRD v${snapshot.data?.version ?? '—'}`, 'CODESIGN_HANDOFF.md', 'CONTENT_PACK.md', 'EXPERIENCE_DIRECTION.md', 'START_WITH_CODEX.md'] },
           { label: isThai ? 'ผลการตรวจ PRD' : 'PRD REVIEW RESULT', value: String(prdReviewOutcome ?? '') },
-          { label: isThai ? 'หลักฐานการสร้าง' : 'BUILD EVIDENCE', value: [String(draft.values.appUrl), String(draft.values.repositoryUrl)].filter(Boolean) },
+          { label: isThai ? 'หลักฐานการสร้าง' : 'BUILD EVIDENCE', value: String(draft.values.appUrl) },
         ]}
         status={alignmentStatus}
         note={alignmentNote}
@@ -237,8 +233,8 @@ export function ImplementPhase({ project }: { project: ProjectRow }) {
         onConfirmedChange={(confirmed) => draft.setField('alignmentConfirmed', confirmed)}
       />
 
-      <ReviewGate title={isThai ? 'ตรวจสอบแอปที่สร้าง' : 'BUILD CHECK'} question={isThai ? 'App ทำงานจาก Public URL และมี Repository ที่กลับมาแก้ไขต่อได้หรือยัง?' : 'Does the app work from its public URL, with a repository you can continue editing?'} actions={<ArcadeButton disabled={!ready || completion.isPending} onClick={() => completion.mutate()}>{isThai ? 'ทดสอบแอป' : 'TEST THE BUILD'} <ArrowRight size={18} /></ArcadeButton>}>
-        <p>{isThai ? 'ต้องยืนยันว่า App ใช้งานได้ และบันทึกทั้ง Public URL กับ Repository URL ก่อนเข้าสู่ Feedback' : 'Confirm the working app and record both the public and repository URLs before feedback.'}</p>
+      <ReviewGate title={isThai ? 'ตรวจสอบแอปที่สร้าง' : 'BUILD CHECK'} question={isThai ? 'App ทำงานจาก Public URL และผ่านการทดสอบเส้นทางหลักแล้วหรือยัง?' : 'Does the app work from its public URL and pass the primary-journey test?'} actions={<ArcadeButton disabled={!ready || completion.isPending} onClick={() => completion.mutate()}>{isThai ? 'ทดสอบแอป' : 'TEST THE BUILD'} <ArrowRight size={18} /></ArcadeButton>}>
+        <p>{isThai ? 'ต้องยืนยันว่า App ใช้งานได้ และบันทึกเฉพาะ Public URL ก่อนเข้าสู่ Feedback' : 'Confirm that the app works and save only its public URL before feedback.'}</p>
         {completion.isError ? <p className="field-error" role="alert">บันทึก Build ไม่สำเร็จ กรุณาลองอีกครั้ง</p> : null}
       </ReviewGate>
     </JourneyLayout>

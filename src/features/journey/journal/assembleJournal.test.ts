@@ -21,13 +21,15 @@ describe('assembleJournal', () => {
         N: { change: 'Clarify the first step', because: 'Tester paused', expectedResult: 'Faster start' },
       },
       prd: null,
-      build: { id: 'build-1', project_id: 'project-1', version_label: 'v1', app_url: 'https://example.com', repository_url: null, created_at: '2026-08-30T00:00:00Z' },
+      build: { id: 'build-1', project_id: 'project-1', version_label: 'v1', app_url: 'https://example.com', repository_url: 'https://github.com/private/secret-project', created_at: '2026-08-30T00:00:00Z' },
       feedback: [],
       decisions: [],
     })
     expect(journal).toContain('# CODESIGN JOURNAL — 21 DAYS OF WRITING')
     expect(journal).toContain('New writers')
     expect(journal).toContain('https://example.com')
+    expect(journal).not.toContain('https://github.com/private/secret-project')
+    expect(journal).not.toContain('Repository URL')
     expect(journal).toContain('Clarify the first step')
     expect(journal).toContain('Similar apps were abandoned')
     expect(journal).toContain('Remove streak pressure')

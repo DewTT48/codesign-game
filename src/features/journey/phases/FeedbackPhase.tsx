@@ -89,7 +89,6 @@ export function FeedbackPhase({ project }: { project: ProjectRow }) {
         allowRevision
         items={[
           { label: isThai ? 'แอปที่นำมาทดสอบ' : 'BUILD UNDER TEST', value: String(build.appUrl ?? '') },
-          { label: isThai ? 'Repository' : 'REPOSITORY', value: String(build.repositoryUrl ?? '') },
           { label: isThai ? 'ความสัมพันธ์กับ PRD ที่ยืนยันไว้' : 'IMPLEMENTATION TO PRD', value: [String(build.alignmentStatus ?? ''), String(build.alignmentNote ?? '')].filter(Boolean) },
         ]}
         status={alignmentStatus}

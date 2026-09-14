@@ -431,13 +431,14 @@ export async function getLatestPrdSnapshot(projectId: string): Promise<PrdSnapsh
 export async function completeImplementation(input: {
   projectId: string
   appUrl: string
-  repositoryUrl?: string
 }): Promise<ProjectRow> {
   const client = requireSupabase()
   const { data, error } = await client.rpc('complete_implementation', {
     target_project_id: input.projectId,
     target_app_url: input.appUrl,
-    target_repository_url: input.repositoryUrl || null,
+    // The hosted RPC still accepts this legacy argument. Always send null so
+    // a private repository location is never stored by the current app.
+    target_repository_url: null,
   })
   if (error) throw error
   return data

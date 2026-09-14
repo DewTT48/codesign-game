@@ -156,7 +156,6 @@ ${data.prd?.experience_direction ?? 'No locked Experience Direction snapshot fou
 - **GitHub readiness at handoff:** ${text(i.githubReadiness)}
 - **Working app confirmed:** ${String(i.workingApp ?? false)}
 - **App URL:** ${data.build?.app_url ?? text(i.appUrl)}
-- **Repository URL:** ${data.build?.repository_url ?? text(i.repositoryUrl)}
 
 ## G — Get Feedback
 
