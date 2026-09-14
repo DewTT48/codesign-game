@@ -4912,6 +4912,36 @@ a.mission-node__content:focus-visible {
   opacity: 0;
 }
 
+.implementation-completion-checklist {
+  display: grid;
+  gap: 10px;
+  margin: 18px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.implementation-completion-checklist li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 2px solid rgba(255, 255, 255, 0.28);
+}
+
+.implementation-completion-checklist li.is-complete {
+  color: var(--positive);
+  border-color: color-mix(in srgb, var(--positive) 60%, transparent);
+}
+
+.implementation-completion-checklist li.is-incomplete {
+  color: #ffd0a6;
+  border-color: color-mix(in srgb, var(--accent) 70%, transparent);
+}
+
+.implementation-completion-checklist li.is-incomplete svg {
+  opacity: 0;
+}
+
 .test-checklist {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));

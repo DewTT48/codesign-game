@@ -6,7 +6,8 @@ import { ArcadeButton } from '../../../components/ui/ArcadeButton'
 import type { ProjectRow } from '../../../lib/supabase/database.types'
 import { useLanguage } from '../../i18n/LanguageContext'
 import { CrossStepAlignment } from '../CrossStepAlignment'
-import { alignmentIsReady, normalizeAlignmentStatus } from '../crossStepAlignmentModel'
+import { normalizeAlignmentStatus } from '../crossStepAlignmentModel'
+import { getImplementationReadiness, type ImplementationRequirementKey } from '../implementationReadiness'
 import { completeImplementation, getLatestPrdSnapshot, getPhaseEntries } from '../journey.service'
 import { JourneyLayout } from '../JourneyLayout'
 import { FormField, PhaseSection, ReviewGate } from '../PhaseFormComponents'
@@ -74,8 +75,34 @@ export function ImplementPhase({ project }: { project: ProjectRow }) {
   const packageReady = packageFiles.every((file) => file.content.trim())
   const packageLoadError = snapshot.isError || prdEntries.isError || specifyEntries.isError || (!snapshot.isLoading && !prdEntries.isLoading && !specifyEntries.isLoading && !packageReady)
   const prdReviewOutcome = prdEntries.data?.find((entry) => entry.fieldKey === 'reviewOutcomeV2')?.content
-  const alignmentReady = alignmentIsReady({ status: alignmentStatus, note: alignmentNote, confirmed: Boolean(draft.values.alignmentConfirmed) })
-  const ready = Boolean(draft.values.workingApp && String(draft.values.appUrl).trim() && packageReady && snapshot.isSuccess && prdEntries.isSuccess && specifyEntries.isSuccess && alignmentReady)
+  const implementationReadiness = getImplementationReadiness({
+    workingApp: Boolean(draft.values.workingApp),
+    appUrl: String(draft.values.appUrl),
+    alignmentStatus,
+    alignmentNote,
+    alignmentConfirmed: Boolean(draft.values.alignmentConfirmed),
+  })
+  const ready = !draft.loading && implementationReadiness.ready
+  const completionRequirementLabels: Record<ImplementationRequirementKey, string> = isThai ? {
+    workingApp: 'ยืนยันใน I4 ว่าทดสอบเส้นทางหลักแล้วและ App ใช้งานได้จริง',
+    appUrl: 'ใส่ Public URL ของ App ใน I4',
+    alignmentStatus: alignmentStatus === 'revision' ? 'กลับไปแก้ Product decision ที่เปลี่ยนก่อน' : 'เลือกผลการส่งต่อ PRD → I ใน I5',
+    alignmentNote: 'อธิบายรายละเอียดที่ทำให้ PRD ชัดขึ้นใน I5',
+    alignmentConfirmed: 'ยืนยันว่าตรวจ Step PRD และ I พร้อมกันแล้วใน I5',
+  } : {
+    workingApp: 'Confirm in I4 that the primary journey was tested and the app works',
+    appUrl: 'Enter the public app URL in I4',
+    alignmentStatus: alignmentStatus === 'revision' ? 'Revise the changed product decision first' : 'Select the PRD → I handoff result in I5',
+    alignmentNote: 'Explain the clarification in I5',
+    alignmentConfirmed: 'Confirm the joint PRD and I review in I5',
+  }
+  const visibleRequirementKeys: ImplementationRequirementKey[] = [
+    'workingApp',
+    'appUrl',
+    'alignmentStatus',
+    ...(alignmentStatus === 'clarifies' ? ['alignmentNote' as const] : []),
+    'alignmentConfirmed',
+  ]
 
   const downloadPackageFile = (fileName: string, content: string) => {
     const url = URL.createObjectURL(new Blob([content], { type: 'text/markdown;charset=utf-8' }))
@@ -233,8 +260,14 @@ export function ImplementPhase({ project }: { project: ProjectRow }) {
         onConfirmedChange={(confirmed) => draft.setField('alignmentConfirmed', confirmed)}
       />
 
-      <ReviewGate title={isThai ? 'ตรวจสอบแอปที่สร้าง' : 'BUILD CHECK'} question={isThai ? 'App ทำงานจาก Public URL และผ่านการทดสอบเส้นทางหลักแล้วหรือยัง?' : 'Does the app work from its public URL and pass the primary-journey test?'} actions={<ArcadeButton disabled={!ready || completion.isPending} onClick={() => completion.mutate()}>{isThai ? 'ทดสอบแอป' : 'TEST THE BUILD'} <ArrowRight size={18} /></ArcadeButton>}>
-        <p>{isThai ? 'ต้องยืนยันว่า App ใช้งานได้ และบันทึกเฉพาะ Public URL ก่อนเข้าสู่ Feedback' : 'Confirm that the app works and save only its public URL before feedback.'}</p>
+      <ReviewGate title={isThai ? 'ตรวจสอบแอปที่สร้าง' : 'BUILD CHECK'} question={isThai ? 'App ทำงานจาก Public URL และผ่านการทดสอบเส้นทางหลักแล้วหรือยัง?' : 'Does the app work from its public URL and pass the primary-journey test?'} actions={<ArcadeButton disabled={!ready || completion.isPending} onClick={() => completion.mutate()}>{completion.isPending ? (isThai ? 'กำลังบันทึก…' : 'SAVING…') : (isThai ? 'ไปต่อสู่ Feedback' : 'CONTINUE TO FEEDBACK')} <ArrowRight size={18} /></ArcadeButton>}>
+        <p>{ready ? (isThai ? 'ข้อมูลครบแล้ว พร้อมบันทึก Build และไปต่อสู่ Feedback' : 'Everything is complete. Save the build and continue to feedback.') : (isThai ? 'ปุ่มจะเปิดเมื่อรายการด้านล่างครบ โดยไม่ขึ้นกับการโหลดไฟล์เบื้องหลังซ้ำ' : 'The button unlocks when the visible requirements below are complete; it does not depend on reloading the source files.')}</p>
+        <ul className="implementation-completion-checklist" aria-live="polite">
+          {visibleRequirementKeys.map((key) => {
+            const complete = implementationReadiness.requirements[key]
+            return <li key={key} className={complete ? 'is-complete' : 'is-incomplete'}><Check size={18} aria-hidden="true" /><span>{completionRequirementLabels[key]}</span></li>
+          })}
+        </ul>
         {completion.isError ? <p className="field-error" role="alert">บันทึก Build ไม่สำเร็จ กรุณาลองอีกครั้ง</p> : null}
       </ReviewGate>
     </JourneyLayout>
