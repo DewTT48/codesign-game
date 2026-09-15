@@ -4942,6 +4942,255 @@ a.mission-node__content:focus-visible {
   opacity: 0;
 }
 
+.build-update-intro {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 14px;
+  align-items: start;
+  padding: 18px;
+  color: var(--ink);
+  background: #e8f5ff;
+  border-left: 7px solid var(--positive);
+}
+
+.build-update-intro strong,
+.build-update-intro p {
+  display: block;
+  margin: 0;
+}
+
+.build-update-intro p {
+  margin-top: 6px;
+  line-height: 1.6;
+}
+
+.build-update-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.build-update-actions button,
+.build-update-actions label {
+  min-height: 48px;
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  padding: 12px 16px;
+  color: var(--white);
+  background: var(--deep);
+  border: 3px solid var(--line);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.build-update-actions button:hover,
+.build-update-actions button:focus-visible,
+.build-update-actions label:hover,
+.build-update-actions label:focus-within {
+  border-color: var(--accent);
+}
+
+.build-update-actions label {
+  color: var(--ink);
+  background: var(--positive);
+}
+
+.build-update-actions input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.build-update-prompt {
+  margin-top: 14px;
+  padding: 14px 16px;
+  background: var(--deep);
+  border: 2px solid var(--line);
+}
+
+.build-update-prompt summary {
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.build-update-prompt pre {
+  max-height: 420px;
+  margin: 16px 0 0;
+  padding: 18px;
+  overflow: auto;
+  color: var(--white);
+  background: var(--ink);
+  font-family: var(--font-body);
+  font-size: 15px;
+  line-height: 1.7;
+  white-space: pre-wrap;
+}
+
+.build-update-privacy,
+.build-update-empty,
+.build-update-message {
+  margin: 14px 0 0;
+  padding: 13px 15px;
+  line-height: 1.6;
+}
+
+.build-update-privacy {
+  color: var(--ink);
+  background: #fff1df;
+  border-left: 6px solid var(--accent);
+}
+
+.build-update-empty {
+  color: var(--muted);
+  background: var(--deep);
+  border: 2px dashed var(--line);
+}
+
+.build-update-message {
+  color: var(--white);
+  background: var(--deep);
+  border-left: 5px solid var(--line);
+}
+
+.build-update-workspace {
+  margin-top: 18px;
+}
+
+.build-update-file-list {
+  display: grid;
+  gap: 8px;
+}
+
+.build-update-file-list article {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: 10px;
+  align-items: stretch;
+  background: var(--deep);
+  border: 3px solid var(--line);
+}
+
+.build-update-file-list article.is-active {
+  border-color: var(--accent);
+}
+
+.build-update-file-list button,
+.build-update-file-list label {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 11px 13px;
+  color: var(--white);
+  background: transparent;
+  border: 0;
+  font: inherit;
+}
+
+.build-update-file-list button {
+  text-align: left;
+  cursor: pointer;
+}
+
+.build-update-file-list button:first-child span,
+.build-update-file-list button:first-child strong,
+.build-update-file-list button:first-child small {
+  display: block;
+}
+
+.build-update-file-list button:first-child small {
+  margin-top: 3px;
+  color: var(--muted);
+}
+
+.build-update-file-list label {
+  cursor: pointer;
+}
+
+.build-update-file-list label:has(input:checked) {
+  color: var(--ink);
+  background: var(--positive);
+}
+
+.build-update-file-list button:last-child {
+  color: #ffb8b8;
+  border-left: 2px solid var(--line);
+}
+
+.build-update-preview {
+  margin-top: 16px;
+  padding: 16px;
+  background: var(--deep);
+  border: 3px solid var(--line);
+}
+
+.build-update-preview > header {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 12px;
+}
+
+.build-update-preview > header span {
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.build-update-preview > header strong {
+  overflow-wrap: anywhere;
+}
+
+.build-update-preview .prd-markdown-preview {
+  max-height: 460px;
+}
+
+.build-update-workspace > .owner-confirm {
+  margin-top: 16px;
+}
+
+:lang(th) .journey-page--n .build-update-intro,
+:lang(th) .journey-page--n .build-update-actions,
+:lang(th) .journey-page--n .build-update-prompt,
+:lang(th) .journey-page--n .build-update-file-list,
+:lang(th) .journey-page--n .build-update-preview {
+  font-family: var(--font-body);
+  letter-spacing: 0;
+}
+
+@media (max-width: 700px) {
+  .build-update-actions,
+  .build-update-actions button,
+  .build-update-actions label {
+    width: 100%;
+  }
+
+  .build-update-file-list article {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .build-update-file-list article > label {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    justify-content: center;
+    border-top: 2px solid var(--line);
+  }
+
+  .build-update-file-list article > button:last-child {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  .build-update-preview > header {
+    display: grid;
+  }
+}
+
 .test-checklist {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));

@@ -67,7 +67,7 @@ export function FeedbackPhase({ project }: { project: ProjectRow }) {
   })
 
   return (
-    <JourneyLayout project={project} phase="G" phaseName="GET FEEDBACK" chatContext={draft.values} saveState={draft.saveState}>
+    <JourneyLayout project={project} phase="G" phaseName="GATHER FEEDBACK" chatContext={draft.values} saveState={draft.saveState}>
       <PhaseSection step="01" title={isThai ? 'รายการทดสอบสำหรับผู้สร้าง' : 'CREATOR TEST CHECKLIST'}>
         <div className="test-checklist">{checks.map(([key, label]) => <label className={draft.values[key] ? 'is-active' : ''} key={key}><input type="checkbox" checked={Boolean(draft.values[key])} onChange={(event) => { draft.setField(key, event.target.checked); resetAlignment() }} /><Check size={17} /> {isThai ? thaiCheckLabels[key] : label}</label>)}</div>
       </PhaseSection>

@@ -12,16 +12,16 @@ import { currentPhasePath, isCompletedPhase, phaseSequence } from './phaseNaviga
 import { affectedRevisionPhases, revisionTargets } from './phaseRevision'
 import { MarkdownPreview } from './prd/MarkdownPreview'
 
-const phaseNames: Record<PhaseCode, { th: string; en: string }> = {
-  C: { th: 'ทำความเข้าใจบริบท', en: 'CONTEXT' },
-  O: { th: 'สำรวจทางเลือก', en: 'OPTIONS' },
-  D: { th: 'ท้าทายสมมติฐาน', en: 'DEBATE' },
-  E: { th: 'กำหนดขอบเขต', en: 'ESTABLISH' },
-  S: { th: 'ระบุรายละเอียด', en: 'SPECIFY' },
-  PRD: { th: 'ชุดส่งต่องาน', en: 'FINAL HANDOFF' },
-  I: { th: 'สร้างแอป', en: 'IMPLEMENT' },
-  G: { th: 'รับข้อเสนอแนะ', en: 'FEEDBACK' },
-  N: { th: 'วางรอบถัดไป', en: 'NEXT ITERATION' },
+const phaseNames: Record<PhaseCode, string> = {
+  C: 'CONTEXT',
+  O: 'OPTIONS',
+  D: 'DEBATE',
+  E: 'ESTABLISH',
+  S: 'SPECIFY',
+  PRD: 'PRODUCT REQUIREMENTS',
+  I: 'IMPLEMENT',
+  G: 'GATHER FEEDBACK',
+  N: 'NEXT ITERATION',
 }
 
 const preferredFields: Record<PhaseCode, string[]> = {
@@ -33,7 +33,7 @@ const preferredFields: Record<PhaseCode, string[]> = {
   PRD: ['markdownDraft', 'contentPackDraft', 'experienceDirectionDraft', 'reviewOutcomeV2'],
   I: ['githubReadiness', 'workingApp', 'appUrl', 'alignmentStatus', 'alignmentNote', 'alignmentConfirmed'],
   G: ['mobile', 'start', 'dailyFlow', 'saveData', 'reopen', 'persistence', 'navigation', 'prdRules', 'expected', 'actual', 'stuck', 'worked', 'mostImportant', 'alignmentStatus', 'alignmentNote', 'alignmentConfirmed'],
-  N: ['change', 'because', 'expectedResult', 'changeRoute', 'routeConfirmed'],
+  N: ['buildUpdateFiles', 'buildUpdatePrimaryFile', 'buildUpdateConfirmed', 'change', 'because', 'expectedResult', 'changeRoute', 'routeConfirmed'],
 }
 
 const thaiLabels: Record<string, string> = {
@@ -45,7 +45,7 @@ const thaiLabels: Record<string, string> = {
   markdownDraft: 'CODESIGN_HANDOFF.md', contentPackDraft: 'CONTENT_PACK.md', experienceDirectionDraft: 'EXPERIENCE_DIRECTION.md', reviewOutcomeV2: 'ผลการตรวจชุดส่งต่องาน',
   githubReadiness: 'ความพร้อมเรื่อง GitHub', workingApp: 'ยืนยันว่า App ทำงานแล้ว', appUrl: 'Public App URL',
   mobile: 'เปิดบนโทรศัพท์แล้ว', start: 'เริ่มโปรแกรมได้', dailyFlow: 'ทดลองหนึ่งวันจนจบแล้ว', saveData: 'บันทึกข้อมูลได้', reopen: 'เปิด App ใหม่แล้ว', persistence: 'ความคืบหน้ายังคงอยู่', navigation: 'ออกแล้วกลับมาได้', prdRules: 'ผ่านกติกาสำคัญจาก PRD', expected: 'สิ่งที่คาดว่าผู้ใช้จะทำ', actual: 'สิ่งที่ผู้ใช้ทำจริง', stuck: 'จุดที่ผู้ใช้ติดขัด', worked: 'สิ่งที่ทำงานได้ดี', mostImportant: 'ข้อเสนอแนะสำคัญที่สุด',
-  change: 'สิ่งที่จะเปลี่ยน', because: 'เหตุผล', expectedResult: 'ผลลัพธ์ที่คาดหวัง', changeRoute: 'Step ที่เป็นเจ้าของการเปลี่ยนแปลง', routeConfirmed: 'ยืนยันว่าแก้เฉพาะการสร้าง',
+  buildUpdateFiles: 'เอกสารสถานะของ App ปัจจุบัน', buildUpdatePrimaryFile: 'ไฟล์สรุปหลัก', buildUpdateConfirmed: 'ยืนยันว่าอ่านไฟล์สรุปแล้ว', change: 'สิ่งที่จะเปลี่ยน', because: 'เหตุผล', expectedResult: 'ผลลัพธ์ที่คาดหวัง', changeRoute: 'Step ที่เป็นเจ้าของการเปลี่ยนแปลง', routeConfirmed: 'ยืนยันว่าแก้เฉพาะการสร้าง',
   title: 'หัวข้อ', objective: 'เป้าหมาย', content: 'เนื้อหา', exercise: 'แบบฝึก', record: 'สิ่งที่บันทึก', completion: 'เกณฑ์จบ', duration: 'ระยะเวลา', mood: 'อารมณ์', rationale: 'เหตุผลที่เหมาะ',
 }
 
@@ -120,7 +120,7 @@ export function PhaseHistoryPage({ project, phase }: { project: ProjectRow; phas
     enabled: revisionTargets.includes(phase),
   })
   const currentPath = currentPhasePath(project.id, project.current_phase)
-  const name = isThai ? phaseNames[phase].th : phaseNames[phase].en
+  const name = phaseNames[phase]
   const affectedPhases = affectedRevisionPhases(phase, project.current_phase)
   const revision = useMutation({
     mutationFn: () => startPhaseRevision({ projectId: project.id, targetPhase: phase, reason }),
@@ -189,7 +189,7 @@ export function PhaseHistoryPage({ project, phase }: { project: ProjectRow; phas
 
     <nav className="phase-history__nav" aria-label={isThai ? 'เลือก Step ที่ต้องการดูย้อนหลัง' : 'Choose a completed step to review'}>
       <span>{isThai ? 'ดูย้อนหลัง' : 'HISTORY'}</span>
-      <div>{reviewablePhases.map((item) => <Link className={item === phase ? 'is-active' : ''} key={item} to={`/projects/${project.id}/${item}`}>{item} · {isThai ? phaseNames[item].th : phaseNames[item].en}</Link>)}<Link className="phase-history__revision-link" to={`/projects/${project.id}/revisions`}><History size={15} /> {isThai ? 'ประวัติ Revision ทั้งหมด' : 'ALL REVISIONS'}</Link></div>
+      <div>{reviewablePhases.map((item) => <Link className={item === phase ? 'is-active' : ''} key={item} to={`/projects/${project.id}/${item}`}>{item} · {phaseNames[item]}</Link>)}<Link className="phase-history__revision-link" to={`/projects/${project.id}/revisions`}><History size={15} /> {isThai ? 'ประวัติ Revision ทั้งหมด' : 'ALL REVISIONS'}</Link></div>
     </nav>
 
     <section className="phase-history__results" aria-labelledby="history-results-title">

@@ -41,18 +41,6 @@ export function JourneyLayout({
     staleTime: 0,
   })
   const guide = getPhaseGuide(language, phase, source.data ?? {}, chatContext, project.topic)
-  const thaiPhaseNames: Record<string, string> = {
-    C: 'ทำความเข้าใจบริบท',
-    O: 'สำรวจทางเลือก',
-    D: 'ท้าทายสมมติฐาน',
-    E: 'กำหนดขอบเขต',
-    S: 'ระบุรายละเอียด',
-    PRD: 'ชุดส่งต่องาน',
-    I: 'สร้างแอป',
-    G: 'รับข้อเสนอแนะ',
-    N: 'วางรอบถัดไป',
-  }
-
   async function copyPrompt() {
     try {
       await navigator.clipboard.writeText(guide.prompt)
@@ -74,7 +62,7 @@ export function JourneyLayout({
       <header className="journey-heading">
         <div className={`phase-token${phase.length > 1 ? ' phase-token--wide' : ''}`} aria-hidden="true">{phase}</div>
         <div>
-          <span className="chapter-code">{phase} — {isThai ? (thaiPhaseNames[phase] ?? phaseName) : phaseName}</span>
+          <span className="chapter-code">{phase} — {phaseName}</span>
           <h1>{guide.headline}</h1>
           <p>{guide.principle}</p>
         </div>

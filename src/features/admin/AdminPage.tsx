@@ -21,10 +21,10 @@ const phaseNames: Record<string, string> = {
   D: 'DEBATE',
   E: 'ESTABLISH',
   S: 'SPECIFY',
-  PRD: 'PRD',
+  PRD: 'PRODUCT REQUIREMENTS',
   I: 'IMPLEMENT',
-  G: 'FEEDBACK',
-  N: 'NEXT',
+  G: 'GATHER FEEDBACK',
+  N: 'NEXT ITERATION',
   COMPLETE: 'COMPLETE',
 }
 

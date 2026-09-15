@@ -248,7 +248,7 @@ export function PrdPhase({ project }: { project: ProjectRow }) {
     : ['CONTEXT', 'OPTIONS EXPLORED', 'ASSUMPTIONS CHALLENGED', 'SCOPE LOCKED', 'FLOW DEFINED', 'CONTENT READY', 'EXPERIENCE DEFINED', 'ACCEPTANCE CRITERIA']
 
   return (
-    <JourneyLayout project={project} phase="PRD" phaseName="FINAL HANDOFF" chatContext={files} saveState={saveState}>
+    <JourneyLayout project={project} phase="PRD" phaseName="PRODUCT REQUIREMENTS" chatContext={files} saveState={saveState}>
       <PhaseSection step="01" title={isThai ? 'ไฟล์ร่างที่ CODESIGN สร้างหลังยืนยัน Step S' : 'DRAFTS CREATED AFTER STEP S'} description={isThai ? 'หลังจากคุณยืนยัน Step S แล้ว CODESIGN ได้นำคำตอบและการตัดสินใจที่ยืนยันไว้ตั้งแต่ Step C–S มาสร้างไฟล์ร่าง 3 ฉบับโดยอัตโนมัติ ในการตรวจรอบแรกนี้ คุณไม่ต้องสร้างหรืออัปโหลดไฟล์เพิ่ม' : 'After you confirmed Step S, CODESIGN automatically assembled the answers and decisions confirmed across Steps C–S into three draft files. You do not need to create or upload anything for this first review.'}>
         <div className="prd-checklist" aria-label={isThai ? 'รายการตรวจความพร้อมของ Product' : 'Product definition checklist'}>{checklist.map((item) => <span key={item}><Check size={16} aria-hidden="true" /> {item}</span>)}</div>
         <p className="prd-checklist-note">{isThai ? 'เครื่องหมายสีเขียวหมายถึงมีข้อมูลต้นทางที่จำเป็นครบแล้ว แต่ยังไม่ได้หมายความว่าไฟล์ทั้ง 3 ฉบับผ่านการตรวจความถูกต้องหรือความสอดคล้อง' : 'Green checks mean the required source information is present. They do not mean the three files have passed accuracy or consistency review.'}</p>

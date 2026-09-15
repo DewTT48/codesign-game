@@ -1,4 +1,5 @@
 import type { Json, ProjectRow } from '../../../lib/supabase/database.types'
+import { normalizeBuildUpdateDocuments } from '../buildUpdateModel'
 import { debateDecisionMarkdown, debateOutcomeLabel } from '../debateModel'
 import type { JourneyExportData } from '../journey.service'
 import {
@@ -32,6 +33,16 @@ export function assembleJournal(project: ProjectRow, data: JourneyExportData): s
   const i = data.phases.I ?? {}
   const g = data.phases.G ?? {}
   const n = data.phases.N ?? {}
+  const buildUpdateDocuments = normalizeBuildUpdateDocuments(n.buildUpdateFiles)
+  const requestedPrimaryFile = text(n.buildUpdatePrimaryFile, '')
+  const primaryBuildUpdate = buildUpdateDocuments.find((file) => file.name === requestedPrimaryFile) ?? buildUpdateDocuments[0]
+  const buildUpdateSection = buildUpdateDocuments.length ? `- **Files stored:** ${buildUpdateDocuments.map((file) => file.name).join(', ')}
+- **Primary summary:** ${primaryBuildUpdate?.name ?? 'Not selected'}
+- **Owner reviewed snapshot:** ${String(Boolean(n.buildUpdateConfirmed))}
+
+${primaryBuildUpdate ? `### Primary Summary Snapshot
+
+${primaryBuildUpdate.content}` : ''}` : '- No current-build documents were added. This optional step was skipped.'
   const isCurrentSpecification = Number(s.specificationVersion) >= 2
   const contentArcs = normalizeContentArcs(s.contentArcs)
   const dailyContent = normalizeDailyContent(s.dailyContent)
@@ -157,7 +168,7 @@ ${data.prd?.experience_direction ?? 'No locked Experience Direction snapshot fou
 - **Working app confirmed:** ${String(i.workingApp ?? false)}
 - **App URL:** ${data.build?.app_url ?? text(i.appUrl)}
 
-## G — Get Feedback
+## G — Gather Feedback
 
 - **Expected:** ${text(g.expected)}
 - **Actually happened:** ${text(g.actual)}
@@ -166,6 +177,12 @@ ${data.prd?.experience_direction ?? 'No locked Experience Direction snapshot fou
 - **Most important feedback:** ${text(g.mostImportant)}
 
 ## N — Next Iteration
+
+### Current Build Update (Optional)
+
+${buildUpdateSection}
+
+### Locked Next Change
 
 - **Change:** ${text(n.change)}
 - **Because:** ${text(n.because)}
