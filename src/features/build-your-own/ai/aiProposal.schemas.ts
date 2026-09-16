@@ -4,7 +4,7 @@ import { aiActions } from './aiPolicy'
 const warningSchema = z.object({
   code: z.string().min(1),
   message: z.string().min(1),
-  phase: z.enum(['C', 'O', 'D', 'E', 'S', 'PRD']).optional(),
+  phase: z.enum(['C', 'O', 'D', 'E', 'S', 'PRD']).nullable().optional(),
 })
 
 const consistencySchema = z.object({

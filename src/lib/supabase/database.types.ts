@@ -147,6 +147,21 @@ export type AiRequestRow = RowWithTimestamps & {
   completed_at: string | null
 }
 
+export type AiProposalRow = RowWithTimestamps & {
+  id: string
+  request_id: string
+  project_id: string
+  owner_id: string
+  action: AiRequestRow['action']
+  envelope: Json
+  openai_response_id: string
+  usage: Json
+  actual_cost_micros: number
+  pricing_version: string
+  review_status: 'proposed' | 'accepted' | 'rejected'
+  reviewed_at: string | null
+}
+
 export type AdminPhaseCount = {
   phase: ProjectRow['current_phase']
   count: number
@@ -387,6 +402,27 @@ export type Database = {
         Update: Partial<Omit<AiRequestRow, 'id' | 'project_id' | 'owner_id' | 'created_at' | 'total_tokens'>>
         Relationships: []
       }
+      ai_proposals: {
+        Row: AiProposalRow
+        Insert: {
+          id?: string
+          request_id: string
+          project_id: string
+          owner_id: string
+          action: AiProposalRow['action']
+          envelope: Json
+          openai_response_id: string
+          usage: Json
+          actual_cost_micros: number
+          pricing_version: string
+          review_status?: AiProposalRow['review_status']
+          reviewed_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: Partial<Pick<AiProposalRow, 'review_status' | 'reviewed_at' | 'updated_at'>>
+        Relationships: []
+      }
       journal_snapshots: {
         Row: Record<string, unknown>
         Insert: Record<string, unknown>
@@ -546,6 +582,21 @@ export type Database = {
           target_error_code?: string | null
         }
         Returns: AiRequestRow
+      }
+      store_ai_proposal: {
+        Args: {
+          target_request_id: string
+          target_openai_response_id: string
+          target_envelope: Json
+          target_usage: Json
+          target_actual_cost_micros: number
+          target_pricing_version: string
+        }
+        Returns: AiProposalRow
+      }
+      admin_enable_ai_test_allowance: {
+        Args: { target_project_id: string }
+        Returns: AiProjectBudgetRow
       }
     }
     Enums: Record<string, never>

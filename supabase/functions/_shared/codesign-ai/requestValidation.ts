@@ -50,6 +50,9 @@ export function validateCodesignAiRequest(value: unknown): CodesignAiRequestVali
   if (!isJsonValue(body.userDraft)) {
     return { success: false, error: 'User draft must be valid JSON data.' }
   }
+  if (JSON.stringify(body.userDraft).length > 100_000) {
+    return { success: false, error: 'User draft exceeds the 100,000 character limit.' }
+  }
   if (
     typeof body.idempotencyKey !== 'string'
     || body.idempotencyKey.trim().length < 8
