@@ -1,4 +1,4 @@
-import { ArrowRight, Gamepad2, Lightbulb, LogIn, MessageSquareText } from 'lucide-react'
+import { ArrowRight, Gamepad2, Lightbulb, MessageSquareText } from 'lucide-react'
 import { MissionMap } from '../../components/progress/MissionMap'
 import { SolidificationMeter } from '../../components/progress/SolidificationMeter'
 import { ArcadeButton } from '../../components/ui/ArcadeButton'
@@ -23,9 +23,6 @@ export function LandingPage() {
           <div className="hero-actions">
             <ArcadeButton to="/mission">
               BUILD WITH GUIDE <ArrowRight aria-hidden="true" size={20} />
-            </ArcadeButton>
-            <ArcadeButton to="/auth?intent=signin" variant="secondary">
-              {isThai ? 'เข้าสู่ระบบ / ทำต่อ' : 'SIGN IN / CONTINUE'} <LogIn aria-hidden="true" size={20} />
             </ArcadeButton>
             <button className="text-action" type="button" disabled>
               BUILD ON YOUR OWN <span>COMING NEXT</span>

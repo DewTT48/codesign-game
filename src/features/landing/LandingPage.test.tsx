@@ -21,8 +21,8 @@ describe('LandingPage', () => {
       screen.getByRole('link', { name: /build with guide/i }),
     ).toHaveAttribute('href', '/mission')
     expect(
-      screen.getByRole('link', { name: /เข้าสู่ระบบ \/ ทำต่อ|sign in \/ continue/i }),
-    ).toHaveAttribute('href', '/auth?intent=signin')
+      screen.queryByRole('link', { name: /เข้าสู่ระบบ \/ ทำต่อ|sign in \/ continue/i }),
+    ).not.toBeInTheDocument()
     expect(screen.getByText('21 DAYS OF')).toBeInTheDocument()
   })
 })

@@ -1,6 +1,7 @@
-import { Palette, Volume2, VolumeX } from 'lucide-react'
+import { LayoutDashboard, LogIn, Palette, Volume2, VolumeX } from 'lucide-react'
 import { type PropsWithChildren, useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { useAuth } from '../../features/auth/AuthContext'
 import { useLanguage } from '../../features/i18n/LanguageContext'
 
 type ThemeName = 'classic' | 'deep-sea' | 'violet-vault'
@@ -13,6 +14,7 @@ const themes: Array<{ name: ThemeName; label: string; color: string }> = [
 
 export function AppShell({ children }: PropsWithChildren) {
   const { language, setLanguage, isThai } = useLanguage()
+  const auth = useAuth()
   const audioRef = useRef<HTMLAudioElement>(null)
   const [theme, setTheme] = useState<ThemeName>(() => {
     const saved = window.localStorage.getItem('codesign-theme')
@@ -133,6 +135,22 @@ export function AppShell({ children }: PropsWithChildren) {
               </div>
             ) : null}
           </div>
+          <Link
+            className="topbar-account-link"
+            to={auth.user ? '/dashboard' : '/auth?intent=signin'}
+            aria-label={
+              auth.user
+                ? isThai ? 'ไปที่ Dashboard' : 'Go to dashboard'
+                : isThai ? 'เข้าสู่ระบบ' : 'Sign in'
+            }
+          >
+            {auth.user ? (
+              <LayoutDashboard aria-hidden="true" size={17} />
+            ) : (
+              <LogIn aria-hidden="true" size={17} />
+            )}
+            <span>{auth.user ? 'DASHBOARD' : isThai ? 'เข้าสู่ระบบ' : 'SIGN IN'}</span>
+          </Link>
         </div>
       </header>
       <audio ref={audioRef} loop preload="none">

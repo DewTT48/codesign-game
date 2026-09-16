@@ -245,6 +245,30 @@ a {
   gap: 18px;
 }
 
+.topbar-account-link {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 8px 12px;
+  color: var(--white);
+  background: transparent;
+  border: 2px solid var(--accent);
+  font-family: var(--font-display);
+  font-size: 8px;
+  line-height: 1.4;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: color 120ms ease, background-color 120ms ease;
+}
+
+.topbar-account-link:hover,
+.topbar-account-link:focus-visible {
+  color: var(--ink);
+  background: var(--accent);
+}
+
 .language-switch {
   display: inline-flex;
   border: 2px solid var(--line);
@@ -7992,6 +8016,15 @@ a.mission-node__content:focus-visible {
     justify-self: end;
   }
 
+  .topbar-account-link {
+    width: 44px;
+    padding: 0;
+  }
+
+  .topbar-account-link span {
+    display: none;
+  }
+
   .codex-folder-plan__name {
     align-items: stretch;
     flex-direction: column;
@@ -8488,6 +8521,7 @@ a.mission-node__content:focus-visible {
    use 16px. The pixel face is an explicit exception, never the default. */
 :lang(th) :is(
   .creator-credit,
+  .topbar-account-link,
   .mission-you,
   .mission-viewing,
   .project-card__meta,
