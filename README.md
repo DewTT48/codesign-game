@@ -26,9 +26,10 @@ or consume Project Passes, complete Own Journey steps, or review AI proposals.
 The production build stays disabled unless the matching GitHub Actions variable
 is explicitly set.
 
-The Own Journey now covers C, O, D, E, S, and PRD with bilingual content,
-required-answer gates, autosave, locked decision snapshots, and read-only review
-of completed steps. CODESIGN AI uses a server-selected GPT-5.6 Sol policy,
+The Own Journey now covers C, O, D, E, S, PRD, I, G, and N with bilingual
+content, required-answer gates, autosave, locked decision/evidence snapshots,
+and read-only review of completed steps. CODESIGN AI supports the product-
+definition flow through PRD with a server-selected GPT-5.6 Sol policy,
 strict structured proposals, and Accept/Edit/Reject/Regenerate review. AI remains
 disabled per Project until an Admin explicitly enables the bounded internal
 allowance of five requests and a one-dollar hard cap.

@@ -8,20 +8,30 @@ import {
 } from './ownJourneyContent'
 
 describe('Own Journey content contract', () => {
-  it('defines the full CODESIGN flow and terminates after PRD', () => {
-    expect(ownJourneyPhases).toEqual(['C', 'O', 'D', 'E', 'S', 'PRD'])
+  it('defines the full CODESIGN flow and terminates after N', () => {
+    expect(ownJourneyPhases).toEqual(['C', 'O', 'D', 'E', 'S', 'PRD', 'I', 'G', 'N'])
     expect(nextOwnJourneyPhase('C')).toBe('O')
     expect(nextOwnJourneyPhase('S')).toBe('PRD')
-    expect(nextOwnJourneyPhase('PRD')).toBe('COMPLETE')
+    expect(nextOwnJourneyPhase('PRD')).toBe('I')
+    expect(nextOwnJourneyPhase('I')).toBe('G')
+    expect(nextOwnJourneyPhase('G')).toBe('N')
+    expect(nextOwnJourneyPhase('N')).toBe('COMPLETE')
   })
 
-  it.each(ownJourneyPhases)('provides bilingual content, fields, and one AI action for %s', (phase) => {
+  it.each(ownJourneyPhases)('provides bilingual content and fields for %s', (phase) => {
     const definition = ownJourneyDefinitions[phase]
     expect(definition.headline.th).not.toBe('')
     expect(definition.headline.en).not.toBe('')
     expect(definition.sections.length).toBeGreaterThan(0)
     expect(definition.sections.flatMap((section) => section.fields).length).toBeGreaterThan(0)
-    expect(definition.aiAction).toBeTruthy()
+  })
+
+  it.each(['C', 'O', 'D', 'E', 'S', 'PRD'] as const)('provides a governed AI proposal action for %s', (phase) => {
+    expect(ownJourneyDefinitions[phase].aiAction).toBeTruthy()
+  })
+
+  it.each(['I', 'G', 'N'] as const)('keeps evidence-led phase %s human-authored', (phase) => {
+    expect(ownJourneyDefinitions[phase].aiAction).toBeUndefined()
   })
 
   it('blocks completion until every required field meets its detail gate', () => {

@@ -57,9 +57,10 @@ Definition of done:
 - `/projects/new/own` พร้อม validation, confirm dialog และ idempotent creation key
 - no-Pass/error states โดยยังไม่เปิด checkout
 - `/own-projects/:projectId/:phase?` เป็น Own Journey แยกจาก Guided Journey
-- เนื้อหาไทย/อังกฤษและ completion gate ครบ C, O, D, E, S และ PRD
+- เนื้อหาไทย/อังกฤษและ completion gate ครบ C, O, D, E, S, PRD, I, G และ N
 - autosave Draft, Lock decision snapshot, ป้องกันข้าม Step และเปิดอ่าน Step ที่ Lock แล้วแบบ read-only
-- PRD เป็นจุดจบของ Own Journey และเปลี่ยน Project เป็น COMPLETE โดยไม่ไหลเข้า I/G/N ของ Guided
+- Own Journey ใช้ I/G/N ฉบับเฉพาะที่ไม่ผูกกับ Guided 21 Days: เก็บแผนและหลักฐานการสร้าง การทดสอบกับผู้ใช้ และ Next Iteration
+- Project เปลี่ยนเป็น COMPLETE หลัง Lock Step N เท่านั้น ส่วน PRD จะพาไป Step I
 - redirect ป้องกัน Own Project เข้า route/prompt ของ Guided โดยตรง
 - unit/UI tests สำหรับ confirm boundary, no-Pass state, dashboard routing และ workspace separation
 
@@ -105,7 +106,7 @@ Phase 3B UI ที่ทำแล้ว:
 - Accept / Edit & Accept / Reject / Regenerate พร้อมเก็บ reviewed content แยกจาก provider output
 - accepted proposal แนบกับ Phase Draft และ final authority เกิดเมื่อผู้ใช้ Lock Step
 - Admin UI เห็นเฉพาะ Own Project metadata/usage และเปิด allowance 5 requests / 1 USD ได้
-- หน้า C → O → D → E → S → PRD ส่ง locked decision เป็น authoritative context ต่อเนื่อง
+- หน้า C → O → D → E → S → PRD ส่ง locked decision เป็น authoritative context ต่อเนื่อง ส่วน I → G → N เก็บหลักฐานและคำตัดสินของ Build cycle โดยไม่เรียก AI แทน observation ของผู้ใช้
 
 ก่อนขยาย cohort: รัน eval กับ model จริงทีละหน้า, อนุมัติ moderation/reconciliation UX
 และเพิ่ม logging/dashboard ที่ redact ข้อมูล; internal policy ปัจจุบันไม่เก็บ raw prompt/response

@@ -9357,7 +9357,7 @@ a.mission-node__content:focus-visible {
 
 .own-journey-map {
   display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
+  grid-template-columns: repeat(9, minmax(0, 1fr));
   gap: 8px;
   margin: 24px 0;
 }
@@ -9816,7 +9816,8 @@ a.mission-node__content:focus-visible {
 }
 
 .own-accepted-notice,
-.own-readonly-banner {
+.own-readonly-banner,
+.own-evidence-boundary {
   display: flex;
   align-items: flex-start;
   gap: 12px;
@@ -9832,13 +9833,20 @@ a.mission-node__content:focus-visible {
   border-color: var(--line);
 }
 
-.own-readonly-banner strong {
+.own-evidence-boundary {
+  background: rgba(255, 138, 36, 0.1);
+  border-color: var(--accent);
+}
+
+.own-readonly-banner strong,
+.own-evidence-boundary strong {
   color: var(--accent);
   font-family: var(--font-display);
   font-size: 8px;
 }
 
-.own-readonly-banner p {
+.own-readonly-banner p,
+.own-evidence-boundary p {
   margin: 5px 0 0;
   color: var(--muted);
 }
