@@ -1,6 +1,9 @@
 # CODESIGN Build Your Own v2 — Data Model
 
-สถานะ: Phase 1 และ Phase 3A implemented locally ใน migrations `20260916120000_build_your_own_project_passes.sql` และ `20260916140000_ai_usage_foundation.sql`
+สถานะ: Phase 1, Phase 3A และ Phase 3B-2 deployed บน hosted Supabase ผ่าน
+migrations `20260916120000_build_your_own_project_passes.sql`,
+`20260916140000_ai_usage_foundation.sql` และ
+`20260916150000_ai_proposals_and_test_allowance.sql`
 
 ## Existing model ที่ reuse
 
@@ -109,6 +112,16 @@ Owner และ Admin อ่าน ledger/summary ได้ แต่ browser �
 
 Accepted decisions ยังใช้ `decisions` เดิม AI proposal ไม่มีสิทธิ์เขียนทับ current decision โดยอัตโนมัติ
 
+### `ai_proposals`
+
+หนึ่งแถวต่อ `ai_requests` เก็บ structured proposal envelope, OpenAI response ID,
+usage, actual cost, pricing version และ review status โดยไม่เก็บ raw prompt/response
+Owner และ Admin อ่านได้ผ่าน RLS แต่ browser ไม่มีสิทธิ์เขียนโดยตรง
+
+`store_ai_proposal(...)` เป็น service-role-only และ idempotent ต่อ request ส่วน
+`admin_enable_ai_test_allowance(...)` เปิด internal allowance 5 requests / 1 USD
+ให้ active Own Project โดย Admin เท่านั้น
+
 ## Data model สำหรับ Phase ถัดไป
 
 ### Billing
@@ -129,4 +142,4 @@ Accepted decisions ยังใช้ `decisions` เดิม AI proposal ไ�
 - retention ของ audit events
 - support policy สำหรับ consumed Pass ที่ให้ผิดคน; Phase 1 ใช้วิธี grant ชดเชย ไม่ restore row consumed
 - source-of-truth และ stable key ของ Course entitlement
-- AI allowance/retention policy และ Billing schemas สุดท้ายหลังได้ price, refund และ expiry decision
+- AI allowance สำหรับ cohort หลัง internal test และ Billing schemas สุดท้ายหลังได้ price, refund และ expiry decision

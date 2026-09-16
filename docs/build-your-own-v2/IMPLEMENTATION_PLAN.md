@@ -8,7 +8,7 @@
 - deploy database ก่อน client ที่เรียก RPC ใหม่
 - ไม่เปิด Stripe Live หรือ AI production จน decision gate และ observability พร้อม
 - regression test Guided 21 Days ทุก phase
-- ทุก migration ทดลองใน local Supabase ก่อน remote
+- ทุก migration ต้องมี pgTAP contract test และ apply แบบ transaction ก่อน smoke test บน hosted Supabase
 
 ## Phase 0 — Repository discovery และ rules
 
@@ -21,7 +21,7 @@
 
 ## Phase 1 — Project Pass foundation
 
-สถานะ: implemented locally; รอ local database test environment ยืนยัน
+สถานะ: deployed บน production และใช้งานผ่าน Admin/ผู้ใช้ได้แล้ว
 
 - เพิ่ม `project_passes` และ `project_pass_events`
 - เพิ่ม RLS/read RPC
@@ -41,7 +41,7 @@ Definition of done:
 
 ## Phase 2 — Build Your Own entry UI
 
-สถานะ: implemented locally behind `VITE_BUILD_YOUR_OWN_V2`; ยังไม่เปิด production
+สถานะ: deployed บน production โดยเปิด `VITE_BUILD_YOUR_OWN_V2`
 
 - feature flag สำหรับ dashboard/route
 - แสดง Pass inventory และสถานะ ไม่มีคำว่า Free Pass
@@ -64,7 +64,8 @@ Definition of done:
 
 ## Phase 3 — AI foundation
 
-สถานะ Phase 3A: implemented locally แบบ fail closed; ยังไม่เรียก OpenAI
+สถานะ: Phase 3A, 3B-1 และ 3B-2 backend deployed แบบ fail closed; ยังไม่เรียก
+OpenAI จนกว่าจะเพิ่ม `OPENAI_API_KEY`
 
 สิ่งที่ทำแล้ว:
 
@@ -74,25 +75,36 @@ Definition of done:
 - Accept/Edit & Accept/Reject/Regenerate review helper โดย Reject/Regenerate ไม่คืน accepted candidate
 - hard limits สำหรับ request/input/output/total tokens/cost, one-active-request concurrency และ idempotency payload check
 - owner isolation และ Admin read-only access สำหรับ support/audit
-- สร้าง `supabase/functions/codesign-ai/` ที่ตอบ `503 AI_NOT_CONFIGURED` จนกว่า config จะครบ
+- deploy `supabase/functions/codesign-ai/` บน hosted Supabase โดยตอบ
+  `503 AI_NOT_CONFIGURED` จนกว่า secret จะครบ
 - เพิ่ม unit tests และ pgTAP tests สำหรับ policy, schema, limit, lifecycle, reconciliation และ RLS
-
-Phase 3B ที่ยังไม่ทำ:
-
-- input token count, Responses API call, timeout/circuit breaker และ structured-output validation ฝั่ง server
-- proposal persistence/UI และ Accept/Edit/Reject/Regenerate integration กับ decision history
-- logging/dashboard ที่ redact ข้อมูล และการรัน eval กับ model จริง
 
 Phase 3B-1 ที่ทำแล้วแบบไม่เรียก API:
 
-- pure server-side prompt assembly จาก current accepted decisions เท่านั้น
+- pure server-side prompt assembly จาก current accepted decisions และ locked phase entries
 - canonical/deterministic context และ source decision versions สำหรับ reproduce
 - untrusted-input labeling และ developer instruction ป้องกัน role/output override
 - narrow browser request contract ที่ไม่รับ model หรือ reasoning effort จาก client
 - eval fixtures ภาษาไทย/อังกฤษ: hallucination, cross-step conflict, PRD fidelity และ prompt injection
-- endpoint ยังคง fail closed และยังไม่เกิดค่าใช้จ่าย
+- endpoint ยังคง fail closed เมื่อ secret ไม่ครบและยังไม่เกิดค่าใช้จ่าย
 
-ก่อนเปิด production: ต้องกำหนด allowance, retention และ moderation UX
+Phase 3B-2 ที่ทำแล้ว:
+
+- เรียก input-token count endpoint ก่อน reserve และจำกัด 40,000 input tokens ต่อ request
+- Responses API client ที่ fix model/effort/output limit ฝั่ง server, ใช้ strict JSON schema และ `store: false`
+- `ai_proposals` persistence ที่เก็บเฉพาะ structured proposal/usage/cost ไม่เก็บ raw prompt/response
+- internal allowance แบบ Admin เปิดให้ต่อ Project: 5 requests และ hard cap 1 USD
+- idempotent retry, timeout และ fail-closed reconciliation สำหรับผลลัพธ์ที่ไม่แน่นอน
+- hosted migration, Edge Function deployment, CORS/fail-closed smoke tests
+
+Phase 3B ที่ยังไม่ทำ:
+
+- proposal UI และ Accept/Edit/Reject/Regenerate integration กับ decision history
+- Admin UI สำหรับเปิด allowance และดู reconciliation state
+- logging/dashboard ที่ redact ข้อมูล และการรัน eval กับ model จริง
+
+ก่อนเปิดใช้งานจริง: เพิ่ม Edge secret, ทดสอบ model eval ด้วย internal Project และอนุมัติ
+moderation/reconciliation UX; internal policy ปัจจุบันไม่เก็บ raw prompt/response
 
 ## Phase 4 — Stripe Test Mode
 
@@ -159,7 +171,7 @@ Phase 3B-1 ที่ทำแล้วแบบไม่เรียก API:
 
 - ราคา, currency, tax
 - refund/dispute/expiry
-- AI allowance และ hard-limit numbers
+- AI allowance สำหรับ cohort หลัง internal test (internal กำหนดแล้วที่ 5 requests / 1 USD ต่อ Project)
 - course entitlement source/event
 - Own Journey prompts/gates และ eligibility ของผู้ใช้เดิม
 

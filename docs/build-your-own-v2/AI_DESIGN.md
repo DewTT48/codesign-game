@@ -1,6 +1,7 @@
 # CODESIGN Build Your Own v2 — AI Design
 
-สถานะ: Phase 3A foundation และ Phase 3B-1 prompt boundary implemented; ยังไม่เชื่อม OpenAI API และยังไม่เกิดค่าใช้จ่าย
+สถานะ: Phase 3B-2 backend และ hosted Edge Function deployed แล้ว; endpoint ยัง fail
+closed และยังไม่เกิดค่าใช้จ่ายจนกว่าจะเพิ่ม `OPENAI_API_KEY`
 
 ## บทบาทของ AI
 
@@ -41,8 +42,9 @@ UI action
   → Supabase JWT
   → codesign-ai Edge Function
   → verify project ownership + mode
-  → reserve usage budget (atomic)
   → build prompt from accepted project state
+  → count input tokens
+  → reserve usage budget (atomic)
   → OpenAI Responses API
   → validate structured output
   → record actual usage/status
@@ -81,7 +83,7 @@ Phase 3A เพิ่ม `ai_requests` แบบหนึ่งแถวต่�
 - `estimated_input_tokens`, `reserved_output_tokens`, `reserved_cost_micros`
 - `actual_cost_micros`, `started_at`, `completed_at`, `error_code`
 
-Responses API ส่ง usage ที่มี input, output และ total token พร้อมรายละเอียด token ได้ จึงต้องเก็บค่าจริงหลังจบ request ([Responses API reference](https://developers.openai.com/api/reference/cli/resources/responses/methods/create)). ราคาต่อ token ต้องเป็น server configuration ที่ version ได้ ไม่ hard-code จากหน้า pricing เพราะราคาเปลี่ยนได้
+Responses API ส่ง usage ที่มี input, output และ total token พร้อมรายละเอียด token ได้ จึงต้องเก็บค่าจริงหลังจบ request ([Responses API reference](https://developers.openai.com/api/reference/cli/resources/responses/methods/create)). ราคาต่อ token ถูกบันทึกด้วย pricing version ฝั่ง server และต้องตรวจทานเมื่อราคา model เปลี่ยน
 
 ## Hard limits และ cost guardrails
 
@@ -105,7 +107,9 @@ Guardrail ขั้นต่ำ:
 - no automatic fallback ไป model อื่น
 - เมื่อถึง limit ผู้ใช้ยังอ่าน แก้ไข Accept และ export งานได้ เพียงหยุด AI generation
 
-ค่าตัวเลข allowance เป็น business decision ที่ยังไม่กำหนด จึงห้ามเปิด AI production จนกว่าจะตั้งค่าและทดสอบ boundary
+Internal test allowance กำหนดไว้ที่ 5 requests, 100,000 input tokens, 40,000
+output tokens, 140,000 total tokens และ hard cap 1 USD ต่อ Project เปิดได้โดย
+Admin เท่านั้น ค่าเหล่านี้ยังไม่ใช่ production cohort policy
 
 ## Phase 3A implementation boundary
 
@@ -115,15 +119,22 @@ Guardrail ขั้นต่ำ:
 - owner อ่าน ledger ของตนได้ และ Admin อ่านได้แบบ read-only เพื่อ support/audit
 - stale reservation ที่ยังไม่เริ่มถูกยกเลิกได้เมื่อหมดอายุ; request ที่เป็น `in_progress` จะไม่ถูก auto-release เพื่อป้องกัน double spend
 - model/effort/prompt version/output schema version ถูกบันทึกใน ledger และ idempotency key เดิมใช้กับ payload ต่างกันไม่ได้
-- `supabase/functions/codesign-ai/index.ts` ยังตอบ `503 AI_NOT_CONFIGURED` เสมอ ไม่มี OpenAI client หรือ secret ใน repository
+- หากไม่มี `OPENAI_API_KEY`, `supabase/functions/codesign-ai/index.ts` ตอบ
+  `503 AI_NOT_CONFIGURED` ก่อน authentication/provider call
 
-Phase 3B จึงยังต้องทำ input token counting, Responses API call, structured-output validation, persistence ของ proposal และ evaluation ก่อนเปิด UI จริง
+## Phase 3B-2 implementation boundary
 
-Phase 3B-1 เพิ่ม prompt assembly และ request validation ฝั่ง server แล้ว โดยเรียง
-current accepted decisions แบบ deterministic, เก็บ source decision versions และห่อ
-user draft เป็น `untrusted_user_draft` เสมอ พร้อม static evaluation fixtures ภาษาไทย/
-อังกฤษ ส่วน input token counting, API call, persistence และการรัน eval กับ model จริง
-ยังคง fail closed จนกว่า policy gate จะได้รับอนุมัติ
+- นับ token ด้วย Responses input-token endpoint ก่อน atomic reservation
+- ใช้ strict action-specific JSON schema, server-selected reasoning และ `store: false`
+- Migration `20260916150000_ai_proposals_and_test_allowance.sql` เพิ่ม structured
+  proposal persistence และ Admin internal allowance RPC
+- เก็บเฉพาะ proposal envelope, usage, upstream response ID, cost และ pricing version
+  ไม่เก็บ raw prompt/response
+- request ที่ provider ปฏิเสธแบบยืนยันได้ถูก finalize; network/timeout/5xx ที่ผลลัพธ์
+  ไม่แน่นอนคง `in_progress` และห้าม auto-retry เพื่อป้องกัน double spend
+- idempotent retry คืน proposal เดิมและ reconcile ledger โดยไม่ยิง model ซ้ำ
+- backend deployed บน hosted Supabase แล้ว แต่ UI/review integration และ model eval จริง
+  ยังเป็นงานถัดไป
 
 ## Prompt และ decision integrity
 
@@ -147,15 +158,17 @@ user draft เป็น `untrusted_user_draft` เสมอ พร้อม stat
 
 ## Failure behavior
 
-- ถ้า OpenAI timeout/error: release หรือ reconcile reservation ตามสถานะที่ยืนยันได้ และไม่สร้าง decision
+- ถ้า OpenAI timeout/network/5xx แล้วไม่ทราบว่าเกิด generation หรือไม่: คง reservation
+  เพื่อ manual reconciliation และไม่ auto-retry
+- ถ้า provider ปฏิเสธก่อน generation แบบยืนยันได้: finalize failed และ release reservation ตาม usage จริง
 - ถ้า output ไม่ผ่าน schema: บันทึก failed usage ตาม token ที่เกิดจริง แล้วแจ้งให้ retry ภายใต้ allowance
 - ถ้า response กลับมาแต่ client หลุด: idempotency key ใช้ดึงผลเดิม ไม่ยิงซ้ำ
 - ถ้า metering write ล้มเหลว: fail closed ก่อนเรียก model
 
 ## Assumptions / decisions ที่ยังต้องตรวจสอบ
 
-- allowance และ hard-limit numbers ต่อ Project
-- retention ของ prompt/response ใน CODESIGN database
+- allowance สำหรับ cohort หลัง internal test
+- retention policy หากอนาคตต้องเก็บข้อมูลมากกว่า structured proposal (ปัจจุบันไม่เก็บ raw)
 - AI actions ใดให้ regenerate ได้กี่ครั้ง
 - จะเปิด streaming ใน UI หรือส่ง response ครั้งเดียว
 - moderation policy และ UX เมื่อ content ถูกปฏิเสธ
