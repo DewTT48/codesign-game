@@ -28,8 +28,10 @@ Actions variable is explicitly set.
 
 Phase 3A also includes a fail-closed AI usage foundation: typed proposal schemas,
 server-selected GPT-5.6 Sol reasoning policy, and atomic budget/request ledgers.
-The Edge Function intentionally returns `503 AI_NOT_CONFIGURED`; no API key,
-live model call, or numeric allowance is enabled yet.
+Phase 3B-1 adds server-side prompt assembly from current accepted decisions,
+untrusted-input labeling, narrow request validation, and Thai/English evaluation
+fixtures. The Edge Function intentionally returns `503 AI_NOT_CONFIGURED`; no
+API key, live model call, or numeric allowance is enabled yet.
 
 ## Security
 

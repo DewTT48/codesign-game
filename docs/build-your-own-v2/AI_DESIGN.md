@@ -1,6 +1,6 @@
 # CODESIGN Build Your Own v2 — AI Design
 
-สถานะ: Phase 3A foundation implemented locally; ยังไม่เชื่อม OpenAI API และยังไม่เกิดค่าใช้จ่าย
+สถานะ: Phase 3A foundation และ Phase 3B-1 prompt boundary implemented; ยังไม่เชื่อม OpenAI API และยังไม่เกิดค่าใช้จ่าย
 
 ## บทบาทของ AI
 
@@ -117,7 +117,13 @@ Guardrail ขั้นต่ำ:
 - model/effort/prompt version/output schema version ถูกบันทึกใน ledger และ idempotency key เดิมใช้กับ payload ต่างกันไม่ได้
 - `supabase/functions/codesign-ai/index.ts` ยังตอบ `503 AI_NOT_CONFIGURED` เสมอ ไม่มี OpenAI client หรือ secret ใน repository
 
-Phase 3B จึงยังต้องทำ prompt assembly, input token counting, Responses API call, structured-output validation, persistence ของ proposal และ evaluation ก่อนเปิด UI จริง
+Phase 3B จึงยังต้องทำ input token counting, Responses API call, structured-output validation, persistence ของ proposal และ evaluation ก่อนเปิด UI จริง
+
+Phase 3B-1 เพิ่ม prompt assembly และ request validation ฝั่ง server แล้ว โดยเรียง
+current accepted decisions แบบ deterministic, เก็บ source decision versions และห่อ
+user draft เป็น `untrusted_user_draft` เสมอ พร้อม static evaluation fixtures ภาษาไทย/
+อังกฤษ ส่วน input token counting, API call, persistence และการรัน eval กับ model จริง
+ยังคง fail closed จนกว่า policy gate จะได้รับอนุมัติ
 
 ## Prompt และ decision integrity
 

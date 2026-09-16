@@ -79,10 +79,18 @@ Definition of done:
 
 Phase 3B ที่ยังไม่ทำ:
 
-- prompt assembly จาก accepted decisions และ untrusted-input labeling
 - input token count, Responses API call, timeout/circuit breaker และ structured-output validation ฝั่ง server
 - proposal persistence/UI และ Accept/Edit/Reject/Regenerate integration กับ decision history
-- logging/dashboard ที่ redact ข้อมูล และ eval ชุดภาษาไทย/อังกฤษ: hallucination, cross-step conflict, PRD fidelity, prompt injection
+- logging/dashboard ที่ redact ข้อมูล และการรัน eval กับ model จริง
+
+Phase 3B-1 ที่ทำแล้วแบบไม่เรียก API:
+
+- pure server-side prompt assembly จาก current accepted decisions เท่านั้น
+- canonical/deterministic context และ source decision versions สำหรับ reproduce
+- untrusted-input labeling และ developer instruction ป้องกัน role/output override
+- narrow browser request contract ที่ไม่รับ model หรือ reasoning effort จาก client
+- eval fixtures ภาษาไทย/อังกฤษ: hallucination, cross-step conflict, PRD fidelity และ prompt injection
+- endpoint ยังคง fail closed และยังไม่เกิดค่าใช้จ่าย
 
 ก่อนเปิด production: ต้องกำหนด allowance, retention และ moderation UX
 
