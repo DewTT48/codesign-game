@@ -56,16 +56,19 @@ Definition of done:
 - Dashboard launch panel และ Pass inventory
 - `/projects/new/own` พร้อม validation, confirm dialog และ idempotent creation key
 - no-Pass/error states โดยยังไม่เปิด checkout
-- `/own-projects/:projectId` เป็น preview workspace แยกจาก Guided Journey
+- `/own-projects/:projectId/:phase?` เป็น Own Journey แยกจาก Guided Journey
+- เนื้อหาไทย/อังกฤษและ completion gate ครบ C, O, D, E, S และ PRD
+- autosave Draft, Lock decision snapshot, ป้องกันข้าม Step และเปิดอ่าน Step ที่ Lock แล้วแบบ read-only
+- PRD เป็นจุดจบของ Own Journey และเปลี่ยน Project เป็น COMPLETE โดยไม่ไหลเข้า I/G/N ของ Guided
 - redirect ป้องกัน Own Project เข้า route/prompt ของ Guided โดยตรง
 - unit/UI tests สำหรับ confirm boundary, no-Pass state, dashboard routing และ workspace separation
 
-ก่อนเปิดปุ่ม `START C — CONTEXT`: ต้องอนุมัติ Own Journey content/gates ที่ต่างจาก Guided
+Own Journey content/gates พร้อมสำหรับการทดลองไล่ทีละหน้าและปรับจากผลใช้งานจริง
 
 ## Phase 3 — AI foundation
 
-สถานะ: Phase 3A, 3B-1 และ 3B-2 backend deployed แบบ fail closed; ยังไม่เรียก
-OpenAI จนกว่าจะเพิ่ม `OPENAI_API_KEY`
+สถานะ: Phase 3A, 3B-1 และ 3B-2 backend deployed; Edge Function secret พร้อมแล้ว
+และ smoke test ยืนยันว่า endpoint บังคับ authentication ก่อนเรียก model
 
 สิ่งที่ทำแล้ว:
 
@@ -75,8 +78,7 @@ OpenAI จนกว่าจะเพิ่ม `OPENAI_API_KEY`
 - Accept/Edit & Accept/Reject/Regenerate review helper โดย Reject/Regenerate ไม่คืน accepted candidate
 - hard limits สำหรับ request/input/output/total tokens/cost, one-active-request concurrency และ idempotency payload check
 - owner isolation และ Admin read-only access สำหรับ support/audit
-- deploy `supabase/functions/codesign-ai/` บน hosted Supabase โดยตอบ
-  `503 AI_NOT_CONFIGURED` จนกว่า secret จะครบ
+- deploy `supabase/functions/codesign-ai/` บน hosted Supabase และเก็บ API key ใน Edge secret เท่านั้น
 - เพิ่ม unit tests และ pgTAP tests สำหรับ policy, schema, limit, lifecycle, reconciliation และ RLS
 
 Phase 3B-1 ที่ทำแล้วแบบไม่เรียก API:
@@ -97,14 +99,16 @@ Phase 3B-2 ที่ทำแล้ว:
 - idempotent retry, timeout และ fail-closed reconciliation สำหรับผลลัพธ์ที่ไม่แน่นอน
 - hosted migration, Edge Function deployment, CORS/fail-closed smoke tests
 
-Phase 3B ที่ยังไม่ทำ:
+Phase 3B UI ที่ทำแล้ว:
 
-- proposal UI และ Accept/Edit/Reject/Regenerate integration กับ decision history
-- Admin UI สำหรับเปิด allowance และดู reconciliation state
-- logging/dashboard ที่ redact ข้อมูล และการรัน eval กับ model จริง
+- proposal UI ครบทั้ง frame context, options, assumptions, alignment และ PRD draft
+- Accept / Edit & Accept / Reject / Regenerate พร้อมเก็บ reviewed content แยกจาก provider output
+- accepted proposal แนบกับ Phase Draft และ final authority เกิดเมื่อผู้ใช้ Lock Step
+- Admin UI เห็นเฉพาะ Own Project metadata/usage และเปิด allowance 5 requests / 1 USD ได้
+- หน้า C → O → D → E → S → PRD ส่ง locked decision เป็น authoritative context ต่อเนื่อง
 
-ก่อนเปิดใช้งานจริง: เพิ่ม Edge secret, ทดสอบ model eval ด้วย internal Project และอนุมัติ
-moderation/reconciliation UX; internal policy ปัจจุบันไม่เก็บ raw prompt/response
+ก่อนขยาย cohort: รัน eval กับ model จริงทีละหน้า, อนุมัติ moderation/reconciliation UX
+และเพิ่ม logging/dashboard ที่ redact ข้อมูล; internal policy ปัจจุบันไม่เก็บ raw prompt/response
 
 ## Phase 4 — Stripe Test Mode
 

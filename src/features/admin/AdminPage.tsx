@@ -3,6 +3,7 @@ import {
   Activity,
   Archive,
   ArrowLeft,
+  Bot,
   CheckCircle2,
   FolderKanban,
   RefreshCw,
@@ -20,7 +21,9 @@ import { useLanguage } from '../i18n/LanguageContext'
 import { summarizeProjectPasses } from '../project-pass/projectPass.service'
 import {
   createAdminGrantKey,
+  enableAdminAiTestAllowance,
   getAdminOverview,
+  getAdminOwnProjects,
   getAdminProjectPasses,
   getAdminUsers,
   grantAdminProjectPass,
@@ -55,6 +58,7 @@ export function AdminPage() {
   const [grantKey, setGrantKey] = useState('')
   const [grantNote, setGrantNote] = useState('')
   const [grantSuccess, setGrantSuccess] = useState('')
+  const [allowanceSuccess, setAllowanceSuccess] = useState('')
   const overview = useQuery({ queryKey: ['admin-overview'], queryFn: getAdminOverview })
   const users = useQuery({
     queryKey: ['admin-users', searchQuery],
@@ -63,6 +67,11 @@ export function AdminPage() {
   const passes = useQuery({
     queryKey: ['admin-project-passes'],
     queryFn: getAdminProjectPasses,
+    retry: false,
+  })
+  const ownProjects = useQuery({
+    queryKey: ['admin-own-projects'],
+    queryFn: getAdminOwnProjects,
     retry: false,
   })
   const grantMutation = useMutation({
@@ -74,6 +83,13 @@ export function AdminPage() {
       setGrantKey('')
       setGrantNote('')
       await queryClient.invalidateQueries({ queryKey: ['admin-project-passes'] })
+    },
+  })
+  const allowanceMutation = useMutation({
+    mutationFn: (projectId: string) => enableAdminAiTestAllowance(projectId),
+    async onSuccess(budget) {
+      setAllowanceSuccess(budget.project_id)
+      await queryClient.invalidateQueries({ queryKey: ['admin-own-projects'] })
     },
   })
 
@@ -108,7 +124,7 @@ export function AdminPage() {
     })
   }
 
-  const refreshing = overview.isFetching || users.isFetching || passes.isFetching
+  const refreshing = overview.isFetching || users.isFetching || passes.isFetching || ownProjects.isFetching
   const maxPhaseCount = Math.max(1, ...(overview.data?.phase_counts.map((item) => item.count) ?? [1]))
 
   return (
@@ -129,6 +145,7 @@ export function AdminPage() {
             void overview.refetch()
             void users.refetch()
             void passes.refetch()
+            void ownProjects.refetch()
           }}>
             <RefreshCw aria-hidden="true" size={18} /> {refreshing ? 'REFRESHING…' : 'REFRESH'}
           </button>
@@ -302,6 +319,66 @@ export function AdminPage() {
                   </div>
                 </article>
                 )
+              })}
+            </div>
+          </section>
+
+          <section className="admin-panel admin-ai-projects" aria-labelledby="admin-ai-projects-title">
+            <header className="admin-users-heading">
+              <div>
+                <span className="panel-kicker">INTERNAL AI TESTING</span>
+                <h2 id="admin-ai-projects-title">{isThai ? 'Own Project และ AI Allowance' : 'OWN PROJECT AI ALLOWANCES'}</h2>
+              </div>
+              <Bot aria-hidden="true" size={28} />
+            </header>
+            <div className="admin-privacy-note">
+              <ShieldCheck aria-hidden="true" size={19} />
+              <span>{isThai ? 'แสดงเฉพาะ metadata และตัวนับการใช้งาน ไม่เปิดอ่านข้อความ Draft, Decision หรือ PRD ของผู้ใช้' : 'Shows metadata and usage counters only. Private drafts, decisions, and PRDs remain hidden.'}</span>
+            </div>
+            {allowanceSuccess ? <div className="admin-pass-feedback" role="status">
+              <CheckCircle2 aria-hidden="true" size={19} />
+              {isThai ? 'เปิด Internal AI allowance แล้ว: สูงสุด 5 requests และ $1 ต่อ Project' : 'Internal AI allowance enabled: up to 5 requests and $1 per project.'}
+            </div> : null}
+            {allowanceMutation.isError || ownProjects.isError ? <div className="admin-pass-feedback admin-pass-feedback--error" role="alert">
+              {isThai ? 'จัดการ AI allowance ไม่สำเร็จ กรุณาตรวจ migration และสิทธิ์ Admin' : 'Could not manage the AI allowance. Check the migration and Admin access.'}
+            </div> : null}
+            {!ownProjects.isLoading && ownProjects.data?.length === 0 ? <div className="admin-empty-users">
+              {isThai ? 'ยังไม่มี Own Project' : 'NO OWN PROJECTS YET'}
+            </div> : null}
+            <div className="admin-ai-project-list">
+              {ownProjects.data?.map((project) => {
+                const enabled = project.ai_status === 'enabled'
+                const exhausted = project.ai_status === 'exhausted'
+                return <article className="admin-ai-project-card" key={project.project_id}>
+                  <div>
+                    <span>BUILD YOUR OWN · {project.current_phase}</span>
+                    <h3>{project.title}</h3>
+                    <p>{project.owner_display_name || project.owner_email || project.owner_id}</p>
+                  </div>
+                  <dl>
+                    <div><dt>{isThai ? 'สถานะ' : 'STATUS'}</dt><dd>{project.ai_status.replace('_', ' ').toUpperCase()}</dd></div>
+                    <div><dt>{isThai ? 'คำขอ' : 'REQUESTS'}</dt><dd>{project.used_requests}/{project.max_requests ?? '—'}</dd></div>
+                    <div><dt>{isThai ? 'ค่าใช้จ่าย' : 'COST'}</dt><dd>${(project.used_cost_micros / 1_000_000).toFixed(4)} / {project.max_cost_micros === null ? '—' : `$${(project.max_cost_micros / 1_000_000).toFixed(2)}`}</dd></div>
+                  </dl>
+                  <button
+                    type="button"
+                    disabled={allowanceMutation.isPending || enabled || exhausted || project.project_status === 'archived'}
+                    onClick={() => {
+                      setAllowanceSuccess('')
+                      allowanceMutation.reset()
+                      allowanceMutation.mutate(project.project_id)
+                    }}
+                  >
+                    <Bot aria-hidden="true" size={17} />
+                    {enabled
+                      ? (isThai ? 'AI TEST เปิดแล้ว' : 'AI TEST ENABLED')
+                      : exhausted
+                        ? (isThai ? 'ALLOWANCE หมดแล้ว' : 'ALLOWANCE EXHAUSTED')
+                        : allowanceMutation.isPending
+                          ? (isThai ? 'กำลังเปิด…' : 'ENABLING…')
+                          : (isThai ? 'เปิด 5 REQUEST TEST' : 'ENABLE 5-REQUEST TEST')}
+                  </button>
+                </article>
               })}
             </div>
           </section>

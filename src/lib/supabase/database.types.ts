@@ -159,6 +159,7 @@ export type AiProposalRow = RowWithTimestamps & {
   actual_cost_micros: number
   pricing_version: string
   review_status: 'proposed' | 'accepted' | 'rejected'
+  review_content: Json | null
   reviewed_at: string | null
 }
 
@@ -191,6 +192,22 @@ export type AdminUserRow = {
   completed_missions: number
   archived_missions: number
   last_activity_at: string
+}
+
+export type AdminOwnProjectRow = {
+  project_id: string
+  owner_id: string
+  owner_email: string | null
+  owner_display_name: string | null
+  title: string
+  project_status: ProjectRow['status']
+  current_phase: ProjectRow['current_phase']
+  ai_status: AiProjectBudgetRow['status'] | 'not_configured'
+  used_requests: number
+  max_requests: number | null
+  used_cost_micros: number
+  max_cost_micros: number | null
+  updated_at: string
 }
 
 export type DecisionRow = {
@@ -416,11 +433,12 @@ export type Database = {
           actual_cost_micros: number
           pricing_version: string
           review_status?: AiProposalRow['review_status']
+          review_content?: Json | null
           reviewed_at?: string | null
           created_at?: string
           updated_at?: string
         }
-        Update: Partial<Pick<AiProposalRow, 'review_status' | 'reviewed_at' | 'updated_at'>>
+        Update: Partial<Pick<AiProposalRow, 'review_status' | 'review_content' | 'reviewed_at' | 'updated_at'>>
         Relationships: []
       }
       journal_snapshots: {
@@ -436,6 +454,13 @@ export type Database = {
         Args: {
           target_project_id: string
           target_phase: string
+        }
+        Returns: ProjectRow
+      }
+      complete_own_phase: {
+        Args: {
+          target_project_id: string
+          target_phase: 'C' | 'O' | 'D' | 'E' | 'S' | 'PRD'
         }
         Returns: ProjectRow
       }
@@ -511,6 +536,10 @@ export type Database = {
           page_offset?: number
         }
         Returns: AdminUserRow[]
+      }
+      get_admin_own_projects: {
+        Args: Record<string, never>
+        Returns: AdminOwnProjectRow[]
       }
       get_my_project_passes: {
         Args: Record<string, never>
@@ -591,6 +620,14 @@ export type Database = {
           target_usage: Json
           target_actual_cost_micros: number
           target_pricing_version: string
+        }
+        Returns: AiProposalRow
+      }
+      review_ai_proposal: {
+        Args: {
+          target_proposal_id: string
+          target_review_action: 'accepted' | 'rejected'
+          target_review_content?: Json | null
         }
         Returns: AiProposalRow
       }

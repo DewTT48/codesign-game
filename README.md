@@ -15,23 +15,23 @@ Live application: https://dewtt48.github.io/codesign-game/
 Use `npm run check` before publishing. The GitHub Pages workflow builds the Vite
 application and publishes `dist` after every successful push to `main`.
 
-## Build Your Own v2 preview
+## Build Your Own v2
 
 Phase 2 UI is protected by `VITE_BUILD_YOUR_OWN_V2=true`. The example env enables
 it for local development. The dashboard then shows Project Pass inventory and a
 link to `/projects/new/own`.
 
-The Phase 1 migration must be applied to the local Supabase database before the
-preview can read or consume Project Passes. No Stripe or OpenAI API is called by
-this preview. The production build stays disabled unless the matching GitHub
-Actions variable is explicitly set.
+The hosted Supabase migrations must be applied before the application can read
+or consume Project Passes, complete Own Journey steps, or review AI proposals.
+The production build stays disabled unless the matching GitHub Actions variable
+is explicitly set.
 
-Phase 3A also includes a fail-closed AI usage foundation: typed proposal schemas,
-server-selected GPT-5.6 Sol reasoning policy, and atomic budget/request ledgers.
-Phase 3B-1 adds server-side prompt assembly from current accepted decisions,
-untrusted-input labeling, narrow request validation, and Thai/English evaluation
-fixtures. The Edge Function intentionally returns `503 AI_NOT_CONFIGURED`; no
-API key, live model call, or numeric allowance is enabled yet.
+The Own Journey now covers C, O, D, E, S, and PRD with bilingual content,
+required-answer gates, autosave, locked decision snapshots, and read-only review
+of completed steps. CODESIGN AI uses a server-selected GPT-5.6 Sol policy,
+strict structured proposals, and Accept/Edit/Reject/Regenerate review. AI remains
+disabled per Project until an Admin explicitly enables the bounded internal
+allowance of five requests and a one-dollar hard cap.
 
 ## Security
 

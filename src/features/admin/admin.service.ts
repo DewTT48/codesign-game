@@ -1,7 +1,9 @@
 import { requireSupabase } from '../../lib/supabase/client'
 import type {
+  AdminOwnProjectRow,
   AdminOverview,
   AdminUserRow,
+  AiProjectBudgetRow,
   ProjectPassRow,
 } from '../../lib/supabase/database.types'
 
@@ -42,6 +44,22 @@ export async function getAdminProjectPasses(): Promise<ProjectPassRow[]> {
     .from('project_passes')
     .select('*')
     .order('granted_at', { ascending: false })
+  if (error) throw error
+  return data
+}
+
+export async function getAdminOwnProjects(): Promise<AdminOwnProjectRow[]> {
+  const client = requireSupabase()
+  const { data, error } = await client.rpc('get_admin_own_projects')
+  if (error) throw error
+  return data
+}
+
+export async function enableAdminAiTestAllowance(projectId: string): Promise<AiProjectBudgetRow> {
+  const client = requireSupabase()
+  const { data, error } = await client.rpc('admin_enable_ai_test_allowance', {
+    target_project_id: projectId,
+  })
   if (error) throw error
   return data
 }

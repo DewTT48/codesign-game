@@ -7,7 +7,9 @@ import { AdminPage } from './AdminPage'
 
 const adminService = vi.hoisted(() => ({
   createAdminGrantKey: vi.fn(() => 'admin:user-1:test-grant-001'),
+  enableAdminAiTestAllowance: vi.fn(),
   getAdminOverview: vi.fn(),
+  getAdminOwnProjects: vi.fn(),
   getAdminProjectPasses: vi.fn(),
   getAdminUsers: vi.fn(),
   grantAdminProjectPass: vi.fn(),
@@ -40,6 +42,21 @@ describe('AdminPage', () => {
     archived_missions: 0,
     last_activity_at: '2026-08-30T12:00:00.000Z',
   }
+  const ownProject = {
+    project_id: 'project-1',
+    owner_id: player.user_id,
+    owner_email: player.email,
+    owner_display_name: player.display_name,
+    title: 'Learning Plan Companion',
+    project_status: 'in_progress',
+    current_phase: 'C',
+    ai_status: 'not_configured',
+    used_requests: 0,
+    max_requests: null,
+    used_cost_micros: 0,
+    max_cost_micros: null,
+    updated_at: '2026-09-16T06:00:00.000Z',
+  }
 
   function renderPage() {
     const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
@@ -58,6 +75,7 @@ describe('AdminPage', () => {
     adminService.getAdminOverview.mockResolvedValue(overview)
     adminService.getAdminUsers.mockResolvedValue([player])
     adminService.getAdminProjectPasses.mockResolvedValue([])
+    adminService.getAdminOwnProjects.mockResolvedValue([])
 
     renderPage()
 
@@ -73,6 +91,7 @@ describe('AdminPage', () => {
     adminService.getAdminOverview.mockResolvedValue(overview)
     adminService.getAdminUsers.mockResolvedValue([player])
     adminService.getAdminProjectPasses.mockResolvedValue([])
+    adminService.getAdminOwnProjects.mockResolvedValue([])
     adminService.grantAdminProjectPass.mockResolvedValue({
       id: 'pass-1',
       owner_id: player.user_id,
@@ -104,5 +123,22 @@ describe('AdminPage', () => {
       note: 'Phase 2 testing access',
     }))
     expect(await screen.findByText(/เพิ่ม Project Pass สำเร็จ/)).toBeInTheDocument()
+  })
+
+  it('lets an admin enable the bounded AI test allowance for an Own Project', async () => {
+    adminService.getAdminOverview.mockResolvedValue(overview)
+    adminService.getAdminUsers.mockResolvedValue([player])
+    adminService.getAdminProjectPasses.mockResolvedValue([])
+    adminService.getAdminOwnProjects.mockResolvedValue([ownProject])
+    adminService.enableAdminAiTestAllowance.mockResolvedValue({
+      project_id: ownProject.project_id,
+      status: 'enabled',
+    })
+
+    renderPage()
+
+    fireEvent.click(await screen.findByRole('button', { name: 'เปิด 5 REQUEST TEST' }))
+    await waitFor(() => expect(adminService.enableAdminAiTestAllowance).toHaveBeenCalledWith(ownProject.project_id))
+    expect(await screen.findByText(/เปิด Internal AI allowance แล้ว/)).toBeInTheDocument()
   })
 })

@@ -65,7 +65,7 @@ export default function App() {
           }
         />
         <Route
-          path="/own-projects/:projectId"
+          path="/own-projects/:projectId/:phase?"
           element={
             <ProtectedRoute>
               {isBuildYourOwnV2Enabled

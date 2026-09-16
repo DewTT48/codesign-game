@@ -1,7 +1,7 @@
 # CODESIGN Build Your Own v2 — AI Design
 
-สถานะ: Phase 3B-2 backend และ hosted Edge Function deployed แล้ว; endpoint ยัง fail
-closed และยังไม่เกิดค่าใช้จ่ายจนกว่าจะเพิ่ม `OPENAI_API_KEY`
+สถานะ: Phase 3B-2 backend และ hosted Edge Function deployed แล้ว; Edge secret พร้อม
+และทุก Project ยังคง fail closed จนกว่า Admin จะเปิด bounded internal allowance
 
 ## บทบาทของ AI
 
@@ -49,8 +49,9 @@ UI action
   → validate structured output
   → record actual usage/status
   → return proposal to UI
-  → user Accept/Edit/Reject
-  → existing decision revision flow
+  → user Accept/Edit/Reject/Regenerate
+  → store reviewed content separately from immutable provider output
+  → lock the completed page as the authoritative decision snapshot
 ```
 
 Request body ควรรับเฉพาะ `projectId`, `action`, `userDraft`, `locale`, `idempotencyKey` ส่วน model, effort, system prompt, accepted context และ allowance อ่านจาก server/database

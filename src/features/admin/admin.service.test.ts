@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { ProjectPassRow } from '../../lib/supabase/database.types'
-import { grantAdminProjectPass } from './admin.service'
+import { enableAdminAiTestAllowance, grantAdminProjectPass } from './admin.service'
 
 const supabaseMocks = vi.hoisted(() => ({
   rpc: vi.fn(),
@@ -43,6 +43,20 @@ describe('grantAdminProjectPass', () => {
       target_source: 'admin',
       target_grant_key: 'admin:user-1:test-grant-001',
       target_note: 'Phase 2 testing access',
+    })
+  })
+})
+
+describe('enableAdminAiTestAllowance', () => {
+  beforeEach(() => vi.clearAllMocks())
+
+  it('uses the protected admin RPC for the selected Own Project', async () => {
+    const budget = { project_id: 'project-1', status: 'enabled' }
+    supabaseMocks.rpc.mockResolvedValue({ data: budget, error: null })
+
+    await expect(enableAdminAiTestAllowance('project-1')).resolves.toEqual(budget)
+    expect(supabaseMocks.rpc).toHaveBeenCalledWith('admin_enable_ai_test_allowance', {
+      target_project_id: 'project-1',
     })
   })
 })
