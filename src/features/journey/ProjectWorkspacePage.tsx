@@ -16,6 +16,7 @@ import { ProjectPlaceholderPage } from '../projects/ProjectPlaceholderPage'
 import { useLanguage } from '../i18n/LanguageContext'
 import { PhaseHistoryPage } from './PhaseHistoryPage'
 import { resolvePhaseRoute } from './phaseNavigation'
+import { isBuildYourOwnV2Enabled } from '../build-your-own/buildYourOwn.flags'
 
 const supportedPhases = new Set<PhaseCode>(['C', 'O', 'D', 'E', 'S', 'PRD', 'I', 'G', 'N'])
 
@@ -44,6 +45,10 @@ export function ProjectWorkspacePage() {
         </section>
       </div>
     )
+  }
+
+  if (project.data.mode === 'own') {
+    return <Navigate to={isBuildYourOwnV2Enabled ? `/own-projects/${project.data.id}` : '/dashboard'} replace />
   }
 
   const currentPhase = project.data.current_phase

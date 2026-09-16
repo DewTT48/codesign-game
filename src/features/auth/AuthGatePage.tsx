@@ -1,6 +1,6 @@
 import { ArrowLeft, LockKeyhole, Mail } from 'lucide-react'
 import { type FormEvent, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, Navigate, useSearchParams } from 'react-router-dom'
 import { ArcadeButton } from '../../components/ui/ArcadeButton'
 import { useLanguage } from '../i18n/LanguageContext'
 import { useAuth } from './AuthContext'
@@ -8,11 +8,21 @@ import { useAuth } from './AuthContext'
 export function AuthGatePage() {
   const { isThai } = useLanguage()
   const auth = useAuth()
+  const [searchParams] = useSearchParams()
+  const returningUser = searchParams.get('intent') === 'signin'
   const [error, setError] = useState<string | null>(null)
   const [startingGoogle, setStartingGoogle] = useState(false)
   const [sendingEmail, setSendingEmail] = useState(false)
   const [email, setEmail] = useState('')
   const [emailSent, setEmailSent] = useState(false)
+
+  if (auth.loading) {
+    return <div className="route-loading" role="status">CHECKING SESSION…</div>
+  }
+
+  if (auth.user) {
+    return <Navigate to="/dashboard" replace />
+  }
 
   async function handleGoogleSignIn() {
     setStartingGoogle(true)
@@ -42,17 +52,23 @@ export function AuthGatePage() {
 
   return (
     <div className="auth-page content-page">
-      <Link className="back-link" to="/mission">
-        <ArrowLeft aria-hidden="true" size={18} /> MISSION BRIEF
+      <Link className="back-link" to={returningUser ? '/' : '/mission'}>
+        <ArrowLeft aria-hidden="true" size={18} /> {returningUser ? (isThai ? 'หน้าแรก' : 'HOME') : 'MISSION BRIEF'}
       </Link>
       <section className="auth-card" aria-labelledby="auth-title">
         <div className="auth-lock" aria-hidden="true">
           <LockKeyhole size={34} />
         </div>
-        <span className="chapter-code">AUTH GATE</span>
-        <h1 id="auth-title">SAVE YOUR MISSION</h1>
+        <span className="chapter-code">{returningUser ? 'PLAYER ACCESS' : 'AUTH GATE'}</span>
+        <h1 id="auth-title">{returningUser ? (isThai ? 'เข้าสู่ระบบ CODESIGN' : 'SIGN IN TO CODESIGN') : 'SAVE YOUR MISSION'}</h1>
         <p>
-          {isThai ? 'ตั้งแต่ C — Context เป็นต้นไป การคิด การตัดสินใจ PRD และ Journal ของคุณจะถูกบันทึกอย่างเป็นส่วนตัว' : 'From C — Context onward, your thinking, decisions, PRD, and Journal are saved privately.'}
+          {returningUser
+            ? (isThai
+                ? 'กลับไปทำ Project เดิมต่อ หรือเข้าสู่ Dashboard สำหรับผู้ดูแลระบบด้วยบัญชีที่ได้รับสิทธิ์'
+                : 'Continue an existing Project, or open the Admin Dashboard with an authorized account.')
+            : (isThai
+                ? 'ตั้งแต่ C — Context เป็นต้นไป การคิด การตัดสินใจ PRD และ Journal ของคุณจะถูกบันทึกอย่างเป็นส่วนตัว'
+                : 'From C — Context onward, your thinking, decisions, PRD, and Journal are saved privately.')}
         </p>
         <ArcadeButton
           type="button"

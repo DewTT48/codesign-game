@@ -13,6 +13,9 @@ import { ScrollToTop } from './components/navigation/ScrollToTop'
 import { AdminPage } from './features/admin/AdminPage'
 import { AdminRoute } from './features/admin/AdminRoute'
 import { RevisionHistoryPage } from './features/journey/RevisionHistoryPage'
+import { CreateOwnProjectPage } from './features/build-your-own/CreateOwnProjectPage'
+import { OwnProjectWorkspacePage } from './features/build-your-own/OwnProjectWorkspacePage'
+import { isBuildYourOwnV2Enabled } from './features/build-your-own/buildYourOwn.flags'
 
 export default function App() {
   return (
@@ -48,6 +51,26 @@ export default function App() {
           element={
             <ProtectedRoute>
               <CreateProjectPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/projects/new/own"
+          element={
+            <ProtectedRoute>
+              {isBuildYourOwnV2Enabled
+                ? <CreateOwnProjectPage />
+                : <Navigate to="/dashboard" replace />}
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/own-projects/:projectId"
+          element={
+            <ProtectedRoute>
+              {isBuildYourOwnV2Enabled
+                ? <OwnProjectWorkspacePage />
+                : <Navigate to="/dashboard" replace />}
             </ProtectedRoute>
           }
         />

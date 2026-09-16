@@ -20,6 +20,9 @@ describe('LandingPage', () => {
     expect(
       screen.getByRole('link', { name: /build with guide/i }),
     ).toHaveAttribute('href', '/mission')
+    expect(
+      screen.getByRole('link', { name: /เข้าสู่ระบบ \/ ทำต่อ|sign in \/ continue/i }),
+    ).toHaveAttribute('href', '/auth?intent=signin')
     expect(screen.getByText('21 DAYS OF')).toBeInTheDocument()
   })
 })

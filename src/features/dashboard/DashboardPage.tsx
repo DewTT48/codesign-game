@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Archive, ArrowRight, LogOut, Plus, RotateCcw, ShieldCheck, Trash2, X } from 'lucide-react'
+import { Archive, ArrowRight, LogOut, Plus, RotateCcw, ShieldCheck, Sparkles, TicketCheck, Trash2, X } from 'lucide-react'
 import { useState } from 'react'
 import { SolidificationMeter } from '../../components/progress/SolidificationMeter'
 import { ArcadeButton } from '../../components/ui/ArcadeButton'
@@ -8,6 +8,51 @@ import { useAuth } from '../auth/AuthContext'
 import { useLanguage } from '../i18n/LanguageContext'
 import { archiveProject, deleteProject, listProjects, restoreProject } from '../projects/project.service'
 import { isCurrentUserAdmin } from '../admin/admin.service'
+import { isBuildYourOwnV2Enabled } from '../build-your-own/buildYourOwn.flags'
+import { listMyProjectPasses, summarizeProjectPasses } from '../project-pass/projectPass.service'
+
+function BuildYourOwnLaunchPanel() {
+  const { isThai } = useLanguage()
+  const passes = useQuery({
+    queryKey: ['project-passes'],
+    queryFn: listMyProjectPasses,
+    retry: false,
+  })
+  const summary = summarizeProjectPasses(passes.data ?? [])
+
+  return (
+    <section className="own-launch-panel" aria-labelledby="own-launch-title">
+      <div className="own-launch-panel__art" aria-hidden="true">
+        <Sparkles size={34} />
+        <span>OWN</span>
+      </div>
+      <div className="own-launch-panel__copy">
+        <span className="panel-kicker">NEW MODE · V2 PREVIEW</span>
+        <h2 id="own-launch-title">BUILD YOUR OWN</h2>
+        <p>
+          {isThai
+            ? 'ใช้ CODESIGN กับผลิตภัณฑ์ของคุณเอง โดยไม่จำกัดรูปแบบ 21 Days'
+            : 'Use CODESIGN for your own product without the 21 Days format.'}
+        </p>
+        {passes.isError ? (
+          <span className="own-launch-panel__error">
+            {isThai ? 'Project Pass service ยังไม่พร้อมใน environment นี้' : 'Project Pass service is not ready in this environment.'}
+          </span>
+        ) : null}
+      </div>
+      <div className="own-launch-panel__access">
+        <div>
+          <TicketCheck aria-hidden="true" size={24} />
+          <strong>{passes.isLoading ? '—' : summary.available}</strong>
+          <span>{isThai ? 'PASS พร้อมใช้' : 'PASS AVAILABLE'}</span>
+        </div>
+        <ArcadeButton to="/projects/new/own">
+          OPEN BUILD YOUR OWN <ArrowRight aria-hidden="true" size={18} />
+        </ArcadeButton>
+      </div>
+    </section>
+  )
+}
 
 export function DashboardPage() {
   const { isThai } = useLanguage()
@@ -65,6 +110,8 @@ export function DashboardPage() {
         </div>
       </header>
 
+      {isBuildYourOwnV2Enabled ? <BuildYourOwnLaunchPanel /> : null}
+
       {projects.isLoading ? (
         <div className="dashboard-state" role="status">
           LOADING MISSIONS…
@@ -112,15 +159,25 @@ export function DashboardPage() {
           {activeProjects.map((project) => (
             <article className="project-card" key={project.id}>
               <div className="project-card__meta">
-                <span>{project.current_phase} — CURRENT MISSION</span>
+                <span>
+                  {project.mode === 'own'
+                    ? `BUILD YOUR OWN · ${project.current_phase}`
+                    : `${project.current_phase} — CURRENT MISSION`}
+                </span>
                 <span>{project.status.replace('_', ' ').toUpperCase()}</span>
               </div>
               <h3>{project.title}</h3>
               <SolidificationMeter current={project.solidification_stage.replace('_', ' ') as 'IDEA'} />
               <div className="project-card__actions">
-                <ArcadeButton to={`/projects/${project.id}/${project.current_phase}`}>
-                  CONTINUE MISSION <ArrowRight aria-hidden="true" size={18} />
-                </ArcadeButton>
+                {project.mode === 'own' && !isBuildYourOwnV2Enabled ? (
+                  <ArcadeButton type="button" disabled>OWN MODE PAUSED</ArcadeButton>
+                ) : (
+                  <ArcadeButton to={project.mode === 'own'
+                    ? `/own-projects/${project.id}`
+                    : `/projects/${project.id}/${project.current_phase}`}>
+                    {project.mode === 'own' ? 'OPEN PROJECT' : 'CONTINUE MISSION'} <ArrowRight aria-hidden="true" size={18} />
+                  </ArcadeButton>
+                )}
                 <button
                   className="mission-manage-action"
                   type="button"
@@ -150,7 +207,7 @@ export function DashboardPage() {
             {archivedProjects.map((project) => (
               <article className="archive-card" key={project.id}>
                 <div>
-                  <span>{project.current_phase} — LAST MISSION</span>
+                  <span>{project.mode === 'own' ? 'BUILD YOUR OWN' : `${project.current_phase} — LAST MISSION`}</span>
                   <h3>{project.title}</h3>
                 </div>
                 <div className="archive-card__actions">
@@ -177,8 +234,14 @@ export function DashboardPage() {
             </button>
             <Trash2 className="delete-dialog__icon" aria-hidden="true" size={34} />
             <span className="chapter-code">DANGER ZONE</span>
-            <h2 id="delete-dialog-title">DELETE MISSION?</h2>
-            <p>{isThai ? 'การลบนี้จะลบคำตอบ การตัดสินใจ PRD และ Journal ทั้งหมดของ Mission นี้อย่างถาวร และไม่สามารถกู้คืนได้' : 'This permanently removes every answer, decision, PRD, and journal entry in this mission. It cannot be undone.'}</p>
+            <h2 id="delete-dialog-title">DELETE {deleteTarget.mode === 'own' ? 'PROJECT' : 'MISSION'}?</h2>
+            <p>{isThai
+              ? deleteTarget.mode === 'own'
+                ? 'การลบนี้จะลบข้อมูล Project อย่างถาวร ไม่สามารถกู้คืนได้ และจะไม่คืน Project Pass อัตโนมัติ'
+                : 'การลบนี้จะลบคำตอบ การตัดสินใจ PRD และ Journal ทั้งหมดของ Mission นี้อย่างถาวร และไม่สามารถกู้คืนได้'
+              : deleteTarget.mode === 'own'
+                ? 'This permanently removes the Project. It cannot be undone and does not automatically restore its Project Pass.'
+                : 'This permanently removes every answer, decision, PRD, and journal entry in this mission. It cannot be undone.'}</p>
             <strong>{deleteTarget.title}</strong>
             <label htmlFor="delete-confirmation">{isThai ? 'พิมพ์ DELETE เพื่อยืนยัน' : 'TYPE DELETE TO CONFIRM'}</label>
             <input
@@ -195,7 +258,11 @@ export function DashboardPage() {
                 disabled={deleteConfirmation !== 'DELETE' || deleteMutation.isPending}
                 onClick={() => deleteMutation.mutate(deleteTarget.id)}
               >
-                {deleteMutation.isPending ? 'DELETING…' : isThai ? 'ลบ Mission ถาวร' : 'DELETE PERMANENTLY'}
+                {deleteMutation.isPending
+                  ? 'DELETING…'
+                  : isThai
+                    ? `ลบ ${deleteTarget.mode === 'own' ? 'Project' : 'Mission'} ถาวร`
+                    : 'DELETE PERMANENTLY'}
               </button>
             </div>
           </section>

@@ -65,6 +65,88 @@ export type FeedbackEntryRow = {
   created_at: string
 }
 
+export type ProjectPassRow = {
+  id: string
+  owner_id: string
+  source: 'course' | 'stripe' | 'admin'
+  status: 'available' | 'consumed' | 'revoked'
+  grant_key: string
+  granted_by: string | null
+  project_id: string | null
+  consume_key: string | null
+  note: string | null
+  granted_at: string
+  consumed_at: string | null
+  revoked_at: string | null
+  updated_at: string
+}
+
+export type ProjectPassEventRow = {
+  id: string
+  pass_id: string
+  owner_id: string
+  event_type: 'granted' | 'consumed' | 'revoked' | 'restored'
+  project_id: string | null
+  actor_id: string | null
+  reason: string | null
+  metadata: Json
+  created_at: string
+}
+
+export type AiProjectBudgetRow = RowWithTimestamps & {
+  project_id: string
+  owner_id: string
+  status: 'disabled' | 'enabled' | 'exhausted'
+  max_requests: number | null
+  max_input_tokens: number | null
+  max_output_tokens: number | null
+  max_total_tokens: number | null
+  max_cost_micros: number | null
+  reserved_requests: number
+  used_requests: number
+  reserved_input_tokens: number
+  used_input_tokens: number
+  reserved_output_tokens: number
+  used_output_tokens: number
+  reserved_cost_micros: number
+  used_cost_micros: number
+  limit_version: number
+  configured_by: string | null
+  configured_at: string | null
+}
+
+export type AiRequestRow = RowWithTimestamps & {
+  id: string
+  project_id: string
+  owner_id: string
+  action:
+    | 'frame_context'
+    | 'generate_options'
+    | 'challenge_assumptions'
+    | 'check_alignment'
+    | 'draft_prd'
+  model: 'gpt-5.6-sol'
+  reasoning_effort: 'low' | 'medium' | 'high' | 'xhigh'
+  status: 'reserved' | 'in_progress' | 'completed' | 'failed' | 'cancelled'
+  idempotency_key: string
+  prompt_template_version: string
+  output_schema_version: string
+  estimated_input_tokens: number
+  reserved_output_tokens: number
+  reserved_cost_micros: number
+  input_tokens: number
+  cached_input_tokens: number
+  output_tokens: number
+  reasoning_tokens: number
+  total_tokens: number
+  actual_cost_micros: number
+  openai_response_id: string | null
+  error_code: string | null
+  reservation_expires_at: string | null
+  started_at: string | null
+  completed_at: string | null
+}
+
 export type AdminPhaseCount = {
   phase: ProjectRow['current_phase']
   count: number
@@ -207,6 +289,104 @@ export type Database = {
         Update: Partial<Omit<FeedbackEntryRow, 'id' | 'project_id' | 'created_at'>>
         Relationships: []
       }
+      project_passes: {
+        Row: ProjectPassRow
+        Insert: {
+          id?: string
+          owner_id: string
+          source: ProjectPassRow['source']
+          status?: ProjectPassRow['status']
+          grant_key: string
+          granted_by?: string | null
+          project_id?: string | null
+          consume_key?: string | null
+          note?: string | null
+          granted_at?: string
+          consumed_at?: string | null
+          revoked_at?: string | null
+          updated_at?: string
+        }
+        Update: Partial<
+          Omit<ProjectPassRow, 'id' | 'owner_id' | 'grant_key' | 'granted_at'>
+        >
+        Relationships: []
+      }
+      project_pass_events: {
+        Row: ProjectPassEventRow
+        Insert: {
+          id?: string
+          pass_id: string
+          owner_id: string
+          event_type: ProjectPassEventRow['event_type']
+          project_id?: string | null
+          actor_id?: string | null
+          reason?: string | null
+          metadata?: Json
+          created_at?: string
+        }
+        Update: Record<string, never>
+        Relationships: []
+      }
+      ai_project_budgets: {
+        Row: AiProjectBudgetRow
+        Insert: {
+          project_id: string
+          owner_id: string
+          status?: AiProjectBudgetRow['status']
+          max_requests?: number | null
+          max_input_tokens?: number | null
+          max_output_tokens?: number | null
+          max_total_tokens?: number | null
+          max_cost_micros?: number | null
+          reserved_requests?: number
+          used_requests?: number
+          reserved_input_tokens?: number
+          used_input_tokens?: number
+          reserved_output_tokens?: number
+          used_output_tokens?: number
+          reserved_cost_micros?: number
+          used_cost_micros?: number
+          limit_version?: number
+          configured_by?: string | null
+          configured_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: Partial<Omit<AiProjectBudgetRow, 'project_id' | 'owner_id' | 'created_at'>>
+        Relationships: []
+      }
+      ai_requests: {
+        Row: AiRequestRow
+        Insert: {
+          id?: string
+          project_id: string
+          owner_id: string
+          action: AiRequestRow['action']
+          model?: AiRequestRow['model']
+          reasoning_effort: AiRequestRow['reasoning_effort']
+          status?: AiRequestRow['status']
+          idempotency_key: string
+          prompt_template_version: string
+          output_schema_version: string
+          estimated_input_tokens: number
+          reserved_output_tokens: number
+          reserved_cost_micros: number
+          input_tokens?: number
+          cached_input_tokens?: number
+          output_tokens?: number
+          reasoning_tokens?: number
+          actual_cost_micros?: number
+          openai_response_id?: string | null
+          error_code?: string | null
+          reservation_expires_at?: string | null
+          started_at?: string | null
+          completed_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: Partial<Omit<AiRequestRow, 'id' | 'project_id' | 'owner_id' | 'created_at' | 'total_tokens'>>
+        Relationships: []
+      }
       journal_snapshots: {
         Row: Record<string, unknown>
         Insert: Record<string, unknown>
@@ -295,6 +475,77 @@ export type Database = {
           page_offset?: number
         }
         Returns: AdminUserRow[]
+      }
+      get_my_project_passes: {
+        Args: Record<string, never>
+        Returns: ProjectPassRow[]
+      }
+      admin_grant_project_pass: {
+        Args: {
+          target_user_id: string
+          target_source: 'course' | 'admin'
+          target_grant_key: string
+          target_note?: string | null
+        }
+        Returns: ProjectPassRow
+      }
+      admin_revoke_project_pass: {
+        Args: {
+          target_pass_id: string
+          target_reason: string
+        }
+        Returns: ProjectPassRow
+      }
+      admin_restore_project_pass: {
+        Args: {
+          target_pass_id: string
+          target_reason: string
+        }
+        Returns: ProjectPassRow
+      }
+      create_own_project_with_pass: {
+        Args: {
+          target_title: string
+          target_topic: string
+          target_creation_key: string
+        }
+        Returns: ProjectRow
+      }
+      get_ai_usage_summary: {
+        Args: { target_project_id: string }
+        Returns: Json | null
+      }
+      reserve_ai_request: {
+        Args: {
+          target_project_id: string
+          target_owner_id: string
+          target_action: AiRequestRow['action']
+          target_idempotency_key: string
+          target_estimated_input_tokens: number
+          target_reserved_output_tokens: number
+          target_reserved_cost_micros: number
+          target_prompt_template_version: string
+          target_output_schema_version: string
+        }
+        Returns: AiRequestRow
+      }
+      mark_ai_request_started: {
+        Args: { target_request_id: string }
+        Returns: AiRequestRow
+      }
+      finalize_ai_request: {
+        Args: {
+          target_request_id: string
+          target_status: 'completed' | 'failed' | 'cancelled'
+          target_openai_response_id: string | null
+          target_input_tokens: number
+          target_cached_input_tokens: number
+          target_output_tokens: number
+          target_reasoning_tokens: number
+          target_actual_cost_micros: number
+          target_error_code?: string | null
+        }
+        Returns: AiRequestRow
       }
     }
     Enums: Record<string, never>
