@@ -1,7 +1,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { render, screen } from '@testing-library/react'
+import { cleanup, render, screen } from '@testing-library/react'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { ProjectRow } from '../../lib/supabase/database.types'
 import { LanguageProvider } from '../i18n/LanguageContext'
 import { OwnProjectWorkspacePage } from './OwnProjectWorkspacePage'
@@ -55,6 +55,8 @@ function renderWorkspace(path = '/own-projects/own-project-1') {
 }
 
 describe('OwnProjectWorkspacePage', () => {
+  afterEach(cleanup)
+
   beforeEach(() => {
     vi.clearAllMocks()
     window.localStorage.setItem('codesign-language', 'th')
@@ -79,6 +81,20 @@ describe('OwnProjectWorkspacePage', () => {
     expect(screen.queryByRole('heading', { name: 'แปลงทิศทางให้เป็นข้อกำหนดที่สร้างและทดสอบได้' })).not.toBeInTheDocument()
   })
 
+  it('opens the Own implementation page after PRD without Guided 21-day content', async () => {
+    getProjectMock.mockResolvedValue({
+      ...ownProject,
+      current_phase: 'I',
+      solidification_stage: 'BUILD_READY',
+    })
+    renderWorkspace('/own-projects/own-project-1/I')
+
+    expect(await screen.findByRole('heading', { name: 'เปลี่ยน PRD ที่ Lock แล้วให้เป็น Product ที่ใช้งานได้จริง' })).toBeInTheDocument()
+    expect(screen.getByLabelText(/Public URL ของ Build/)).toBeInTheDocument()
+    expect(screen.queryByText(/21 DAYS OF/)).not.toBeInTheDocument()
+    expect(screen.queryByText(/CODESIGN AI · PROPOSAL ONLY/)).not.toBeInTheDocument()
+  })
+
   it('shows a completed Own Project summary and keeps all steps reviewable', async () => {
     getProjectMock.mockResolvedValue({
       ...ownProject,
@@ -89,7 +105,8 @@ describe('OwnProjectWorkspacePage', () => {
     })
     renderWorkspace()
 
-    expect(await screen.findByRole('heading', { name: 'Product Definition พร้อมส่งต่อแล้ว' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Build รอบแรกพร้อมสำหรับการพัฒนาต่อ' })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: /PRODUCT REQUIREMENTS/ })).toHaveAttribute('href', '/own-projects/own-project-1/PRD')
+    expect(screen.getByRole('link', { name: /NEXT ITERATION/ })).toHaveAttribute('href', '/own-projects/own-project-1/N')
   })
 })

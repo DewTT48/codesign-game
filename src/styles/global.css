@@ -9357,7 +9357,7 @@ a.mission-node__content:focus-visible {
 
 .own-journey-map {
   display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
+  grid-template-columns: repeat(9, minmax(0, 1fr));
   gap: 8px;
   margin: 24px 0;
 }

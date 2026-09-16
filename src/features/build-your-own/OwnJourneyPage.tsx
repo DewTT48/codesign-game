@@ -128,6 +128,7 @@ function AiProposalPanel({
   const { language, isThai } = useLanguage()
   const queryClient = useQueryClient()
   const definition = ownJourneyDefinitions[phase]
+  const action = definition.aiAction!
   const [generatedProposal, setGeneratedProposal] = useState<AiProposalView | null>(null)
   const [editing, setEditing] = useState(false)
   const [editValue, setEditValue] = useState('')
@@ -139,8 +140,8 @@ function AiProposalPanel({
     retry: false,
   })
   const pendingProposal = useQuery({
-    queryKey: ['ai-proposal', project.id, definition.aiAction],
-    queryFn: () => getPendingAiProposal(project.id, definition.aiAction),
+    queryKey: ['ai-proposal', project.id, action],
+    queryFn: () => getPendingAiProposal(project.id, action),
     retry: false,
   })
   const activeProposal = generatedProposal ?? pendingProposal.data ?? null
@@ -148,10 +149,10 @@ function AiProposalPanel({
   const generation = useMutation({
     mutationFn: () => invokeCodesignAi({
       projectId: project.id,
-      action: definition.aiAction,
+      action,
       userDraft: values,
       locale: language,
-      idempotencyKey: createAiIdempotencyKey(project.id, definition.aiAction),
+      idempotencyKey: createAiIdempotencyKey(project.id, action),
     }),
     async onSuccess(result) {
       setGeneratedProposal(result.proposal)
@@ -176,7 +177,7 @@ function AiProposalPanel({
       setGeneratedProposal(null)
       setEditing(false)
       setEditError('')
-      await queryClient.invalidateQueries({ queryKey: ['ai-proposal', project.id, definition.aiAction] })
+      await queryClient.invalidateQueries({ queryKey: ['ai-proposal', project.id, action] })
     },
   })
 
@@ -187,17 +188,17 @@ function AiProposalPanel({
       }
       return invokeCodesignAi({
         projectId: project.id,
-        action: definition.aiAction,
+        action,
         userDraft: values,
         locale: language,
-        idempotencyKey: createAiIdempotencyKey(project.id, definition.aiAction),
+        idempotencyKey: createAiIdempotencyKey(project.id, action),
       })
     },
     async onSuccess(result) {
       setGeneratedProposal(result.proposal)
       setEditing(false)
       await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ['ai-proposal', project.id, definition.aiAction] }),
+        queryClient.invalidateQueries({ queryKey: ['ai-proposal', project.id, action] }),
         queryClient.invalidateQueries({ queryKey: ['ai-usage', project.id] }),
       ])
     },
@@ -232,8 +233,8 @@ function AiProposalPanel({
         <div className="own-ai-panel__icon"><Bot aria-hidden="true" size={28} /></div>
         <div>
           <span>CODESIGN AI · PROPOSAL ONLY</span>
-          <h2 id={`ai-${phase}-title`}>{localizedText(definition.aiTitle, isThai)}</h2>
-          <p>{localizedText(definition.aiDescription, isThai)}</p>
+          <h2 id={`ai-${phase}-title`}>{localizedText(definition.aiTitle!, isThai)}</h2>
+          <p>{localizedText(definition.aiDescription!, isThai)}</p>
         </div>
         <div className={`own-ai-allowance own-ai-allowance--${usage.data?.status ?? 'unknown'}`}>
           <ShieldCheck aria-hidden="true" size={17} />
@@ -328,6 +329,7 @@ export function OwnJourneyPage({
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const definition = ownJourneyDefinitions[phase]
+  const nextPhase = nextOwnJourneyPhase(phase)
   const initialValues = useMemo(() => getOwnJourneyInitialValues(definition), [definition])
   const draft = usePhaseDraft<Record<string, string>>({
     projectId: project.id,
@@ -352,7 +354,6 @@ export function OwnJourneyPage({
     async onSuccess(nextProject) {
       queryClient.setQueryData(['project', project.id], nextProject)
       await queryClient.invalidateQueries({ queryKey: ['projects'] })
-      const nextPhase = nextOwnJourneyPhase(phase)
       navigate(nextPhase === 'COMPLETE'
         ? `/own-projects/${project.id}`
         : `/own-projects/${project.id}/${nextPhase}`)
@@ -492,7 +493,7 @@ export function OwnJourneyPage({
             : (isThai ? 'ทำรายการไม่สำเร็จ' : 'ACTION FAILED')}</span> : null}
       </div> : null}
 
-      {!readOnly ? <AiProposalPanel
+      {!readOnly && definition.aiAction && definition.aiTitle && definition.aiDescription ? <AiProposalPanel
         project={project}
         phase={phase}
         values={draft.values}
@@ -503,18 +504,32 @@ export function OwnJourneyPage({
       {acceptedNotice ? <div className="own-accepted-notice" role="status"><CheckCircle2 size={19} /> {isThai ? 'เก็บ AI proposal ที่ Accept แล้วไว้กับ Draft ของหน้านี้ คุณยังแก้คำตอบก่อน Lock ได้' : 'The accepted AI proposal is attached to this page draft. You can still refine your answers before locking.'}</div> : null}
 
       {!readOnly ? <ReviewGate
-        title={phase === 'PRD' ? (isThai ? 'LOCK FINAL PRD' : 'LOCK FINAL PRD') : (isThai ? `LOCK STEP ${phase}` : `LOCK STEP ${phase}`)}
+        title={phase === 'PRD'
+          ? 'LOCK PRD'
+          : phase === 'N'
+            ? (isThai ? 'LOCK NEXT ITERATION' : 'LOCK NEXT ITERATION')
+            : (isThai ? `LOCK STEP ${phase}` : `LOCK STEP ${phase}`)}
         question={isThai
-          ? phase === 'PRD' ? 'PRD นี้สะท้อนคำตัดสินทั้งหมดและพร้อมส่งต่อให้ทีมสร้างแล้วหรือยัง?' : 'คำตอบหน้านี้ชัดพอที่จะใช้เป็น Decision ของหน้าถัดไปแล้วหรือยัง?'
-          : phase === 'PRD' ? 'Does this PRD reflect every decision and feel ready for the build team?' : 'Are these answers clear enough to become the decision context for the next step?'}
+          ? phase === 'PRD'
+            ? 'PRD นี้สะท้อนคำตัดสินทั้งหมดและพร้อมเข้าสู่การสร้างแล้วหรือยัง?'
+            : phase === 'N'
+              ? 'นี่คือการเปลี่ยนแปลงที่สำคัญที่สุดสำหรับรอบถัดไป และมีหลักฐานเพียงพอให้ Lock แล้วหรือยัง?'
+              : 'คำตอบหน้านี้ชัดพอที่จะใช้เป็น Decision ของหน้าถัดไปแล้วหรือยัง?'
+          : phase === 'PRD'
+            ? 'Does this PRD reflect every decision and feel ready for implementation?'
+            : phase === 'N'
+              ? 'Is this the most important next change, with enough evidence to lock the iteration?'
+              : 'Are these answers clear enough to become the decision context for the next step?'}
         actions={<>
           <ArcadeButton variant="secondary" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>{isThai ? 'ยัง — ทบทวนอีกครั้ง' : 'NOT YET — REVIEW'}</ArcadeButton>
           <ArcadeButton disabled={completion.isPending || draft.saveState === 'saving'} onClick={complete}>
             <LockKeyhole size={18} /> {completion.isPending
               ? (isThai ? 'กำลัง Lock…' : 'LOCKING…')
               : phase === 'PRD'
-                ? (isThai ? 'พร้อม — Lock PRD' : 'READY — LOCK PRD')
-                : (isThai ? `พร้อม — ไป Step ${nextOwnJourneyPhase(phase)}` : `READY — GO TO ${nextOwnJourneyPhase(phase)}`)}
+                ? (isThai ? 'พร้อม — Lock PRD และเริ่มสร้าง' : 'READY — LOCK PRD & IMPLEMENT')
+                : phase === 'N'
+                  ? (isThai ? 'พร้อม — ปิดรอบแรก' : 'READY — COMPLETE FIRST CYCLE')
+                  : (isThai ? `พร้อม — ไป Step ${nextPhase}` : `READY — GO TO ${nextPhase}`)}
           </ArcadeButton>
         </>}
       >

@@ -460,7 +460,7 @@ export type Database = {
       complete_own_phase: {
         Args: {
           target_project_id: string
-          target_phase: 'C' | 'O' | 'D' | 'E' | 'S' | 'PRD'
+          target_phase: 'C' | 'O' | 'D' | 'E' | 'S' | 'PRD' | 'I' | 'G' | 'N'
         }
         Returns: ProjectRow
       }
