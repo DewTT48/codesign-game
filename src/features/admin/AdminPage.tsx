@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   Activity,
   Archive,
@@ -8,12 +8,23 @@ import {
   RefreshCw,
   Search,
   ShieldCheck,
+  TicketCheck,
+  TicketPlus,
   Users,
+  X,
 } from 'lucide-react'
 import { type FormEvent, useState } from 'react'
 import { Link } from 'react-router-dom'
+import type { AdminUserRow } from '../../lib/supabase/database.types'
 import { useLanguage } from '../i18n/LanguageContext'
-import { getAdminOverview, getAdminUsers } from './admin.service'
+import { summarizeProjectPasses } from '../project-pass/projectPass.service'
+import {
+  createAdminGrantKey,
+  getAdminOverview,
+  getAdminProjectPasses,
+  getAdminUsers,
+  grantAdminProjectPass,
+} from './admin.service'
 
 const phaseNames: Record<string, string> = {
   C: 'CONTEXT',
@@ -37,12 +48,33 @@ function formatDate(value: string, isThai: boolean) {
 
 export function AdminPage() {
   const { isThai } = useLanguage()
+  const queryClient = useQueryClient()
   const [searchInput, setSearchInput] = useState('')
   const [searchQuery, setSearchQuery] = useState('')
+  const [grantTarget, setGrantTarget] = useState<AdminUserRow | null>(null)
+  const [grantKey, setGrantKey] = useState('')
+  const [grantNote, setGrantNote] = useState('')
+  const [grantSuccess, setGrantSuccess] = useState('')
   const overview = useQuery({ queryKey: ['admin-overview'], queryFn: getAdminOverview })
   const users = useQuery({
     queryKey: ['admin-users', searchQuery],
     queryFn: () => getAdminUsers(searchQuery),
+  })
+  const passes = useQuery({
+    queryKey: ['admin-project-passes'],
+    queryFn: getAdminProjectPasses,
+    retry: false,
+  })
+  const grantMutation = useMutation({
+    mutationFn: (input: Parameters<typeof grantAdminProjectPass>[0]) =>
+      grantAdminProjectPass(input),
+    async onSuccess(grantedPass) {
+      setGrantSuccess(grantedPass.owner_id)
+      setGrantTarget(null)
+      setGrantKey('')
+      setGrantNote('')
+      await queryClient.invalidateQueries({ queryKey: ['admin-project-passes'] })
+    },
   })
 
   function handleSearch(event: FormEvent<HTMLFormElement>) {
@@ -50,7 +82,33 @@ export function AdminPage() {
     setSearchQuery(searchInput.trim())
   }
 
-  const refreshing = overview.isFetching || users.isFetching
+  function openGrantDialog(user: AdminUserRow) {
+    setGrantSuccess('')
+    grantMutation.reset()
+    setGrantTarget(user)
+    setGrantKey(createAdminGrantKey(user.user_id))
+    setGrantNote('')
+  }
+
+  function closeGrantDialog() {
+    if (grantMutation.isPending) return
+    setGrantTarget(null)
+    setGrantKey('')
+    setGrantNote('')
+    grantMutation.reset()
+  }
+
+  function handleGrant(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    if (!grantTarget || !grantKey) return
+    grantMutation.mutate({
+      userId: grantTarget.user_id,
+      grantKey,
+      note: grantNote,
+    })
+  }
+
+  const refreshing = overview.isFetching || users.isFetching || passes.isFetching
   const maxPhaseCount = Math.max(1, ...(overview.data?.phase_counts.map((item) => item.count) ?? [1]))
 
   return (
@@ -66,10 +124,11 @@ export function AdminPage() {
           <p>{isThai ? 'ภาพรวมการใช้งานสำหรับดูแลระบบ โดยไม่เปิดอ่านเนื้อหา Mission ส่วนตัว' : 'A privacy-first operational overview without access to private mission content.'}</p>
         </div>
         <div className="admin-heading__actions">
-          <span className="admin-readonly-badge"><ShieldCheck aria-hidden="true" size={18} /> READ ONLY</span>
+          <span className="admin-readonly-badge"><ShieldCheck aria-hidden="true" size={18} /> ADMIN CONTROLS</span>
           <button type="button" disabled={refreshing} onClick={() => {
             void overview.refetch()
             void users.refetch()
+            void passes.refetch()
           }}>
             <RefreshCw aria-hidden="true" size={18} /> {refreshing ? 'REFRESHING…' : 'REFRESH'}
           </button>
@@ -175,16 +234,34 @@ export function AdminPage() {
 
             <div className="admin-privacy-note">
               <ShieldCheck aria-hidden="true" size={19} />
-              <span>{isThai ? 'แสดงเฉพาะข้อมูลบัญชีและจำนวน Mission ไม่แสดงคำตอบ Decisions PRD หรือ Journal' : 'Shows account metadata and mission counts only—never answers, decisions, PRDs, or journals.'}</span>
+              <span>{isThai ? 'จัดการสิทธิ์ Project Pass ได้ โดยยังคงไม่แสดงคำตอบ Decisions PRD หรือ Journal ส่วนตัว' : 'Manage Project Pass access without exposing private answers, decisions, PRDs, or journals.'}</span>
             </div>
+
+            {passes.isError ? (
+              <div className="admin-pass-feedback admin-pass-feedback--error" role="alert">
+                {isThai ? 'โหลดข้อมูล Project Pass ไม่สำเร็จ กรุณาตรวจสอบว่า migration ถูกใช้งานบน Supabase แล้ว' : 'Could not load Project Passes. Confirm that the migration is active on Supabase.'}
+              </div>
+            ) : null}
+
+            {grantSuccess ? (
+              <div className="admin-pass-feedback" role="status">
+                <TicketCheck aria-hidden="true" size={19} />
+                {isThai ? 'เพิ่ม Project Pass สำเร็จ ผู้ใช้จะเห็นสิทธิ์ใหม่เมื่อเปิดหรือรีเฟรช Dashboard' : 'Project Pass granted. The user will see it after opening or refreshing the dashboard.'}
+              </div>
+            ) : null}
 
             {users.data?.length === 0 ? (
               <div className="admin-empty-users">{isThai ? 'ไม่พบบัญชีที่ค้นหา' : 'NO MATCHING ACCOUNTS'}</div>
             ) : null}
 
             <div className="admin-user-list">
-              {users.data?.map((user) => (
-                <article className="admin-user-card" key={user.user_id}>
+              {users.data?.map((user) => {
+                const passSummary = summarizeProjectPasses(
+                  passes.data?.filter((pass) => pass.owner_id === user.user_id) ?? [],
+                )
+
+                return (
+                  <article className="admin-user-card" key={user.user_id}>
                   <div className="admin-user-identity">
                     <span aria-hidden="true">{(user.display_name || user.email || '?').slice(0, 1).toUpperCase()}</span>
                     <div>
@@ -202,13 +279,74 @@ export function AdminPage() {
                     <span>{isThai ? 'สมัคร' : 'JOINED'} · {formatDate(user.joined_at, isThai)}</span>
                     <span>{isThai ? 'ล่าสุด' : 'LAST ACTIVE'} · {formatDate(user.last_activity_at, isThai)}</span>
                   </div>
+                  <div className="admin-pass-control">
+                    <div>
+                      <TicketCheck aria-hidden="true" size={18} />
+                      <span>{isThai ? 'พร้อมใช้' : 'AVAILABLE'}</span>
+                      <strong>{passes.isLoading ? '—' : passSummary.available}</strong>
+                    </div>
+                    <small>
+                      {isThai
+                        ? `ใช้แล้ว ${passSummary.consumed} · ยกเลิก ${passSummary.revoked}`
+                        : `USED ${passSummary.consumed} · REVOKED ${passSummary.revoked}`}
+                    </small>
+                    <button
+                      type="button"
+                      disabled={passes.isError}
+                      aria-label={`${isThai ? 'เพิ่ม 1 Project Pass ให้' : 'Grant 1 Project Pass to'} ${user.email || user.display_name || user.user_id}`}
+                      onClick={() => openGrantDialog(user)}
+                    >
+                      <TicketPlus aria-hidden="true" size={17} />
+                      {isThai ? 'เพิ่ม 1 PASS' : 'GRANT 1 PASS'}
+                    </button>
+                  </div>
                 </article>
-              ))}
+                )
+              })}
             </div>
           </section>
 
           <p className="admin-generated-at">{isThai ? 'อัปเดตข้อมูลเมื่อ' : 'DATA GENERATED'} · {formatDate(overview.data.generated_at, isThai)}</p>
         </>
+      ) : null}
+
+      {grantTarget ? (
+        <div className="delete-dialog-backdrop" role="presentation" onMouseDown={(event) => {
+          if (event.currentTarget === event.target) closeGrantDialog()
+        }}>
+          <section className="delete-dialog admin-grant-dialog" role="dialog" aria-modal="true" aria-labelledby="grant-pass-title">
+            <button className="delete-dialog__close" type="button" aria-label={isThai ? 'ปิด' : 'Close'} onClick={closeGrantDialog}>
+              <X aria-hidden="true" size={22} />
+            </button>
+            <TicketPlus className="admin-grant-dialog__icon" aria-hidden="true" size={36} />
+            <span className="chapter-code">ACCESS CONTROL</span>
+            <h2 id="grant-pass-title">GRANT 1 PROJECT PASS?</h2>
+            <p>{isThai ? 'สิทธิ์นี้จะอนุญาตให้ผู้ใช้สร้าง Build Your Own Project ได้ 1 Project และระบบจะบันทึกผู้ให้สิทธิ์ไว้ใน Audit Log' : 'This lets the user create one Build Your Own Project and records the granting admin in the audit log.'}</p>
+            <strong>{grantTarget.display_name || grantTarget.email || grantTarget.user_id}</strong>
+            {grantTarget.display_name && grantTarget.email ? <span className="admin-grant-dialog__email">{grantTarget.email}</span> : null}
+            <form onSubmit={handleGrant}>
+              <label htmlFor="grant-pass-note">{isThai ? 'หมายเหตุ (ไม่บังคับ)' : 'NOTE (OPTIONAL)'}</label>
+              <textarea
+                id="grant-pass-note"
+                maxLength={500}
+                placeholder={isThai ? 'เช่น สิทธิ์สำหรับทดสอบ Phase 2' : 'For example: Phase 2 testing access'}
+                value={grantNote}
+                onChange={(event) => setGrantNote(event.target.value)}
+              />
+              {grantMutation.isError ? (
+                <div className="admin-pass-feedback admin-pass-feedback--error" role="alert">
+                  {isThai ? 'เพิ่ม Project Pass ไม่สำเร็จ กรุณาตรวจสอบสิทธิ์หรือลองอีกครั้ง' : 'Could not grant the Project Pass. Check access and try again.'}
+                </div>
+              ) : null}
+              <div className="delete-dialog__actions">
+                <button type="button" disabled={grantMutation.isPending} onClick={closeGrantDialog}>{isThai ? 'ยกเลิก' : 'CANCEL'}</button>
+                <button className="admin-grant-dialog__confirm" type="submit" disabled={grantMutation.isPending}>
+                  {grantMutation.isPending ? 'GRANTING…' : isThai ? 'ยืนยันเพิ่ม 1 PASS' : 'CONFIRM GRANT'}
+                </button>
+              </div>
+            </form>
+          </section>
+        </div>
       ) : null}
     </div>
   )
