@@ -1,7 +1,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
-import { describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { LanguageProvider } from '../i18n/LanguageContext'
 import { AdminPage } from './AdminPage'
 
@@ -10,6 +10,8 @@ const adminService = vi.hoisted(() => ({
   enableAdminAiTestAllowance: vi.fn(),
   getAdminOverview: vi.fn(),
   getAdminOwnProjects: vi.fn(),
+  getAdminProjectRecord: vi.fn(),
+  getAdminProjects: vi.fn(),
   getAdminProjectPasses: vi.fn(),
   getAdminUsers: vi.fn(),
   grantAdminProjectPass: vi.fn(),
@@ -18,6 +20,11 @@ const adminService = vi.hoisted(() => ({
 vi.mock('./admin.service', () => adminService)
 
 describe('AdminPage', () => {
+  afterEach(() => {
+    cleanup()
+    vi.clearAllMocks()
+  })
+
   const overview = {
     total_users: 7,
     total_missions: 12,
@@ -57,6 +64,19 @@ describe('AdminPage', () => {
     max_cost_micros: null,
     updated_at: '2026-09-16T06:00:00.000Z',
   }
+  const adminProject = {
+    ...ownProject,
+    mode: 'own',
+    topic: 'Manager development',
+    content_readiness: 'idea',
+    solidification_stage: 'IDEA',
+    phase_entry_count: 1,
+    locked_phase_count: 0,
+    decision_count: 0,
+    created_at: '2026-09-16T05:00:00.000Z',
+    completed_at: null,
+    latest_activity_at: ownProject.updated_at,
+  }
 
   function renderPage() {
     const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
@@ -71,20 +91,21 @@ describe('AdminPage', () => {
     )
   }
 
-  it('shows operational metadata without mission content', async () => {
+  it('shows the project directory and account operations', async () => {
     adminService.getAdminOverview.mockResolvedValue(overview)
     adminService.getAdminUsers.mockResolvedValue([player])
     adminService.getAdminProjectPasses.mockResolvedValue([])
     adminService.getAdminOwnProjects.mockResolvedValue([])
+    adminService.getAdminProjects.mockResolvedValue([adminProject])
 
     renderPage()
 
     expect(await screen.findByRole('heading', { name: 'ADMIN DASHBOARD' })).toBeInTheDocument()
     expect(await screen.findByText('player@example.com')).toBeInTheDocument()
-    expect(screen.getByText(/ไม่แสดงคำตอบ Decisions PRD หรือ Journal/)).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Project ทั้งหมดและรายละเอียด C–N' })).toBeInTheDocument()
+    expect(await screen.findByRole('button', { name: `เปิด Project Record: ${adminProject.title}` })).toBeInTheDocument()
     expect(screen.getByText('ADMIN CONTROLS')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'เพิ่ม 1 Project Pass ให้ player@example.com' })).toBeInTheDocument()
-    expect(screen.queryByText('PRIVATE MISSION ANSWER')).not.toBeInTheDocument()
   })
 
   it('lets an admin confirm and grant one Project Pass to a user', async () => {
@@ -92,6 +113,7 @@ describe('AdminPage', () => {
     adminService.getAdminUsers.mockResolvedValue([player])
     adminService.getAdminProjectPasses.mockResolvedValue([])
     adminService.getAdminOwnProjects.mockResolvedValue([])
+    adminService.getAdminProjects.mockResolvedValue([])
     adminService.grantAdminProjectPass.mockResolvedValue({
       id: 'pass-1',
       owner_id: player.user_id,
@@ -130,6 +152,7 @@ describe('AdminPage', () => {
     adminService.getAdminUsers.mockResolvedValue([player])
     adminService.getAdminProjectPasses.mockResolvedValue([])
     adminService.getAdminOwnProjects.mockResolvedValue([ownProject])
+    adminService.getAdminProjects.mockResolvedValue([adminProject])
     adminService.enableAdminAiTestAllowance.mockResolvedValue({
       project_id: ownProject.project_id,
       status: 'enabled',
@@ -140,5 +163,66 @@ describe('AdminPage', () => {
     fireEvent.click(await screen.findByRole('button', { name: 'เปิด 5 REQUEST TEST' }))
     await waitFor(() => expect(adminService.enableAdminAiTestAllowance).toHaveBeenCalledWith(ownProject.project_id))
     expect(await screen.findByText(/เปิด Internal AI allowance แล้ว/)).toBeInTheDocument()
+  })
+
+  it('opens a complete read-only Project Record', async () => {
+    adminService.getAdminOverview.mockResolvedValue(overview)
+    adminService.getAdminUsers.mockResolvedValue([player])
+    adminService.getAdminProjectPasses.mockResolvedValue([])
+    adminService.getAdminOwnProjects.mockResolvedValue([])
+    adminService.getAdminProjects.mockResolvedValue([adminProject])
+    adminService.getAdminProjectRecord.mockResolvedValue({
+      project: {
+        id: adminProject.project_id,
+        owner_id: player.user_id,
+        mode: 'own',
+        title: adminProject.title,
+        topic: adminProject.topic,
+        content_readiness: 'idea',
+        status: 'in_progress',
+        current_phase: 'C',
+        solidification_stage: 'IDEA',
+        created_at: adminProject.created_at,
+        updated_at: adminProject.updated_at,
+        completed_at: null,
+      },
+      owner: {
+        id: player.user_id,
+        email: player.email,
+        display_name: player.display_name,
+        created_at: player.joined_at,
+      },
+      phase_entries: [{
+        id: 'entry-1',
+        project_id: adminProject.project_id,
+        phase: 'C',
+        section: 'problem',
+        field_key: 'problemStatement',
+        content: 'Managers need a clearer way to consolidate evidence.',
+        status: 'captured',
+        version: 1,
+        is_current: true,
+        created_at: adminProject.created_at,
+        updated_at: adminProject.updated_at,
+      }],
+      decisions: [],
+      prd_snapshots: [],
+      app_builds: [],
+      feedback_entries: [],
+      ai_budget: null,
+      ai_requests: [],
+      ai_proposals: [],
+      accessed_at: adminProject.updated_at,
+    })
+
+    renderPage()
+
+    fireEvent.click(await screen.findByRole('button', { name: `เปิด Project Record: ${adminProject.title}` }))
+    expect(await screen.findByRole('dialog', { name: adminProject.title })).toBeInTheDocument()
+    expect(await screen.findByText('Managers need a clearer way to consolidate evidence.')).toBeInTheDocument()
+    expect(screen.getByText(/การเปิด Project ถูกบันทึกใน Admin access log/)).toBeInTheDocument()
+
+    fireEvent.keyDown(window, { key: 'Escape' })
+    expect(screen.queryByRole('dialog', { name: adminProject.title })).not.toBeInTheDocument()
   })
 })

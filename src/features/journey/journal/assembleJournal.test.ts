@@ -25,7 +25,7 @@ describe('assembleJournal', () => {
       feedback: [],
       decisions: [],
     })
-    expect(journal).toContain('# CODESIGN JOURNAL — 21 DAYS OF WRITING')
+    expect(journal).toContain('# CODESIGN PROJECT RECORD — 21 DAYS OF WRITING')
     expect(journal).toContain('New writers')
     expect(journal).toContain('https://example.com')
     expect(journal).not.toContain('https://github.com/private/secret-project')

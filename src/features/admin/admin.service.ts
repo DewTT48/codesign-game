@@ -1,11 +1,19 @@
 import { requireSupabase } from '../../lib/supabase/client'
 import type {
+  AdminProjectRecord,
+  AdminProjectRow,
   AdminOwnProjectRow,
   AdminOverview,
   AdminUserRow,
   AiProjectBudgetRow,
   ProjectPassRow,
 } from '../../lib/supabase/database.types'
+
+export type AdminProjectFilters = {
+  searchText?: string
+  mode?: AdminProjectRow['mode'] | 'all'
+  status?: AdminProjectRow['project_status'] | 'all'
+}
 
 export type GrantProjectPassInput = {
   userId: string
@@ -51,6 +59,32 @@ export async function getAdminProjectPasses(): Promise<ProjectPassRow[]> {
 export async function getAdminOwnProjects(): Promise<AdminOwnProjectRow[]> {
   const client = requireSupabase()
   const { data, error } = await client.rpc('get_admin_own_projects')
+  if (error) throw error
+  return data
+}
+
+export async function getAdminProjects({
+  searchText = '',
+  mode = 'all',
+  status = 'all',
+}: AdminProjectFilters = {}): Promise<AdminProjectRow[]> {
+  const client = requireSupabase()
+  const { data, error } = await client.rpc('get_admin_projects', {
+    search_text: searchText.trim() || null,
+    mode_filter: mode === 'all' ? null : mode,
+    status_filter: status === 'all' ? null : status,
+    page_limit: 100,
+    page_offset: 0,
+  })
+  if (error) throw error
+  return data
+}
+
+export async function getAdminProjectRecord(projectId: string): Promise<AdminProjectRecord> {
+  const client = requireSupabase()
+  const { data, error } = await client.rpc('get_admin_project_record', {
+    target_project_id: projectId,
+  })
   if (error) throw error
   return data
 }

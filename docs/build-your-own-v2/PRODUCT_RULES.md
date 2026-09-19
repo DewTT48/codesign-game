@@ -5,7 +5,7 @@
 
 ## เป้าหมาย
 
-Build Your Own ช่วยให้ผู้ใช้ใช้กระบวนการ CODESIGN กับผลิตภัณฑ์ของตนเอง โดย reuse Journey, decision history, Journal และ PRD เดิม แต่ไม่บังคับรูปแบบ `21 DAYS OF ______` และมี AI อยู่ภายใน CODESIGN เพื่อช่วยคิดอย่างมีโครงสร้าง
+Build Your Own ช่วยให้ผู้ใช้ใช้กระบวนการ CODESIGN กับผลิตภัณฑ์ของตนเอง โดย reuse Journey, decision history, Project Record และ PRD เดิม แต่ไม่บังคับรูปแบบ `21 DAYS OF ______` และมี AI อยู่ภายใน CODESIGN เพื่อช่วยคิดอย่างมีโครงสร้าง
 
 Feature นี้ต้องแยกจาก Guided 21 Days อย่างชัดเจน การเพิ่ม `own` ต้องไม่เปลี่ยน creation flow, content, route, progress หรือข้อมูล Project เดิมที่มี `mode = 'guided'`
 

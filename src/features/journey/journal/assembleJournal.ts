@@ -103,7 +103,7 @@ ${jsonBlock(s.screens)}
 
 ${bullets(list(s.acceptanceCriteria))}`
 
-  return `# CODESIGN JOURNAL — ${project.title}
+  return `# CODESIGN PROJECT RECORD — ${project.title}
 
 ## Starting Idea
 

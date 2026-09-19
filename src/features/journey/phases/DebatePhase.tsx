@@ -209,7 +209,7 @@ export function DebatePhase({ project }: { project: ProjectRow }) {
             </div>
           </header>
           {summaryEditing ? <textarea rows={6} value={String(draft.values.whatChanged)} onChange={(event) => { draft.setField('whatChanged', event.target.value); resetAlignment() }} /> : <p>{displayedSummary || (isThai ? 'เลือกผลต่อ Direction เพื่อดูสรุปที่ระบบรวบรวมให้' : 'Choose the direction outcome to see the automatically assembled summary.')}</p>}
-          <small>{isThai ? 'ระบบจะส่งสรุปนี้ต่อไปยัง Step E, Journal และ PRD' : 'This summary will flow to Step E, the Journal, and the PRD.'}</small>
+          <small>{isThai ? 'ระบบจะส่งสรุปนี้ต่อไปยัง Step E, Project Record และ PRD' : 'This summary will flow to Step E, the Project Record, and the PRD.'}</small>
         </section>
       </PhaseSection>
       <CrossStepAlignment

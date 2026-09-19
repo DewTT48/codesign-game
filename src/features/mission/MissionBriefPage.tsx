@@ -32,12 +32,12 @@ export function MissionBriefPage() {
     'เว็บแอปที่ใช้งานได้และมี Public URL',
     'GitHub Repository ที่ Codex ช่วยสร้างและกลับมาแก้ไขต่อได้',
     'PRD ที่บันทึก Product Definition ของคุณ',
-    'Journal ที่แสดงว่าความคิดพัฒนาอย่างไร',
+    'Project Record ที่แสดงว่าข้อมูลและคำตัดสินพัฒนาอย่างไร',
   ] : [
     'A working web app with a public URL',
     'A GitHub repository Codex helps create and you can continue editing',
     'A PRD that records your Product Definition',
-    'A Journal showing how your thinking evolved',
+    'A Project Record showing how the content and decisions evolved',
   ]
   return (
     <div className="content-page mission-brief-page">

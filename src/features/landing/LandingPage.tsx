@@ -36,7 +36,7 @@ export function LandingPage() {
               <Lightbulb aria-hidden="true" size={19} /> Codex-ready PRD
             </li>
             <li>
-              <MessageSquareText aria-hidden="true" size={19} /> Decision journal
+              <MessageSquareText aria-hidden="true" size={19} /> Project record
             </li>
           </ul>
         </div>

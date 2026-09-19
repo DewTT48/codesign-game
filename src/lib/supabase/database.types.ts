@@ -210,6 +210,63 @@ export type AdminOwnProjectRow = {
   updated_at: string
 }
 
+export type AdminProjectRow = {
+  project_id: string
+  owner_id: string
+  owner_email: string | null
+  owner_display_name: string | null
+  mode: ProjectRow['mode']
+  title: string
+  topic: string
+  content_readiness: ProjectRow['content_readiness']
+  project_status: ProjectRow['status']
+  current_phase: ProjectRow['current_phase']
+  solidification_stage: ProjectRow['solidification_stage']
+  phase_entry_count: number
+  locked_phase_count: number
+  decision_count: number
+  ai_status: AiProjectBudgetRow['status'] | 'not_configured'
+  created_at: string
+  updated_at: string
+  completed_at: string | null
+  latest_activity_at: string
+}
+
+export type AdminProjectOwner = {
+  id: string
+  email: string | null
+  display_name: string | null
+  created_at: string
+}
+
+export type AdminPhaseEntryRow = {
+  id: string
+  project_id: string
+  phase: string
+  section: string
+  field_key: string
+  content: Json
+  status: 'captured' | 'locked' | 'superseded'
+  version: number
+  is_current: boolean
+  created_at: string
+  updated_at: string
+}
+
+export type AdminProjectRecord = {
+  project: ProjectRow
+  owner: AdminProjectOwner
+  phase_entries: AdminPhaseEntryRow[]
+  decisions: DecisionRow[]
+  prd_snapshots: PrdSnapshotRow[]
+  app_builds: AppBuildRow[]
+  feedback_entries: FeedbackEntryRow[]
+  ai_budget: AiProjectBudgetRow | null
+  ai_requests: AiRequestRow[]
+  ai_proposals: AiProposalRow[]
+  accessed_at: string
+}
+
 export type DecisionRow = {
   id: string
   project_id: string
@@ -540,6 +597,20 @@ export type Database = {
       get_admin_own_projects: {
         Args: Record<string, never>
         Returns: AdminOwnProjectRow[]
+      }
+      get_admin_projects: {
+        Args: {
+          search_text?: string | null
+          mode_filter?: ProjectRow['mode'] | null
+          status_filter?: ProjectRow['status'] | null
+          page_limit?: number
+          page_offset?: number
+        }
+        Returns: AdminProjectRow[]
+      }
+      get_admin_project_record: {
+        Args: { target_project_id: string }
+        Returns: AdminProjectRecord
       }
       get_my_project_passes: {
         Args: Record<string, never>

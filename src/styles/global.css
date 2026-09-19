@@ -10071,6 +10071,631 @@ a.mission-node__content:focus-visible {
   margin-top: 24px;
 }
 
+.admin-project-directory {
+  margin-top: 22px;
+}
+
+.admin-project-refresh {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 9px 13px;
+  color: var(--white);
+  background: var(--deep-3);
+  border: 3px solid var(--line);
+  font-family: var(--font-display);
+  font-size: 9px;
+  cursor: pointer;
+}
+
+.admin-project-refresh:disabled {
+  cursor: wait;
+  opacity: 0.55;
+}
+
+.admin-record-access-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 24px 0;
+  padding: 15px;
+  color: var(--ink);
+  background: color-mix(in srgb, var(--positive) 82%, var(--white));
+  border: 3px solid var(--white);
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+.admin-record-access-note svg {
+  flex: 0 0 auto;
+}
+
+.admin-project-filters {
+  display: grid;
+  grid-template-columns: minmax(320px, 1fr) minmax(170px, 0.28fr) minmax(170px, 0.28fr);
+  align-items: end;
+  gap: 14px;
+  margin-bottom: 22px;
+}
+
+.admin-project-search {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 9px;
+  padding-left: 12px;
+  color: var(--ink);
+  background: var(--white);
+  border: 3px solid var(--ink);
+  box-shadow: 4px 4px 0 var(--line);
+}
+
+.admin-project-search input {
+  min-width: 0;
+  height: 46px;
+  padding: 0 4px;
+  color: var(--ink);
+  background: transparent;
+  border: 0;
+  outline: 0;
+  font-size: 16px;
+}
+
+.admin-project-search button {
+  align-self: stretch;
+  padding: 0 13px;
+  color: var(--white);
+  background: var(--deep-3);
+  border: 0;
+  border-left: 3px solid var(--ink);
+  font-family: var(--font-display);
+  font-size: 9px;
+  cursor: pointer;
+}
+
+.admin-project-filters > label:not(.admin-project-search) {
+  display: grid;
+  gap: 7px;
+}
+
+.admin-project-filters > label:not(.admin-project-search) > span {
+  color: var(--muted);
+  font-family: var(--font-display);
+  font-size: 8px;
+}
+
+.admin-project-filters select {
+  width: 100%;
+  min-height: 52px;
+  padding: 0 12px;
+  color: var(--ink);
+  background: var(--white);
+  border: 3px solid var(--ink);
+  font-family: var(--font-display);
+  font-size: 9px;
+}
+
+.admin-project-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.admin-project-card {
+  min-width: 0;
+  display: grid;
+  gap: 17px;
+  padding: 20px;
+  background: var(--deep-2);
+  border: 2px solid var(--line);
+}
+
+.admin-project-card > header,
+.admin-project-card > footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.admin-project-mode,
+.admin-project-status {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 6px 8px;
+  font-family: var(--font-display);
+  font-size: 7px;
+  line-height: 1.35;
+}
+
+.admin-project-mode {
+  color: var(--ink);
+  background: var(--accent);
+  border: 2px solid var(--white);
+}
+
+.admin-project-mode--own {
+  color: var(--white);
+  background: var(--magenta);
+}
+
+.admin-project-status {
+  color: var(--muted);
+  border: 2px solid var(--line);
+}
+
+.admin-project-status--completed {
+  color: var(--ink);
+  background: var(--positive);
+  border-color: var(--white);
+}
+
+.admin-project-status--archived {
+  opacity: 0.68;
+}
+
+.admin-project-card__identity h3 {
+  margin: 0;
+  font-size: 21px;
+  line-height: 1.35;
+}
+
+.admin-project-card__identity p {
+  margin: 5px 0 12px;
+  color: var(--muted);
+  font-size: 15px;
+}
+
+.admin-project-card__identity > span {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--white);
+  font-weight: 700;
+}
+
+.admin-project-card__identity > small {
+  display: block;
+  margin: 5px 0 0 22px;
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+
+.admin-project-progress {
+  display: grid;
+  gap: 9px;
+  padding: 13px;
+  background: rgba(3, 26, 45, 0.48);
+  border-left: 4px solid var(--accent);
+}
+
+.admin-project-progress > div:first-child {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.admin-project-progress span,
+.admin-project-progress small {
+  color: var(--muted);
+  font-family: var(--font-display);
+  font-size: 7px;
+  line-height: 1.45;
+}
+
+.admin-project-progress strong {
+  color: var(--accent);
+  font-family: var(--font-display);
+  font-size: 14px;
+}
+
+.admin-project-progress__bar {
+  height: 12px;
+  overflow: hidden;
+  background: var(--deep-3);
+  border: 2px solid var(--line);
+}
+
+.admin-project-progress__bar i {
+  height: 100%;
+  display: block;
+  background: linear-gradient(90deg, var(--accent), var(--magenta));
+}
+
+.admin-project-card > footer > span {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.admin-project-card > footer > button {
+  min-height: 42px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 9px 12px;
+  color: var(--ink);
+  background: var(--positive);
+  border: 2px solid var(--white);
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.admin-record-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: grid;
+  justify-items: end;
+  padding: 18px;
+  overflow: auto;
+  background: rgba(1, 10, 22, 0.82);
+  backdrop-filter: blur(6px);
+}
+
+.admin-record-dialog {
+  position: relative;
+  width: min(1120px, 96vw);
+  min-height: calc(100vh - 36px);
+  padding: clamp(24px, 4vw, 42px);
+  color: var(--white);
+  background: var(--deep-1);
+  border: 4px solid var(--accent);
+  box-shadow: -10px 10px 0 rgba(0, 0, 0, 0.45);
+}
+
+.admin-record-close {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  width: 46px;
+  height: 46px;
+  display: grid;
+  place-items: center;
+  float: right;
+  color: var(--white);
+  background: var(--deep-3);
+  border: 3px solid var(--line);
+  cursor: pointer;
+}
+
+.admin-record-hero {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 0 62px 26px 0;
+  border-bottom: 4px solid var(--accent);
+}
+
+.admin-record-hero h2 {
+  margin: 13px 0 0;
+  font-family: var(--font-display);
+  font-size: clamp(24px, 4vw, 38px);
+  line-height: 1.35;
+}
+
+.admin-record-hero p {
+  margin: 10px 0 0;
+  color: var(--muted);
+  font-size: 17px;
+}
+
+.admin-record-mode {
+  display: flex;
+  align-items: stretch;
+  flex: 0 0 auto;
+  border: 3px solid var(--white);
+}
+
+.admin-record-mode span,
+.admin-record-mode strong {
+  display: grid;
+  place-items: center;
+  padding: 11px 13px;
+  font-family: var(--font-display);
+  font-size: 9px;
+}
+
+.admin-record-mode span {
+  color: var(--ink);
+  background: var(--accent);
+}
+
+.admin-record-mode strong {
+  min-width: 58px;
+  color: var(--white);
+  background: var(--deep-3);
+}
+
+.admin-record-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.admin-record-summary > div {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: 7px 10px;
+  padding: 16px;
+  background: var(--panel);
+  border: 2px solid var(--line);
+}
+
+.admin-record-summary svg {
+  grid-row: 1 / 4;
+  color: var(--accent);
+}
+
+.admin-record-summary span,
+.admin-record-summary small {
+  color: var(--muted);
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+
+.admin-record-summary strong {
+  font-size: 15px;
+  overflow-wrap: anywhere;
+}
+
+.admin-record-section {
+  margin-top: 28px;
+}
+
+.admin-record-section > header {
+  margin-bottom: 15px;
+}
+
+.admin-record-section h3 {
+  margin: 10px 0 0;
+  font-family: var(--font-display);
+  font-size: 17px;
+  line-height: 1.45;
+}
+
+.admin-record-phases {
+  display: grid;
+  gap: 10px;
+}
+
+.admin-record-phase {
+  background: var(--panel);
+  border: 2px solid var(--line);
+}
+
+.admin-record-phase > summary {
+  display: grid;
+  grid-template-columns: 54px minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 13px;
+  padding: 14px;
+  cursor: pointer;
+  list-style: none;
+}
+
+.admin-record-phase > summary::-webkit-details-marker {
+  display: none;
+}
+
+.admin-record-phase > summary > span {
+  width: 48px;
+  height: 48px;
+  display: grid;
+  place-items: center;
+  color: var(--ink);
+  background: var(--accent);
+  border: 2px solid var(--white);
+  font-family: var(--font-display);
+  font-size: 10px;
+}
+
+.admin-record-phase > summary > div {
+  display: grid;
+  gap: 4px;
+}
+
+.admin-record-phase > summary strong {
+  font-family: var(--font-display);
+  font-size: 11px;
+}
+
+.admin-record-phase > summary small {
+  color: var(--muted);
+}
+
+.admin-record-phase > summary i {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--positive);
+  font-family: var(--font-display);
+  font-size: 8px;
+  font-style: normal;
+}
+
+.admin-record-phase[open] > summary > svg {
+  transform: rotate(90deg);
+}
+
+.admin-record-phase__body {
+  display: grid;
+  gap: 18px;
+  padding: 0 18px 18px;
+  border-top: 2px solid var(--line);
+}
+
+.admin-record-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  padding-top: 18px;
+}
+
+.admin-record-fields > article,
+.admin-record-decisions > article,
+.admin-record-revisions > article,
+.admin-record-artifacts > article,
+.admin-record-artifacts > details {
+  min-width: 0;
+  padding: 15px;
+  background: rgba(3, 26, 45, 0.48);
+  border: 2px solid var(--line);
+}
+
+.admin-record-fields article > header,
+.admin-record-decisions article > header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.admin-record-fields h4,
+.admin-record-decisions h4,
+.admin-record-artifacts h4 {
+  margin: 5px 0 0;
+  color: var(--white);
+  font-family: var(--font-display);
+  font-size: 10px;
+  line-height: 1.45;
+}
+
+.admin-record-fields header span,
+.admin-record-fields header small,
+.admin-record-fields time,
+.admin-record-decisions small,
+.admin-record-artifacts article > span {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.admin-record-fields p,
+.admin-record-decisions p,
+.admin-record-artifacts p {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  line-height: 1.65;
+}
+
+.admin-record-fields pre,
+.admin-record-decisions pre,
+.admin-record-revisions pre,
+.admin-record-artifacts pre {
+  max-height: 460px;
+  overflow: auto;
+  padding: 13px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  color: var(--white);
+  background: var(--deep-3);
+  border: 1px solid var(--line);
+  font: 13px/1.65 ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+.admin-record-empty-value,
+.admin-record-no-data {
+  display: block;
+  color: var(--muted);
+  font-style: italic;
+}
+
+.admin-record-no-data {
+  margin: 18px 0 0;
+}
+
+.admin-record-decisions {
+  display: grid;
+  gap: 10px;
+}
+
+.admin-record-decisions > h4 {
+  margin: 0;
+  color: var(--accent);
+}
+
+.admin-record-revisions {
+  padding: 13px;
+  background: var(--deep-3);
+  border: 2px dashed var(--line);
+}
+
+.admin-record-revisions > summary,
+.admin-record-artifacts details > summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--accent);
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.admin-record-revisions > article {
+  margin-top: 10px;
+}
+
+.admin-record-artifacts {
+  display: grid;
+  gap: 11px;
+}
+
+.admin-record-artifacts article > a {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  color: var(--positive);
+  overflow-wrap: anywhere;
+}
+
+.admin-record-artifacts details > h4 {
+  margin-top: 18px;
+  color: var(--accent);
+}
+
+.admin-record-ai-summary {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+  padding: 14px;
+  background: var(--panel);
+  border-left: 4px solid var(--magenta);
+}
+
+.admin-record-ai-summary svg {
+  color: var(--accent);
+}
+
+.admin-record-ai-summary span {
+  margin-left: auto;
+  color: var(--muted);
+}
+
+.admin-record-footer {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 30px;
+  padding-top: 18px;
+  color: var(--muted);
+  border-top: 2px solid var(--line);
+  font-family: var(--font-display);
+  font-size: 7px;
+  line-height: 1.5;
+}
+
 .admin-ai-projects .admin-users-heading > svg {
   color: var(--accent);
 }
@@ -10153,6 +10778,23 @@ a.mission-node__content:focus-visible {
 }
 
 @media (max-width: 960px) {
+  .admin-project-list,
+  .admin-record-fields {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-project-filters {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .admin-project-search {
+    grid-column: 1 / -1;
+  }
+
+  .admin-record-summary {
+    grid-template-columns: 1fr;
+  }
+
   .admin-ai-project-card {
     grid-template-columns: 1fr;
   }
@@ -10163,6 +10805,50 @@ a.mission-node__content:focus-visible {
 }
 
 @media (max-width: 560px) {
+  .admin-project-filters {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-project-search {
+    grid-column: auto;
+  }
+
+  .admin-project-card > footer,
+  .admin-record-hero {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .admin-project-card > footer > button {
+    width: 100%;
+  }
+
+  .admin-record-backdrop {
+    padding: 0;
+  }
+
+  .admin-record-dialog {
+    width: 100%;
+    min-height: 100vh;
+    border-width: 0;
+  }
+
+  .admin-record-hero {
+    padding-right: 0;
+  }
+
+  .admin-record-mode {
+    align-self: flex-start;
+  }
+
+  .admin-record-phase > summary {
+    grid-template-columns: 48px minmax(0, 1fr) auto;
+  }
+
+  .admin-record-phase > summary > i {
+    display: none;
+  }
+
   .admin-ai-project-card dl {
     grid-template-columns: 1fr;
   }

@@ -28,6 +28,7 @@ import {
   getAdminUsers,
   grantAdminProjectPass,
 } from './admin.service'
+import { AdminProjectDirectory } from './AdminProjectDirectory'
 
 const phaseNames: Record<string, string> = {
   C: 'CONTEXT',
@@ -137,7 +138,7 @@ export function AdminPage() {
         <div>
           <span className="chapter-code">SYSTEM CONTROL</span>
           <h1>ADMIN DASHBOARD</h1>
-          <p>{isThai ? 'ภาพรวมการใช้งานสำหรับดูแลระบบ โดยไม่เปิดอ่านเนื้อหา Mission ส่วนตัว' : 'A privacy-first operational overview without access to private mission content.'}</p>
+          <p>{isThai ? 'ดูผู้ใช้ Project และ Project Record ได้ครบทั้ง 21 Days และ Build Your Own โดยไม่แก้คำตัดสินแทนเจ้าของ Project' : 'Review users, projects, and complete Project Records across 21 Days and Build Your Own without editing owner decisions.'}</p>
         </div>
         <div className="admin-heading__actions">
           <span className="admin-readonly-badge"><ShieldCheck aria-hidden="true" size={18} /> ADMIN CONTROLS</span>
@@ -229,6 +230,8 @@ export function AdminPage() {
             </article>
           </section>
 
+          <AdminProjectDirectory isThai={isThai} />
+
           <section className="admin-panel admin-users-panel" aria-labelledby="admin-users-title">
             <header className="admin-users-heading">
               <div>
@@ -251,7 +254,7 @@ export function AdminPage() {
 
             <div className="admin-privacy-note">
               <ShieldCheck aria-hidden="true" size={19} />
-              <span>{isThai ? 'จัดการสิทธิ์ Project Pass ได้ โดยยังคงไม่แสดงคำตอบ Decisions PRD หรือ Journal ส่วนตัว' : 'Manage Project Pass access without exposing private answers, decisions, PRDs, or journals.'}</span>
+              <span>{isThai ? 'ส่วนนี้ใช้จัดการบัญชีและ Project Pass ส่วนคำตอบ Decisions และ PRD เปิดอ่านได้จาก Project Directory ด้านบน' : 'Use this section for accounts and Project Passes. Open answers, decisions, and PRDs from the Project Directory above.'}</span>
             </div>
 
             {passes.isError ? (
@@ -333,7 +336,7 @@ export function AdminPage() {
             </header>
             <div className="admin-privacy-note">
               <ShieldCheck aria-hidden="true" size={19} />
-              <span>{isThai ? 'แสดงเฉพาะ metadata และตัวนับการใช้งาน ไม่เปิดอ่านข้อความ Draft, Decision หรือ PRD ของผู้ใช้' : 'Shows metadata and usage counters only. Private drafts, decisions, and PRDs remain hidden.'}</span>
+              <span>{isThai ? 'ส่วนนี้ใช้เปิดและติดตาม AI allowance ส่วน AI Proposal และคำตอบที่ผู้ใช้ยอมรับดูได้ใน Project Record' : 'Use this section to enable and monitor AI allowance. AI proposals and reviewed content are available in the Project Record.'}</span>
             </div>
             {allowanceSuccess ? <div className="admin-pass-feedback" role="status">
               <CheckCircle2 aria-hidden="true" size={19} />

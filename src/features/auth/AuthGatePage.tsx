@@ -67,8 +67,8 @@ export function AuthGatePage() {
                 ? 'กลับไปทำ Project เดิมต่อ หรือเข้าสู่ Dashboard สำหรับผู้ดูแลระบบด้วยบัญชีที่ได้รับสิทธิ์'
                 : 'Continue an existing Project, or open the Admin Dashboard with an authorized account.')
             : (isThai
-                ? 'ตั้งแต่ C — Context เป็นต้นไป การคิด การตัดสินใจ PRD และ Journal ของคุณจะถูกบันทึกอย่างเป็นส่วนตัว'
-                : 'From C — Context onward, your thinking, decisions, PRD, and Journal are saved privately.')}
+                ? 'ตั้งแต่ C — Context เป็นต้นไป ข้อมูลและการตัดสินใจจะถูกรวบรวมเป็น Project Record จนพร้อมสร้าง Product'
+                : 'From C — Context onward, your inputs and decisions are consolidated into a Project Record ready for building.')}
         </p>
         <ArcadeButton
           type="button"

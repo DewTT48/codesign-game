@@ -238,10 +238,10 @@ export function DashboardPage() {
             <p>{isThai
               ? deleteTarget.mode === 'own'
                 ? 'การลบนี้จะลบข้อมูล Project อย่างถาวร ไม่สามารถกู้คืนได้ และจะไม่คืน Project Pass อัตโนมัติ'
-                : 'การลบนี้จะลบคำตอบ การตัดสินใจ PRD และ Journal ทั้งหมดของ Mission นี้อย่างถาวร และไม่สามารถกู้คืนได้'
+                : 'การลบนี้จะลบคำตอบ การตัดสินใจ PRD และ Project Record ทั้งหมดของ Mission นี้อย่างถาวร และไม่สามารถกู้คืนได้'
               : deleteTarget.mode === 'own'
                 ? 'This permanently removes the Project. It cannot be undone and does not automatically restore its Project Pass.'
-                : 'This permanently removes every answer, decision, PRD, and journal entry in this mission. It cannot be undone.'}</p>
+                : 'This permanently removes every answer, decision, PRD, and Project Record entry in this mission. It cannot be undone.'}</p>
             <strong>{deleteTarget.title}</strong>
             <label htmlFor="delete-confirmation">{isThai ? 'พิมพ์ DELETE เพื่อยืนยัน' : 'TYPE DELETE TO CONFIRM'}</label>
             <input

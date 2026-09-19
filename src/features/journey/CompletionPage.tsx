@@ -23,13 +23,13 @@ const downloadText = (content: string, filename: string) => {
 export function CompletionPage({ project }: { project: ProjectRow }) {
   const { isThai } = useLanguage()
   const [status, setStatus] = useState('')
-  const [showJournal, setShowJournal] = useState(false)
+  const [showProjectRecord, setShowProjectRecord] = useState(false)
   const exportData = useQuery({ queryKey: ['journey-export', project.id], queryFn: () => getJourneyExportData(project.id) })
 
   if (exportData.isLoading) return <div className="route-loading" role="status">{isThai ? 'กำลังสรุปเส้นทางของคุณ…' : 'ASSEMBLING YOUR JOURNEY…'}</div>
   if (exportData.isError || !exportData.data) return <div className="route-loading" role="alert">{isThai ? 'โหลดข้อมูลสรุปเส้นทางไม่สำเร็จ' : 'JOURNEY EXPORT COULD NOT BE LOADED.'}</div>
 
-  const journal = assembleJournal(project, exportData.data)
+  const projectRecord = assembleJournal(project, exportData.data)
   const prd = exportData.data.prd?.markdown_content ?? ''
   const slug = project.topic.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-') || 'codesign'
 
@@ -58,10 +58,10 @@ export function CompletionPage({ project }: { project: ProjectRow }) {
       <section className="completion-artifacts" aria-label={isThai ? 'ผลงานที่เสร็จแล้ว' : 'Completed artifacts'}>
         <article><ExternalLink size={28} /><span>{isThai ? 'Product ที่สร้างเสร็จ' : 'A PRODUCT'}</span><h2>{project.title}</h2><p>{isThai ? 'App ที่ใช้งานได้และผ่านการทดสอบรอบแรก' : 'A working build that has completed its first test.'}</p>{exportData.data.build ? <a href={exportData.data.build.app_url} target="_blank" rel="noreferrer">{isThai ? 'เปิด App ของฉัน' : 'VIEW MY APP'} <ExternalLink size={16} /></a> : null}</article>
         <article><FileText size={28} /><span>{isThai ? 'เอกสาร PRD' : 'A PRD'}</span><h2>{isThai ? 'ข้อกำหนดสำหรับการสร้าง' : 'BUILD DEFINITION'}</h2><p>{isThai ? 'สิ่งที่ Product ควรทำและไม่ควรทำ' : 'What the product should and should not do.'}</p><div><button type="button" disabled={!prd} onClick={() => void copy(prd, 'PRD')}><Clipboard size={16} /> {isThai ? 'คัดลอก' : 'COPY'}</button><button type="button" disabled={!prd} onClick={() => downloadText(prd, `${slug}-prd.md`)}><Download size={16} /> {isThai ? 'ดาวน์โหลด' : 'DOWNLOAD'}</button></div></article>
-        <article><FileText size={28} /><span>{isThai ? 'บันทึก CODESIGN' : 'A CODESIGN JOURNAL'}</span><h2>{isThai ? 'เส้นทางการตัดสินใจ' : 'DECISION TRAIL'}</h2><p>{isThai ? 'เส้นทางจาก Context ถึงการปรับรอบถัดไป' : 'Your path from Context to Next Iteration.'}</p><div><button type="button" onClick={() => setShowJournal((current) => !current)}><FileText size={16} /> {showJournal ? (isThai ? 'ซ่อน' : 'HIDE') : (isThai ? 'เปิดดู' : 'VIEW')}</button><button type="button" onClick={() => downloadText(journal, `${slug}-journal.md`)}><Download size={16} /> {isThai ? 'ดาวน์โหลด' : 'DOWNLOAD'}</button></div></article>
+        <article><FileText size={28} /><span>{isThai ? 'PROJECT RECORD' : 'A PROJECT RECORD'}</span><h2>{isThai ? 'ข้อมูลและเส้นทางการตัดสินใจ' : 'CONTENT & DECISION TRAIL'}</h2><p>{isThai ? 'ข้อมูลที่ Consolidate ตั้งแต่ Context ถึงการปรับรอบถัดไป' : 'Consolidated content from Context to Next Iteration.'}</p><div><button type="button" onClick={() => setShowProjectRecord((current) => !current)}><FileText size={16} /> {showProjectRecord ? (isThai ? 'ซ่อน' : 'HIDE') : (isThai ? 'เปิดดู' : 'VIEW')}</button><button type="button" onClick={() => downloadText(projectRecord, `${slug}-project-record.md`)}><Download size={16} /> {isThai ? 'ดาวน์โหลด' : 'DOWNLOAD'}</button></div></article>
       </section>
 
-      {showJournal ? <section className="journal-preview"><div><h2>{isThai ? 'บันทึก CODESIGN' : 'CODESIGN JOURNAL'}</h2><button type="button" onClick={() => window.print()}><Printer size={16} /> {isThai ? 'พิมพ์ / บันทึก PDF' : 'PRINT / PDF'}</button></div><pre>{journal}</pre></section> : null}
+      {showProjectRecord ? <section className="journal-preview"><div><h2>CODESIGN PROJECT RECORD</h2><button type="button" onClick={() => window.print()}><Printer size={16} /> {isThai ? 'พิมพ์ / บันทึก PDF' : 'PRINT / PDF'}</button></div><pre>{projectRecord}</pre></section> : null}
 
       <blockquote className="completion-principle">{isThai ? 'คุณไม่จำเป็นต้องมี Prompt แรกที่สมบูรณ์แบบ คุณต้องมีกระบวนการที่เปลี่ยนความไม่แน่นอนให้เป็นการตัดสินใจ' : <>You don&apos;t need the perfect first prompt. You need a process that turns uncertainty into decisions.</>}</blockquote>
       {status ? <p className="completion-status" role="status">{status}</p> : null}
