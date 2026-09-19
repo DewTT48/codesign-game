@@ -30,7 +30,7 @@ const preferredFields: Record<PhaseCode, string[]> = {
   D: ['assumptions', 'directionResult', 'whatChanged', 'alignmentStatus', 'alignmentNote', 'alignmentConfirmed'],
   E: ['direction', 'mustHaves', 'nonGoals', 'scopeAlignmentConfirmed', 'alignmentStatus', 'alignmentNote', 'alignmentConfirmed'],
   S: ['productLanguage', 'brandCopy', 'dailyDuration', 'journeySummary', 'dailyCompletionRule', 'returnRule', 'sequenceRule', 'storageRule', 'contentArcs', 'contentPattern', 'exercisePattern', 'recordPattern', 'dailyContent', 'selectedExperience', 'experienceOptions', 'advancedNotes', 'acceptanceCriteria', 'alignmentStatus', 'alignmentNote', 'alignmentConfirmed'],
-  PRD: ['markdownDraft', 'contentPackDraft', 'experienceDirectionDraft', 'uiBriefDraft', 'uiReviewDraft', 'uiReviewApplied'],
+  PRD: ['markdownDraft', 'contentPackDraft', 'experienceDirectionDraft', 'uiBriefDraft', 'uiReviewDraft', 'uiReviewResolution', 'uiReviewApplied'],
   I: ['githubReadiness', 'workingApp', 'appUrl', 'alignmentStatus', 'alignmentNote', 'alignmentConfirmed'],
   G: ['mobile', 'start', 'dailyFlow', 'saveData', 'reopen', 'persistence', 'navigation', 'prdRules', 'expected', 'actual', 'stuck', 'worked', 'mostImportant', 'alignmentStatus', 'alignmentNote', 'alignmentConfirmed'],
   N: ['buildUpdateFiles', 'buildUpdatePrimaryFile', 'buildUpdateConfirmed', 'change', 'because', 'expectedResult', 'changeRoute', 'routeConfirmed'],
@@ -42,7 +42,7 @@ const thaiLabels: Record<string, string> = {
   assumptions: 'การตัดสินใจต่อสมมติฐาน', text: 'สมมติฐาน', stance: 'การตัดสินใจ', why: 'เหตุผลของคุณ', agreeReason: 'เหตุผลที่เดินหน้าต่อ', challengeReason: 'เหตุผลที่ปรับ Direction', directionResult: 'ผลต่อ Direction', whatChanged: 'สรุปจาก Step D',
   direction: 'เรากำลังจะสร้าง', mustHaves: 'สิ่งที่ต้องมีใน Version แรก', nonGoals: 'สิ่งที่ยังไม่ทำใน Version นี้', scopeAlignmentConfirmed: 'ยืนยันความสอดคล้องของขอบเขต',
   productLanguage: 'ภาษาของ Product', brandCopy: 'ข้อความประจำ Product', dailyDuration: 'เวลาต่อวัน', journeySummary: 'เส้นทางหลักของผู้ใช้', dailyCompletionRule: 'หนึ่งวันสำเร็จเมื่อ', returnRule: 'การย้อนกลับมา', sequenceRule: 'ลำดับการทำ', storageRule: 'การจำข้อมูล', contentArcs: 'โครงเนื้อหา 3 ช่วง', contentPattern: 'รูปแบบเนื้อหาประจำวัน', exercisePattern: 'รูปแบบแบบฝึก', recordPattern: 'รูปแบบการบันทึก', dailyContent: 'เนื้อหา 21 วัน', selectedExperience: 'Theme ที่เลือก', experienceOptions: 'แนวทางประสบการณ์ที่พิจารณา', advancedNotes: 'หมายเหตุเพิ่มเติมสำหรับการสร้าง', acceptanceCriteria: 'เกณฑ์ตรวจรับ', alignmentStatus: 'ความสัมพันธ์กับ Step ก่อนหน้า', alignmentNote: 'คำอธิบายล่าสุดในการส่งต่อ', alignmentConfirmed: 'ยืนยันการส่งต่อข้อมูล',
-  markdownDraft: 'CODESIGN_HANDOFF.md', contentPackDraft: 'CONTENT_PACK.md', experienceDirectionDraft: 'EXPERIENCE_DIRECTION.md', reviewOutcomeV2: 'ผลการตรวจชุดส่งต่องาน', uiBriefDraft: 'CODESIGN UI BRIEF', uiReviewDraft: 'CODESIGN_UI_REVIEW.md', uiReviewApplied: 'นำ UI Review ไปใช้กับ Final PRD แล้ว',
+  markdownDraft: 'CODESIGN_HANDOFF.md', contentPackDraft: 'CONTENT_PACK.md', experienceDirectionDraft: 'EXPERIENCE_DIRECTION.md', reviewOutcomeV2: 'ผลการตรวจชุดส่งต่องาน', uiBriefDraft: 'CODESIGN UI BRIEF', uiReviewDraft: 'CODESIGN_UI_REVIEW.md', uiReviewResolution: 'บันทึกการยืนยัน Prototype-driven Changes', uiReviewApplied: 'นำ UI Review ไปใช้กับ Final PRD แล้ว',
   githubReadiness: 'ความพร้อมเรื่อง GitHub', workingApp: 'ยืนยันว่า App ทำงานแล้ว', appUrl: 'Public App URL',
   mobile: 'เปิดบนโทรศัพท์แล้ว', start: 'เริ่มโปรแกรมได้', dailyFlow: 'ทดลองหนึ่งวันจนจบแล้ว', saveData: 'บันทึกข้อมูลได้', reopen: 'เปิด App ใหม่แล้ว', persistence: 'ความคืบหน้ายังคงอยู่', navigation: 'ออกแล้วกลับมาได้', prdRules: 'ผ่านกติกาสำคัญจาก PRD', expected: 'สิ่งที่คาดว่าผู้ใช้จะทำ', actual: 'สิ่งที่ผู้ใช้ทำจริง', stuck: 'จุดที่ผู้ใช้ติดขัด', worked: 'สิ่งที่ทำงานได้ดี', mostImportant: 'ข้อเสนอแนะสำคัญที่สุด',
   buildUpdateFiles: 'เอกสารสถานะของ App ปัจจุบัน', buildUpdatePrimaryFile: 'ไฟล์สรุปหลัก', buildUpdateConfirmed: 'ยืนยันว่าอ่านไฟล์สรุปแล้ว', change: 'สิ่งที่จะเปลี่ยน', because: 'เหตุผล', expectedResult: 'ผลลัพธ์ที่คาดหวัง', changeRoute: 'Step ที่เป็นเจ้าของการเปลี่ยนแปลง', routeConfirmed: 'ยืนยันว่าแก้เฉพาะการสร้าง',
@@ -63,7 +63,7 @@ const codeLabels: Record<string, { th: string; en: string }> = {
   implementation: { th: 'แก้เฉพาะการสร้าง App', en: 'IMPLEMENTATION ONLY' },
 }
 
-const markdownFields = new Set(['markdownDraft', 'contentPackDraft', 'experienceDirectionDraft', 'uiBriefDraft', 'uiReviewDraft'])
+const markdownFields = new Set(['markdownDraft', 'contentPackDraft', 'experienceDirectionDraft', 'uiBriefDraft', 'uiReviewDraft', 'uiReviewResolution'])
 const patternFields = new Set(['contentPattern', 'exercisePattern', 'recordPattern'])
 
 function fieldLabel(key: string, isThai: boolean) {

@@ -28,6 +28,7 @@ const reviewFieldKey = 'confirmedFilesV2'
 const uiBriefFieldKey = 'uiBriefDraft'
 const uiReviewFieldKey = 'uiReviewDraft'
 const uiReviewAppliedFieldKey = 'uiReviewApplied'
+const uiReviewResolutionFieldKey = 'uiReviewResolution'
 
 export function PrdPhase({ project }: { project: ProjectRow }) {
   const { isThai } = useLanguage()
@@ -44,6 +45,7 @@ export function PrdPhase({ project }: { project: ProjectRow }) {
   const [viewMode, setViewMode] = useState<'preview' | 'edit'>('preview')
   const [uiBrief, setUiBrief] = useState('')
   const [uiReview, setUiReview] = useState('')
+  const [uiReviewResolution, setUiReviewResolution] = useState('')
   const [uiReviewApplied, setUiReviewApplied] = useState(false)
   const [saveState, setSaveState] = useState<SaveState>('idle')
   const [feedback, setFeedback] = useState('')
@@ -75,25 +77,30 @@ export function PrdPhase({ project }: { project: ProjectRow }) {
       : assembleGuidedUiBrief(project, source.data, initial)
     const savedUiReview = draft.data.find((entry) => entry.fieldKey === uiReviewFieldKey)?.content
     const initialUiReview = typeof savedUiReview === 'string' ? savedUiReview : ''
+    const savedUiReviewResolution = draft.data.find((entry) => entry.fieldKey === uiReviewResolutionFieldKey)?.content
+    const initialUiReviewResolution = typeof savedUiReviewResolution === 'string' ? savedUiReviewResolution : ''
     const initialUiReviewApplied = draft.data.find((entry) => entry.fieldKey === uiReviewAppliedFieldKey)?.content === true
     setFiles(initial)
     setReviewedFiles(initialReviewed)
     setUiBrief(initialBrief)
     setUiReview(initialUiReview)
+    setUiReviewResolution(initialUiReviewResolution)
     setUiReviewApplied(initialUiReviewApplied)
 
     const missing = prdFiles.filter(({ key }) => !draft.data.some((entry) => entry.fieldKey === fileFieldKeys[key]))
     const missingReview = !draft.data.some((entry) => entry.fieldKey === reviewFieldKey)
     const missingBrief = !draft.data.some((entry) => entry.fieldKey === uiBriefFieldKey)
     const missingUiReview = !draft.data.some((entry) => entry.fieldKey === uiReviewFieldKey)
+    const missingUiReviewResolution = !draft.data.some((entry) => entry.fieldKey === uiReviewResolutionFieldKey)
     const missingUiReviewApplied = !draft.data.some((entry) => entry.fieldKey === uiReviewAppliedFieldKey)
-    if (missing.length || missingReview || missingBrief || missingUiReview || missingUiReviewApplied) {
+    if (missing.length || missingReview || missingBrief || missingUiReview || missingUiReviewResolution || missingUiReviewApplied) {
       setSaveState('saving')
       void Promise.all([
         ...missing.map(({ key }) => savePhaseEntry({ projectId: project.id, phase: 'PRD' as const, section: 'document', fieldKey: fileFieldKeys[key], content: initial[key] })),
         ...(missingReview ? [savePhaseEntry({ projectId: project.id, phase: 'PRD' as const, section: 'review', fieldKey: reviewFieldKey, content: initialReviewed })] : []),
         ...(missingBrief ? [savePhaseEntry({ projectId: project.id, phase: 'PRD' as const, section: 'ui_review', fieldKey: uiBriefFieldKey, content: initialBrief })] : []),
         ...(missingUiReview ? [savePhaseEntry({ projectId: project.id, phase: 'PRD' as const, section: 'ui_review', fieldKey: uiReviewFieldKey, content: initialUiReview })] : []),
+        ...(missingUiReviewResolution ? [savePhaseEntry({ projectId: project.id, phase: 'PRD' as const, section: 'ui_review', fieldKey: uiReviewResolutionFieldKey, content: initialUiReviewResolution })] : []),
         ...(missingUiReviewApplied ? [savePhaseEntry({ projectId: project.id, phase: 'PRD' as const, section: 'ui_review', fieldKey: uiReviewAppliedFieldKey, content: initialUiReviewApplied })] : []),
       ]).then(() => setSaveState('saved')).catch(() => setSaveState('error'))
     } else setSaveState('saved')
@@ -180,8 +187,8 @@ export function PrdPhase({ project }: { project: ProjectRow }) {
     if (element.scrollHeight <= element.clientHeight + 2) markFileRead(selectedFile)
   }, [selectedFile, viewMode, files])
 
-  const applyUiReview = async (review: string) => {
-    const nextFiles = applyGuidedUiReview(files, review)
+  const applyUiReview = async (review: string, resolution = '') => {
+    const nextFiles = applyGuidedUiReview(files, review, resolution)
     const reviewed: PrdFileKey[] = []
     setFiles(nextFiles)
     setReviewedFiles(reviewed)
@@ -196,28 +203,14 @@ export function PrdPhase({ project }: { project: ProjectRow }) {
         savePhaseEntry({ projectId: project.id, phase: 'PRD', section: 'review', fieldKey: reviewFieldKey, content: reviewed }),
         savePhaseEntry({ projectId: project.id, phase: 'PRD', section: 'ui_review', fieldKey: uiBriefFieldKey, content: uiBrief }),
         savePhaseEntry({ projectId: project.id, phase: 'PRD', section: 'ui_review', fieldKey: uiReviewFieldKey, content: review }),
+        savePhaseEntry({ projectId: project.id, phase: 'PRD', section: 'ui_review', fieldKey: uiReviewResolutionFieldKey, content: resolution }),
         savePhaseEntry({ projectId: project.id, phase: 'PRD', section: 'ui_review', fieldKey: uiReviewAppliedFieldKey, content: true }),
       ])
       setUiReview(review)
+      setUiReviewResolution(resolution)
       setUiReviewApplied(true)
       setSaveState('saved')
       setFeedback(isThai ? 'สร้าง Final PRD แล้ว กรุณาเปิดอ่านและยืนยันไฟล์ฉบับสุดท้ายเพียงรอบนี้' : 'FINAL PRD CREATED. REVIEW AND CONFIRM THIS FINAL PACKAGE ONCE.')
-    } catch (error) {
-      setSaveState('error')
-      throw error
-    }
-  }
-
-  const saveRevisionReview = async (review: string) => {
-    setSaveState('saving')
-    try {
-      await Promise.all([
-        savePhaseEntry({ projectId: project.id, phase: 'PRD', section: 'ui_review', fieldKey: uiReviewFieldKey, content: review }),
-        savePhaseEntry({ projectId: project.id, phase: 'PRD', section: 'ui_review', fieldKey: uiReviewAppliedFieldKey, content: false }),
-      ])
-      setUiReview(review)
-      setUiReviewApplied(false)
-      setSaveState('saved')
     } catch (error) {
       setSaveState('error')
       throw error
@@ -284,12 +277,11 @@ export function PrdPhase({ project }: { project: ProjectRow }) {
       <PhaseSection step="02" title={isThai ? 'ดู Prototype และปรับจนได้ UI/UX ที่ต้องการ' : 'PROTOTYPE AND REFINE THE UI/UX'} description={isThai ? 'คัดลอก Prompt ไปใช้ใน ChatGPT หรือ Chat ที่รองรับการสร้างภาพ/หน้าเว็บ ทดลองปรับจนพอใจ แล้วสั่ง FINALIZE UI REVIEW เพื่อนำผลกลับมา CODESIGN' : 'Use the prepared prompt in ChatGPT or another Chat that can create visual artifacts. Iterate until satisfied, then request FINALIZE UI REVIEW and bring the result back.'}>
         <UiReviewWorkspace
           mode="guided"
-          projectId={project.id}
           uiBrief={uiBrief}
           storedReview={uiReview}
+          storedResolution={uiReviewResolution}
           applied={uiReviewApplied}
-          onApply={async ({ review }) => applyUiReview(review)}
-          onRevision={async ({ review }) => saveRevisionReview(review)}
+          onApply={async ({ review, resolution }) => applyUiReview(review, resolution)}
         />
       </PhaseSection>
 

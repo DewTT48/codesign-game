@@ -5,12 +5,27 @@ import type { PrdDrafts } from './prdPackage'
 export const UI_REVIEW_FILE_NAME = 'CODESIGN_UI_REVIEW.md'
 export const OWN_FINAL_PRD_FILE_NAME = 'PRODUCT_REQUIREMENTS.md'
 
-export type UiReviewRoute = 'approved' | 'revision-e' | 'revision-s'
+export type UiReviewRoute = 'approved' | 'confirmation-needed' | 'reprototype'
 
 export type UiReviewCheck = {
   valid: boolean
   route: UiReviewRoute | null
   errors: string[]
+}
+
+export type UiReviewOpenItem = {
+  id: string
+  title: string
+  prompt: string
+  body: string
+  kind: 'owner' | 'consolidation'
+}
+
+export type UiReviewForwardPlan = {
+  acceptedChanges: string
+  impactMap: string
+  ownerQuestions: UiReviewOpenItem[]
+  consolidationItems: UiReviewOpenItem[]
 }
 
 const sourceText = (value: Json | undefined, fallback = 'Not specified') => {
@@ -86,7 +101,7 @@ ${representativeContent(files.contentPack)}
 - Do not add, remove, or rewrite product scope, content rules, completion rules, storage behavior, or approved daily content.
 - Use realistic representative content, but do not attempt to reproduce all 21 days.
 - A visual artifact, image, or lightweight interactive HTML prototype is acceptable. It does not need production code, authentication, a backend, or complete data.
-- If a requested UI change would alter a locked Product Decision, stop and mark it as REVISION REQUIRED — STEP E or STEP S instead of silently changing the product.
+- If an accepted UI change alters a locked Product Decision, record the difference and its PRD impact explicitly. Do not silently rewrite the decision or send the owner back through earlier steps.
 `
 }
 
@@ -109,7 +124,7 @@ ${prdMarkdown.trim() || 'The PRD draft is not ready yet.'}
 - Do not invent business rules, permissions, data behavior, scope, or new features.
 - A visual artifact, image, or lightweight interactive HTML prototype is acceptable. It does not need production code or production infrastructure.
 - Ask one clear Product Owner question at a time when a material UX decision is missing.
-- If an accepted UI change alters a Product Decision, identify the affected PRD section explicitly rather than silently rewriting it.
+- If an accepted UI change alters a Product Decision, identify the affected PRD section explicitly so CODESIGN can consolidate it into the final PRD with owner confirmation.
 `
 }
 
@@ -140,7 +155,7 @@ ${uiBrief}
 3. แสดงหน้าหลัก เส้นทางหลัก Navigation สถานะสำคัญ Mobile และ Desktop เท่าที่จำเป็นต่อการตรวจ UX โดยไม่ต้องทำเนื้อหาครบทุกหน้า
 4. ให้ผู้ใช้ทดลองหรือดู Prototype แล้วถามทีละหนึ่งคำถามเกี่ยวกับสิ่งที่เห็นจริง เช่น ลำดับ หน้าจอ ความชัดเจน การกลับไปมา และความรู้สึกของ UI
 5. ปรับ Prototype ต่อเนื่องจนผู้ใช้พิมพ์ว่า “FINALIZE UI REVIEW” ห้ามสร้าง Final files ก่อนคำสั่งนี้
-6. ถ้าคำขอเปลี่ยน User, Goal, Scope, Must Have, Non-goal, Journey, Completion rule, Content, Storage หรือ Business rule ให้หยุดและสรุป REVISION REQUIRED — STEP E หรือ STEP S ห้ามแก้เงียบ ๆ
+6. หาก Prototype ทำให้เกิดการเปลี่ยน User, Goal, Scope, Must Have, Non-goal, Journey, Completion rule, Content, Storage หรือ Business rule ให้ทำ Prototype ต่อได้ แต่ต้องบันทึกความต่างและผลกระทบอย่างชัดเจน ห้ามแก้เงียบ ๆ และห้ามส่งผู้ใช้ย้อนกลับไปทำ Step เดิม
 7. หลังผู้ใช้สั่ง FINALIZE UI REVIEW: ${finalFiles}
 
 ===== OUTPUT CONTRACT: ${UI_REVIEW_FILE_NAME} =====
@@ -148,7 +163,10 @@ ${uiBrief}
 <!-- CODESIGN:UI_REVIEW:v1 -->
 
 ## Review Status
-ใช้ค่าเดียว: APPROVED FOR FINAL PRD / REVISION REQUIRED — STEP E / REVISION REQUIRED — STEP S
+ใช้ค่าเดียว:
+- READY FOR FINAL PRD — UI ได้รับอนุมัติและไม่มีคำถามที่เจ้าของต้องตอบ
+- OWNER CONFIRMATION NEEDED — UI ได้รับอนุมัติ มีการเปลี่ยนจากข้อมูลเดิมหรือมีคำถามที่ตอบต่อใน CODESIGN ได้ โดยไม่ต้องย้อน Step
+- RE-PROTOTYPE REQUIRED — ใช้เฉพาะเมื่อการตัดสินใจที่ยังไม่จบทำให้ Prototype ปัจจุบันไม่สามารถใช้เป็นแบบอ้างอิงได้จริง
 
 ## Prototype Reviewed
 ระบุ Version หรือคำอธิบาย Prototype ล่าสุดที่ผู้ใช้เห็นและอนุมัติ
@@ -169,13 +187,20 @@ Layout, hierarchy, component character, typography, color roles, density, motion
 เฉพาะสิ่งที่ผู้ใช้อนุมัติจากการเห็น Prototype แล้ว หากไม่มีให้ระบุ NONE
 
 ## PRD Impact Map
-ระบุแต่ละการเปลี่ยนแปลง → ไฟล์/หัวข้อ PRD ที่ต้องแก้ หรือ NO PRD CHANGE
+ระบุแต่ละการเปลี่ยนแปลง → ไฟล์/หัวข้อ PRD ที่ต้องแก้ หรือ NO PRD CHANGE พร้อมข้อความที่แนะนำให้ Consolidate เมื่อทำได้
 
 ## Protected Decisions
 ระบุ Product decisions และ Content ที่ห้ามถูกเปลี่ยนจาก UI Review นี้
 
 ## Open Questions
-ต้องเป็น NONE ก่อนใช้สถานะ APPROVED FOR FINAL PRD
+ใช้ NONE หากไม่มีคำถามที่เจ้าของต้องตอบ หากมีให้เขียนแต่ละรายการตามรูปแบบนี้:
+### Q-01 — ชื่อสั้น
+- **Type:** OWNER DECISION หรือ CODESIGN CONSOLIDATION
+- **Question or action:** คำถามที่เจ้าของต้องตอบ หรือสิ่งที่ CODESIGN นำไปผสานได้เอง
+- **Suggested answer or update:** ข้อเสนอที่ยึดจาก Prototype และบทสนทนา ห้ามแต่ง Product decision
+- **Done when:** เงื่อนไขที่ตรวจได้ว่าปิดรายการแล้ว
+
+ใช้ OWNER DECISION เฉพาะเมื่อจำเป็นต้องได้คำตอบใหม่จากเจ้าของจริง ๆ งานจับคู่หัวข้อ บันทึก Change Log หรือผสานสิ่งที่เจ้าของอนุมัติแล้วให้ใช้ CODESIGN CONSOLIDATION
 
 ## Owner Approval
 ใส่ประโยค I APPROVE THIS UI DIRECTION เฉพาะเมื่อผู้ใช้ยืนยัน Prototype ล่าสุดจริง
@@ -202,7 +227,7 @@ ${uiBrief}
 3. Show only the screens, primary journey, navigation, important states, and mobile/desktop views needed to judge the UX. Do not reproduce every content page.
 4. Let the owner inspect the prototype, then ask one question at a time about visible hierarchy, navigation, clarity, and interaction.
 5. Iterate until the owner types “FINALIZE UI REVIEW”. Do not create final files before that command.
-6. If a request changes the user, goal, scope, must-haves, non-goals, journey, completion rule, content, storage, or business rules, stop and report REVISION REQUIRED — STEP E or STEP S.
+6. If the prototype changes the user, goal, scope, must-haves, non-goals, journey, completion rule, content, storage, or business rules, continue the prototype work but record the difference and PRD impact explicitly. Never rewrite it silently or send the owner back through earlier steps.
 7. After FINALIZE UI REVIEW: ${finalFiles}
 
 ===== OUTPUT CONTRACT: ${UI_REVIEW_FILE_NAME} =====
@@ -210,7 +235,10 @@ ${uiBrief}
 <!-- CODESIGN:UI_REVIEW:v1 -->
 
 ## Review Status
-Use exactly one: APPROVED FOR FINAL PRD / REVISION REQUIRED — STEP E / REVISION REQUIRED — STEP S
+Use exactly one:
+- READY FOR FINAL PRD — the UI is approved and no owner answer remains
+- OWNER CONFIRMATION NEEDED — the UI is approved and CODESIGN can resolve recorded changes or owner questions inline without revisiting earlier steps
+- RE-PROTOTYPE REQUIRED — only when an unresolved decision makes the current prototype invalid as the visual baseline
 
 ## Prototype Reviewed
 Identify the latest prototype version the owner actually reviewed.
@@ -231,13 +259,20 @@ Record mobile/desktop behavior, keyboard, focus, contrast, touch targets, and em
 Only owner-approved changes observed through the prototype; use NONE when applicable.
 
 ## PRD Impact Map
-Map each change to the affected PRD file/section or NO PRD CHANGE.
+Map each change to the affected PRD file/section or NO PRD CHANGE. Include proposed consolidation wording when evidence supports it.
 
 ## Protected Decisions
 List product decisions and content this review must not change.
 
 ## Open Questions
-Must be NONE before APPROVED FOR FINAL PRD.
+Use NONE when no owner answer remains. Otherwise use this exact structure for each item:
+### Q-01 — Short title
+- **Type:** OWNER DECISION or CODESIGN CONSOLIDATION
+- **Question or action:** the owner question or the consolidation action CODESIGN can perform
+- **Suggested answer or update:** a proposal grounded in the prototype and conversation, never an invented Product decision
+- **Done when:** a testable closure condition
+
+Use OWNER DECISION only for a genuinely new owner answer. Use CODESIGN CONSOLIDATION for mapping, change logging, or incorporating something the owner already approved.
 
 ## Owner Approval
 Include I APPROVE THIS UI DIRECTION only after the owner explicitly approves the latest prototype.
@@ -280,18 +315,121 @@ export function validateUiReviewDocument(content: string): UiReviewCheck {
 
   const reviewStatus = section(source, 'Review Status')
   let route: UiReviewRoute | null = null
-  if (/^\s*APPROVED FOR FINAL PRD\s*[.!]?\s*$/i.test(reviewStatus)) route = 'approved'
-  else if (/^\s*REVISION REQUIRED\s*(?:—|-)\s*STEP E\s*[.!]?\s*$/i.test(reviewStatus)) route = 'revision-e'
-  else if (/^\s*REVISION REQUIRED\s*(?:—|-)\s*STEP S\s*[.!]?\s*$/i.test(reviewStatus)) route = 'revision-s'
+  if (/^\s*(?:APPROVED|READY) FOR FINAL PRD\s*[.!]?\s*$/i.test(reviewStatus)) route = 'approved'
+  else if (/^\s*OWNER CONFIRMATION NEEDED\s*[.!]?\s*$/i.test(reviewStatus)) route = 'confirmation-needed'
+  // v1 reviews used a backward route. Treat them as a forward-consolidation
+  // checkpoint so an existing file never forces the owner through old steps.
+  else if (/^\s*REVISION REQUIRED\s*(?:—|-)\s*STEP [ES]\s*[.!]?\s*$/i.test(reviewStatus)) route = 'confirmation-needed'
+  else if (/^\s*RE-PROTOTYPE REQUIRED\s*[.!]?\s*$/i.test(reviewStatus)) route = 'reprototype'
   else errors.push('Review Status ไม่ตรงกับค่าที่รองรับ')
 
-  if (route === 'approved') {
+  if (route === 'approved' || route === 'confirmation-needed') {
     if (!/I APPROVE THIS UI DIRECTION/i.test(source)) errors.push('ยังไม่มี Owner Approval สำหรับ Prototype ล่าสุด')
+  }
+  if (route === 'approved') {
     const openQuestions = section(source, 'Open Questions')
     if (!/^\s*(?:NONE|ไม่มี)\s*[.!]?\s*$/i.test(openQuestions)) errors.push('Open Questions ต้องเป็น NONE ก่อนสร้าง Final PRD')
   }
 
   return { valid: errors.length === 0, route, errors }
+}
+
+function openQuestionBlocks(markdown: string) {
+  const openQuestions = section(markdown, 'Open Questions')
+  if (!openQuestions || /^\s*(?:NONE|ไม่มี)\s*[.!]?\s*$/i.test(openQuestions)) return []
+  const matches = [...openQuestions.matchAll(/(?:^|\n)###\s+([^\n]+)\n([\s\S]*?)(?=\n###\s+|$)/g)]
+  const numbered = matches.filter((match) => /^(?:OQ|Q|CQ|RA)-?\d+\b/i.test(match[1].trim()))
+  if (!numbered.length) {
+    return [{ title: 'OPEN QUESTION', body: openQuestions }]
+  }
+  return numbered.map((match) => ({ title: match[1].trim(), body: match[2].trim() }))
+}
+
+function questionPrompt(title: string, body: string) {
+  const labeled = body.match(/(?:^|\n)\s*[-*]?\s*\*\*(?:Question or action|Question to confirm|คำถามที่ต้องยืนยัน|คำถามที่ต้องตอบ)\s*:\*\*\s*([^\n]+)/i)?.[1]?.trim()
+  return labeled || title.replace(/^[A-Z]{1,3}-?\d+\s*(?:—|-)\s*/i, '').trim()
+}
+
+export function getUiReviewForwardPlan(content: string): UiReviewForwardPlan {
+  const source = content.trim()
+  const items = openQuestionBlocks(source).map(({ title, body }, index): UiReviewOpenItem => {
+    const explicitOwner = /(?:\*\*Type\s*:\*\*\s*OWNER DECISION|คำถามที่ต้องยืนยัน|Question to confirm|Decision needed)/i.test(body)
+    const explicitConsolidation = /(?:\*\*Type\s*:\*\*\s*CODESIGN CONSOLIDATION|คำถามที่ต้องตรวจ|CODESIGN\s+(?:บันทึก|ผสาน)|mapping|change log)/i.test(body)
+    return {
+      id: title.match(/^([A-Z]{1,3}-?\d+)/i)?.[1]?.toUpperCase() ?? `Q-${String(index + 1).padStart(2, '0')}`,
+      title,
+      prompt: questionPrompt(title, body),
+      body,
+      kind: explicitOwner ? 'owner' : explicitConsolidation ? 'consolidation' : 'owner',
+    }
+  })
+  return {
+    acceptedChanges: section(source, 'Accepted UX Changes'),
+    impactMap: section(source, 'PRD Impact Map'),
+    ownerQuestions: items.filter((item) => item.kind === 'owner'),
+    consolidationItems: items.filter((item) => item.kind === 'consolidation'),
+  }
+}
+
+export function assembleUiReviewResolution(
+  review: string,
+  answers: Record<string, string>,
+  language: 'th' | 'en',
+) {
+  const plan = getUiReviewForwardPlan(review)
+  const answerBlocks = plan.ownerQuestions.map((item) => `### ${item.id} — ${item.title.replace(/^[A-Z]{1,3}-?\d+\s*(?:—|-)\s*/i, '')}
+
+**Question:** ${item.prompt}
+
+**Owner answer:** ${answers[item.id]?.trim() || 'Not answered'}`)
+  const consolidation = plan.consolidationItems.length
+    ? plan.consolidationItems.map((item) => `- **${item.id}:** ${item.prompt}`).join('\n')
+    : language === 'th'
+      ? '- CODESIGN จะผสาน Accepted UX Changes และ PRD Impact Map ที่เจ้าของอนุมัติแล้วลงใน Final PRD'
+      : '- CODESIGN will merge the owner-approved Accepted UX Changes and PRD Impact Map into the final PRD.'
+
+  return `# CODESIGN PROTOTYPE CHANGE RESOLUTION
+<!-- CODESIGN:UI_REVIEW_RESOLUTION:v1 -->
+
+## Owner Confirmation
+
+I CONFIRM THESE PROTOTYPE-DRIVEN CHANGES
+
+## Consolidation Actions
+
+${consolidation}
+
+## Owner Answers
+
+${answerBlocks.length ? answerBlocks.join('\n\n') : 'NONE'}
+
+## Traceability
+
+The original Product definition remains in version history. This resolution authorizes CODESIGN to move forward, record the delta, and assemble the final PRD without sending the owner back through earlier steps.
+`
+}
+
+export function validateUiReviewResolution(review: string, resolution: string) {
+  const plan = getUiReviewForwardPlan(review)
+  if (!/<!--\s*CODESIGN:UI_REVIEW_RESOLUTION:v1\s*-->/i.test(resolution)) return false
+  if (!/I CONFIRM THESE PROTOTYPE-DRIVEN CHANGES/i.test(resolution)) return false
+  return plan.ownerQuestions.every((item) => {
+    const escaped = item.id.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+    const body = resolution.match(new RegExp(`(?:^|\\n)###\\s+${escaped}[^\\n]*\\n([\\s\\S]*?)(?=\\n###\\s+|\\n##\\s+|$)`, 'i'))?.[1] ?? ''
+    const answer = body.match(/\*\*Owner answer:\*\*\s*([^\n]+)/i)?.[1]?.trim() ?? ''
+    return Boolean(answer && !/^Not answered$/i.test(answer))
+  })
+}
+
+export function getUiReviewResolutionAnswers(review: string, resolution: string) {
+  const answers: Record<string, string> = {}
+  for (const item of getUiReviewForwardPlan(review).ownerQuestions) {
+    const escaped = item.id.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+    const body = resolution.match(new RegExp(`(?:^|\\n)###\\s+${escaped}[^\\n]*\\n([\\s\\S]*?)(?=\\n###\\s+|\\n##\\s+|$)`, 'i'))?.[1] ?? ''
+    const answer = body.match(/\*\*Owner answer:\*\*\s*([^\n]+)/i)?.[1]?.trim() ?? ''
+    if (answer && !/^Not answered$/i.test(answer)) answers[item.id] = answer
+  }
+  return answers
 }
 
 export function validateOwnFinalPrd(content: string) {
@@ -334,9 +472,19 @@ function replaceOrAppend(markdown: string, title: string, body: string) {
   return `${markdown.trimEnd()}\n\n${block}\n`
 }
 
-export function applyGuidedUiReview(files: PrdDrafts, uiReview: string): PrdDrafts {
+function nestedResolution(resolution: string) {
+  return resolution.trim()
+    .replace(/^###\s+/gm, '###### ')
+    .replace(/^##\s+/gm, '##### ')
+    .replace(/^#\s+/gm, '#### ')
+}
+
+export function applyGuidedUiReview(files: PrdDrafts, uiReview: string, resolution = ''): PrdDrafts {
   const check = validateUiReviewDocument(uiReview)
-  if (!check.valid || check.route !== 'approved') throw new Error('An approved CODESIGN UI Review is required.')
+  if (!check.valid || check.route === 'reprototype') throw new Error('An approved CODESIGN UI Review is required.')
+  if (check.route === 'confirmation-needed' && !validateUiReviewResolution(uiReview, resolution)) {
+    throw new Error('Owner confirmation is required before consolidating prototype changes.')
+  }
 
   const handoffReview = compactReview(uiReview, [
     'Prototype Reviewed',
@@ -355,9 +503,28 @@ export function applyGuidedUiReview(files: PrdDrafts, uiReview: string): PrdDraf
     'Protected Decisions',
   ])
 
+  const consolidationNotice = '> **Final PRD addendum:** These owner-confirmed prototype changes amend or clarify the earlier draft wherever the two differ. Protected Decisions and the approved CONTENT_PACK.md remain unchanged.'
+  const resolutionRecord = resolution.trim() ? `\n\n### Prototype Change Resolution\n\n${nestedResolution(resolution)}` : ''
   return {
-    handoff: replaceOrAppend(files.handoff, '## CODESIGN UI Review — Owner Approved', handoffReview),
+    handoff: replaceOrAppend(files.handoff, '## CODESIGN UI Review — Owner Approved', `${consolidationNotice}\n\n${handoffReview}${resolutionRecord}`),
     contentPack: files.contentPack,
-    experienceDirection: replaceOrAppend(files.experienceDirection, '## CODESIGN UI Review — Owner Approved', experienceReview),
+    experienceDirection: replaceOrAppend(files.experienceDirection, '## CODESIGN UI Review — Owner Approved', `${consolidationNotice}\n\n${experienceReview}${resolutionRecord}`),
   }
+}
+
+export function applyOwnUiReview(finalPrd: string, uiReview: string, resolution = '') {
+  const check = validateUiReviewDocument(uiReview)
+  if (!check.valid || check.route === 'reprototype') throw new Error('An approved CODESIGN UI Review is required.')
+  if (check.route === 'confirmation-needed' && !validateUiReviewResolution(uiReview, resolution)) {
+    throw new Error('Owner confirmation is required before consolidating prototype changes.')
+  }
+  const reviewRecord = compactReview(uiReview, [
+    'Prototype Reviewed',
+    'Accepted UX Changes',
+    'PRD Impact Map',
+    'Protected Decisions',
+  ])
+  const consolidationNotice = '> **Final PRD addendum:** These owner-confirmed prototype changes amend or clarify the earlier draft wherever the two differ. Protected Decisions remain unchanged.'
+  const resolutionRecord = resolution.trim() ? `\n\n### Prototype Change Resolution\n\n${nestedResolution(resolution)}` : ''
+  return replaceOrAppend(finalPrd, '## CODESIGN UI Review — Owner Approved', `${consolidationNotice}\n\n${reviewRecord}${resolutionRecord}`)
 }

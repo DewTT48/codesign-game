@@ -213,7 +213,7 @@ export const ownJourneyDefinitions: Record<OwnJourneyPhase, OwnJourneyDefinition
     phase: 'PRD',
     name: 'PRODUCT REQUIREMENTS',
     headline: { th: 'เห็นหน้าตาก่อน แล้วทำ PRD ให้พร้อมสร้างจริง', en: 'See the interface before finalizing the build-ready PRD' },
-    principle: { th: 'เริ่มจาก PRD Draft ที่สังเคราะห์จาก Decision ที่ Lock แล้ว ใช้ Prototype ตรวจ UI/UX และนำเฉพาะสิ่งที่ผู้ใช้อนุมัติกลับมาสร้าง Final PRD โดยไม่เพิ่ม Scope เงียบ ๆ', en: 'Start with a PRD draft from locked decisions, use a prototype to review the UI/UX, and bring only owner-approved changes into the final PRD without silent scope expansion.' },
+    principle: { th: 'เริ่มจาก PRD Draft ใช้ Prototype ทำให้สิ่งที่จะสร้างชัดขึ้น แล้วบันทึกและผสานเฉพาะการเปลี่ยนแปลงที่ผู้ใช้ยืนยันลง Final PRD โดยไม่ต้องย้อนทำ Step เดิม', en: 'Start with a PRD draft, use the prototype to clarify the intended product, then record and consolidate only owner-confirmed changes into the final PRD without revisiting earlier steps.' },
     outcome: { th: 'ได้ CODESIGN UI Review และ Final PRD Markdown ที่ตรวจความครบ ความสอดคล้อง และพร้อมส่งต่อให้ทีมสร้าง', en: 'A CODESIGN UI Review plus a complete final PRD reviewed for consistency and implementation handoff.' },
     aiAction: 'draft_prd',
     aiTitle: { th: 'ให้ AI ร่าง PRD ตั้งต้นจาก Decision ที่ Lock แล้ว', en: 'Let AI create the starting PRD from locked decisions' },

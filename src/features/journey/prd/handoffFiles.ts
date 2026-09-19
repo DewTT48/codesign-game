@@ -143,7 +143,7 @@ export function assembleStartWithCodex(project: ProjectRow, readiness: GitHubRea
 
 ให้ถือทั้งสามไฟล์เป็น source of truth ห้ามเติมพฤติกรรมที่เปลี่ยน Product โดยไม่แจ้ง หากพบความกำกวมที่มีผลต่อ Product ให้ระบุ **PRODUCT DECISION REQUIRED** และถามผู้ใช้ครั้งละหนึ่งคำถามที่ชัดเจน
 
-ข้อสรุปจาก Prototype และ CODESIGN UI Review ที่เจ้าของอนุมัติแล้วถูกรวมไว้ใน CODESIGN_HANDOFF.md และ EXPERIENCE_DIRECTION.md เรียบร้อย จึงไม่ต้องขอไฟล์ CODESIGN_UI_REVIEW.md เพิ่ม และห้ามย้อนกลับไปใช้ Prototype code เป็น source of truth
+ข้อสรุปจาก Prototype และ CODESIGN UI Review ที่เจ้าของอนุมัติแล้วถูกรวมไว้ใน CODESIGN_HANDOFF.md และ EXPERIENCE_DIRECTION.md เรียบร้อย จึงไม่ต้องขอไฟล์ CODESIGN_UI_REVIEW.md เพิ่ม และห้ามย้อนกลับไปใช้ Prototype code เป็น source of truth หากหัวข้อ CODESIGN UI Review ระบุ Prototype-driven change ที่ต่างจากข้อความร่างก่อนหน้า ให้ใช้ Change Resolution ที่เจ้าของยืนยันแล้วเป็นข้อกำหนดล่าสุด โดยยังต้องรักษา Protected Decisions และ CONTENT_PACK.md
 
 ## กติกา Product ที่ยืนยันแล้ว
 
@@ -206,7 +206,7 @@ Work entirely inside the current project folder. Do not ask the owner to attach 
 
 Treat these files as the source of truth. Do not silently invent a behavior that changes the product. Mark any material ambiguity as **PRODUCT DECISION REQUIRED** and ask one clear question.
 
-Owner-approved prototype and CODESIGN UI Review conclusions are already consolidated into CODESIGN_HANDOFF.md and EXPERIENCE_DIRECTION.md. Do not request CODESIGN_UI_REVIEW.md separately, and never treat prototype code as a source of truth.
+Owner-approved prototype and CODESIGN UI Review conclusions are already consolidated into CODESIGN_HANDOFF.md and EXPERIENCE_DIRECTION.md. Do not request CODESIGN_UI_REVIEW.md separately, and never treat prototype code as a source of truth. When the CODESIGN UI Review section records an owner-confirmed prototype-driven change that differs from earlier draft wording, the Change Resolution is the latest requirement while Protected Decisions and CONTENT_PACK.md remain fixed.
 
 ## Locked Product Rules
 

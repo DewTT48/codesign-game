@@ -1,27 +1,28 @@
 import { AlertTriangle, Check, Clipboard, Download, ExternalLink, FileUp, RotateCcw, Sparkles } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
-import { Link } from 'react-router-dom'
 import { useLanguage } from '../../i18n/LanguageContext'
 import { MarkdownPreview } from './MarkdownPreview'
 import {
   OWN_FINAL_PRD_FILE_NAME,
   UI_REVIEW_FILE_NAME,
   assemblePrototypePrompt,
+  assembleUiReviewResolution,
+  getUiReviewForwardPlan,
+  getUiReviewResolutionAnswers,
   validateOwnFinalPrd,
   validateUiReviewDocument,
-  type UiReviewRoute,
+  validateUiReviewResolution,
 } from './uiReview'
 
 type UiReviewWorkspaceProps = {
   mode: 'guided' | 'own'
-  projectId: string
   uiBrief: string
   storedReview?: string
   storedFinalPrd?: string
+  storedResolution?: string
   applied: boolean
   disabled?: boolean
-  onApply: (input: { review: string; finalPrd?: string }) => Promise<void>
-  onRevision?: (input: { review: string; route: Exclude<UiReviewRoute, 'approved'> }) => Promise<void>
+  onApply: (input: { review: string; finalPrd?: string; resolution?: string }) => Promise<void>
 }
 
 function downloadMarkdown(fileName: string, content: string) {
@@ -35,14 +36,13 @@ function downloadMarkdown(fileName: string, content: string) {
 
 export function UiReviewWorkspace({
   mode,
-  projectId,
   uiBrief,
   storedReview = '',
   storedFinalPrd = '',
+  storedResolution = '',
   applied,
   disabled = false,
   onApply,
-  onRevision,
 }: UiReviewWorkspaceProps) {
   const { language, isThai } = useLanguage()
   const reviewInputRef = useRef<HTMLInputElement>(null)
@@ -51,19 +51,40 @@ export function UiReviewWorkspace({
   const [finalPrd, setFinalPrd] = useState(storedFinalPrd)
   const [copyState, setCopyState] = useState<'idle' | 'copied' | 'failed'>('idle')
   const [applyState, setApplyState] = useState<'idle' | 'saving' | 'saved' | 'failed'>('idle')
+  const [answers, setAnswers] = useState<Record<string, string>>({})
+  const [forwardConfirmed, setForwardConfirmed] = useState(false)
   const prompt = assemblePrototypePrompt(uiBrief, mode, language)
   const reviewCheck = validateUiReviewDocument(review)
   const finalPrdCheck = validateOwnFinalPrd(finalPrd)
-  const hasChanges = review !== storedReview || (mode === 'own' && finalPrd !== storedFinalPrd)
+  const forwardPlan = getUiReviewForwardPlan(review)
+  const ownerAnswersReady = forwardPlan.ownerQuestions.every((item) => Boolean(answers[item.id]?.trim()))
+  const resolution = reviewCheck.route === 'confirmation-needed'
+    ? assembleUiReviewResolution(review, answers, language)
+    : ''
+  const hasChanges = review !== storedReview
+    || (mode === 'own' && finalPrd !== storedFinalPrd)
+    || (resolution && resolution !== storedResolution)
+  const reviewReady = reviewCheck.route === 'approved'
+    || (reviewCheck.route === 'confirmation-needed' && forwardConfirmed && ownerAnswersReady)
   const canApply = reviewCheck.valid
-    && reviewCheck.route === 'approved'
+    && reviewReady
     && (mode === 'guided' || finalPrdCheck.valid)
     && (!applied || hasChanges)
     && !disabled
     && applyState !== 'saving'
 
-  useEffect(() => setReview(storedReview), [storedReview])
+  useEffect(() => {
+    setReview(storedReview)
+    setAnswers(getUiReviewResolutionAnswers(storedReview, storedResolution))
+    setForwardConfirmed(validateUiReviewResolution(storedReview, storedResolution))
+  }, [storedResolution, storedReview])
   useEffect(() => setFinalPrd(storedFinalPrd), [storedFinalPrd])
+
+  function replaceReview(content: string) {
+    setReview(content)
+    setAnswers({})
+    setForwardConfirmed(false)
+  }
 
   async function copyPrompt() {
     try {
@@ -89,19 +110,11 @@ export function UiReviewWorkspace({
     if (!canApply) return
     setApplyState('saving')
     try {
-      await onApply({ review, finalPrd: mode === 'own' ? finalPrd : undefined })
-      setApplyState('saved')
-    } catch {
-      setApplyState('failed')
-    }
-  }
-
-  async function saveRevision() {
-    const route = reviewCheck.route
-    if (!reviewCheck.valid || !route || route === 'approved' || !onRevision) return
-    setApplyState('saving')
-    try {
-      await onRevision({ review, route })
+      await onApply({
+        review,
+        finalPrd: mode === 'own' ? finalPrd : undefined,
+        resolution: reviewCheck.route === 'confirmation-needed' ? resolution : undefined,
+      })
       setApplyState('saved')
     } catch {
       setApplyState('failed')
@@ -142,7 +155,7 @@ export function UiReviewWorkspace({
         <article className={reviewCheck.valid ? 'is-valid' : review ? 'is-error' : ''}>
           <div><strong>{UI_REVIEW_FILE_NAME}</strong><small>{reviewCheck.valid ? (isThai ? 'โครงสร้างถูกต้อง' : 'VALID STRUCTURE') : (isThai ? 'จำเป็น' : 'REQUIRED')}</small></div>
           <button type="button" disabled={disabled} onClick={() => reviewInputRef.current?.click()}><FileUp size={17} /> {isThai ? 'เลือกไฟล์' : 'CHOOSE FILE'}</button>
-          <input ref={reviewInputRef} hidden type="file" accept=".md,text/markdown,text/plain" onChange={(event) => void readFile(event.target.files?.[0], UI_REVIEW_FILE_NAME, setReview)} />
+          <input ref={reviewInputRef} hidden type="file" accept=".md,text/markdown,text/plain" onChange={(event) => void readFile(event.target.files?.[0], UI_REVIEW_FILE_NAME, replaceReview)} />
         </article>
         {mode === 'own' ? <article className={finalPrdCheck.valid ? 'is-valid' : finalPrd ? 'is-error' : ''}>
           <div><strong>{OWN_FINAL_PRD_FILE_NAME}</strong><small>{finalPrdCheck.valid ? (isThai ? 'โครงสร้างหลักครบ' : 'CORE STRUCTURE READY') : (isThai ? 'จำเป็นสำหรับ Build Your Own' : 'REQUIRED FOR BUILD YOUR OWN')}</small></div>
@@ -153,22 +166,36 @@ export function UiReviewWorkspace({
 
       <details className="ui-review-paste">
         <summary>{isThai ? 'ถ้าดาวน์โหลดไฟล์ไม่ได้ ให้วาง Markdown ที่นี่' : 'PASTE MARKDOWN HERE IF DOWNLOAD IS UNAVAILABLE'}</summary>
-        <label><span>{UI_REVIEW_FILE_NAME}</span><textarea disabled={disabled} value={review} onChange={(event) => { setReview(event.target.value); setApplyState('idle') }} /></label>
+        <label><span>{UI_REVIEW_FILE_NAME}</span><textarea disabled={disabled} value={review} onChange={(event) => { replaceReview(event.target.value); setApplyState('idle') }} /></label>
         {mode === 'own' ? <label><span>{OWN_FINAL_PRD_FILE_NAME}</span><textarea disabled={disabled} value={finalPrd} onChange={(event) => { setFinalPrd(event.target.value); setApplyState('idle') }} /></label> : null}
       </details>
 
       {review && !reviewCheck.valid ? <div className="ui-review-errors" role="alert"><AlertTriangle size={20} /><div><strong>{isThai ? 'UI Review ยังใช้ไม่ได้' : 'UI REVIEW IS NOT READY'}</strong>{reviewCheck.errors.map((error) => <p key={error}>{error}</p>)}</div></div> : null}
       {mode === 'own' && finalPrd && !finalPrdCheck.valid ? <div className="ui-review-errors" role="alert"><AlertTriangle size={20} /><div><strong>{isThai ? 'Final PRD ยังมีโครงสร้างไม่ครบ' : 'FINAL PRD IS INCOMPLETE'}</strong>{finalPrdCheck.errors.map((error) => <p key={error}>{error}</p>)}</div></div> : null}
 
-      {reviewCheck.valid && reviewCheck.route !== 'approved' ? <div className="ui-review-revision">
-        <RotateCcw size={22} /><div><strong>{reviewCheck.route === 'revision-e' ? 'REVISION REQUIRED — STEP E' : 'REVISION REQUIRED — STEP S'}</strong><p>{isThai ? 'Prototype พบการเปลี่ยน Product Decision จึงยังห้ามสร้าง Final PRD บันทึกผลนี้ก่อน แล้วกลับไปแก้ Step ที่เป็นเจ้าของการตัดสินใจ' : 'The prototype exposed a changed Product Decision. Save this result and revise the owning step before creating the final PRD.'}</p><div><button type="button" disabled={disabled || applyState === 'saving'} onClick={() => void saveRevision()}>{mode === 'own' ? (isThai ? 'บันทึกและเริ่ม Revision' : 'SAVE AND START REVISION') : (isThai ? 'บันทึกผล Review' : 'SAVE REVIEW RESULT')}</button>{mode === 'guided' ? <Link to={`/projects/${projectId}/${reviewCheck.route === 'revision-e' ? 'E' : 'S'}`}>{isThai ? 'ไปดู Step ที่ต้องแก้' : 'OPEN THE OWNING STEP'}</Link> : null}</div></div>
+      {reviewCheck.valid && reviewCheck.route === 'confirmation-needed' ? <div className="ui-review-forward">
+        <div className="ui-review-forward__title"><Check size={22} /><div><strong>{isThai ? 'UI ได้รับอนุมัติแล้ว — Consolidate แล้วเดินหน้าต่อ' : 'UI APPROVED — CONSOLIDATE AND MOVE FORWARD'}</strong><p>{isThai ? 'ไม่ต้องย้อนกลับไปแก้ Step เดิม CODESIGN จะเก็บสิ่งที่เปลี่ยนเป็น Change Log และผสานเข้ากับ Final PRD หลังคุณตอบเฉพาะคำถามที่ยังต้องตัดสินใจ' : 'You do not need to revisit earlier steps. CODESIGN records the delta and merges it into the final PRD after the remaining owner decisions are answered here.'}</p></div></div>
+
+        <details className="ui-review-forward__changes">
+          <summary>{isThai ? 'ดูสิ่งที่เปลี่ยนจากข้อมูลเดิม' : 'REVIEW WHAT CHANGED'}</summary>
+          {forwardPlan.acceptedChanges ? <section><h4>{isThai ? 'สิ่งที่อนุมัติจาก Prototype' : 'APPROVED FROM THE PROTOTYPE'}</h4><MarkdownPreview markdown={forwardPlan.acceptedChanges} /></section> : null}
+          {forwardPlan.impactMap ? <section><h4>{isThai ? 'จุดที่ CODESIGN จะผสานใน Final PRD' : 'FINAL PRD CONSOLIDATION MAP'}</h4><MarkdownPreview markdown={forwardPlan.impactMap} /></section> : null}
+        </details>
+
+        {forwardPlan.consolidationItems.length ? <section className="ui-review-forward__automatic"><h4>{isThai ? 'CODESIGN จัดการให้โดยไม่ต้องตอบเพิ่ม' : 'CODESIGN HANDLES THESE AUTOMATICALLY'}</h4><ul>{forwardPlan.consolidationItems.map((item) => <li key={item.id}><Check size={16} /><span><strong>{item.title}</strong><small>{item.prompt}</small></span></li>)}</ul></section> : null}
+
+        {forwardPlan.ownerQuestions.length ? <section className="ui-review-forward__questions"><h4>{isThai ? `ตอบอีก ${forwardPlan.ownerQuestions.length} เรื่องก่อนสร้าง Final PRD` : `ANSWER ${forwardPlan.ownerQuestions.length} OWNER QUESTION(S)`}</h4>{forwardPlan.ownerQuestions.map((item, index) => <label key={item.id}><span><strong>{index + 1}. {item.prompt}</strong><small>{isThai ? 'ตอบด้วยภาษาของคุณได้เลย คำตอบนี้จะถูกบันทึกไว้กับ Final PRD' : 'Answer in your own words. It will be recorded with the final PRD.'}</small></span><textarea rows={3} value={answers[item.id] ?? ''} onChange={(event) => setAnswers((current) => ({ ...current, [item.id]: event.target.value }))} /></label>)}</section> : <p className="ui-review-forward__ready"><Check size={18} /> {isThai ? 'ไม่มีคำถาม Product Decision ที่ต้องตอบเพิ่ม' : 'NO ADDITIONAL PRODUCT DECISION IS REQUIRED.'}</p>}
+
+        <label className={forwardConfirmed ? 'ui-review-forward__confirm is-active' : 'ui-review-forward__confirm'}><input type="checkbox" checked={forwardConfirmed} onChange={(event) => setForwardConfirmed(event.target.checked)} /><Check size={18} /><span><strong>{isThai ? 'ยืนยันให้ใช้การเปลี่ยนแปลงจาก Prototype สร้าง Final PRD' : 'USE THESE PROTOTYPE-DRIVEN CHANGES IN THE FINAL PRD'}</strong><small>{isThai ? 'ระบบจะเก็บข้อมูลเดิมและ UI Review ไว้ในประวัติ ไม่แก้ CONTENT_PACK.md และไม่ส่งคุณย้อนกลับไปทำ Step เดิม' : 'CODESIGN preserves the prior definition and UI Review in history, leaves CONTENT_PACK.md unchanged, and does not send you back through earlier steps.'}</small></span></label>
       </div> : null}
+
+      {reviewCheck.valid && reviewCheck.route === 'reprototype' ? <div className="ui-review-revision"><RotateCcw size={22} /><div><strong>RE-PROTOTYPE REQUIRED</strong><p>{isThai ? 'คำตัดสินที่ยังไม่จบจะเปลี่ยนหน้าตาหรือ Flow จน Prototype ปัจจุบันใช้เป็นแบบอ้างอิงไม่ได้ กรุณากลับไปตอบคำถามใน Chat และปรับ Prototype เฉพาะกรณีนี้เท่านั้น' : 'An unresolved decision would materially change the visible flow, so the current prototype is no longer a reliable baseline. Return to Chat only for this case.'}</p></div></div> : null}
 
       {reviewCheck.valid && reviewCheck.route === 'approved' ? <div className="ui-review-preview"><div><Check size={19} /><strong>APPROVED FOR FINAL PRD</strong></div><MarkdownPreview markdown={review} /></div> : null}
 
       <footer>
         <p>{mode === 'guided' ? (isThai ? 'ระบบจะเพิ่ม Screen map, Navigation และ UI direction ที่อนุมัติแล้วในไฟล์ที่เกี่ยวข้อง ส่วน CONTENT_PACK.md จะคงเดิมทุกตัวอักษร' : 'Approved screen, navigation, and UI direction details are added to the relevant files. CONTENT_PACK.md remains byte-for-byte unchanged.') : (isThai ? 'ระบบจะเก็บ UI Review คู่กับ Final PRD เพื่อให้ตรวจย้อนกลับได้ แล้วให้คุณอ่าน Final PRD รอบเดียวก่อน Lock' : 'CODESIGN stores the UI Review with the final PRD for traceability, then asks you to review that final PRD once before locking.')}</p>
-        <button type="button" disabled={!canApply} onClick={() => void apply()}><Check size={18} /> {applyState === 'saving' ? (isThai ? 'กำลังสร้าง Final PRD…' : 'CREATING FINAL PRD…') : applied ? (isThai ? 'สร้าง Final PRD แล้ว' : 'FINAL PRD CREATED') : (isThai ? 'ใช้ UI Review สร้าง Final PRD' : 'CREATE FINAL PRD FROM UI REVIEW')}</button>
+        <button type="button" disabled={!canApply} onClick={() => void apply()}><Check size={18} /> {applyState === 'saving' ? (isThai ? 'กำลังสร้าง Final PRD…' : 'CREATING FINAL PRD…') : applied ? (isThai ? 'สร้าง Final PRD แล้ว' : 'FINAL PRD CREATED') : reviewCheck.route === 'confirmation-needed' ? (isThai ? 'ยืนยันการเปลี่ยนแปลงและสร้าง Final PRD' : 'CONFIRM CHANGES AND CREATE FINAL PRD') : (isThai ? 'ใช้ UI Review สร้าง Final PRD' : 'CREATE FINAL PRD FROM UI REVIEW')}</button>
         {applyState === 'failed' ? <span role="alert">{isThai ? 'ทำรายการไม่สำเร็จ ตรวจชื่อไฟล์และลองอีกครั้ง' : 'ACTION FAILED. CHECK THE FILENAMES AND TRY AGAIN.'}</span> : null}
       </footer>
     </section>

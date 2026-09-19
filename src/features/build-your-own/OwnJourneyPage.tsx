@@ -22,10 +22,10 @@ import { SolidificationMeter } from '../../components/progress/SolidificationMet
 import { ArcadeButton } from '../../components/ui/ArcadeButton'
 import type { Json, ProjectRow } from '../../lib/supabase/database.types'
 import { useLanguage } from '../i18n/LanguageContext'
-import { savePhaseEntry, startPhaseRevision } from '../journey/journey.service'
+import { savePhaseEntry } from '../journey/journey.service'
 import { PhaseSection, ReviewGate } from '../journey/PhaseFormComponents'
 import { UiReviewWorkspace } from '../journey/prd/UiReviewWorkspace'
-import { assembleOwnUiBrief } from '../journey/prd/uiReview'
+import { applyOwnUiReview, assembleOwnUiBrief } from '../journey/prd/uiReview'
 import { usePhaseDraft } from '../journey/usePhaseDraft'
 import {
   CodesignAiError,
@@ -337,6 +337,7 @@ export function OwnJourneyPage({
     ...(phase === 'PRD' ? {
       uiBriefDraft: '',
       uiReviewMarkdown: '',
+      uiReviewResolution: '',
       uiReviewApplied: '',
     } : {}),
   }), [definition, phase])
@@ -393,6 +394,7 @@ export function OwnJourneyPage({
         prdMarkdown: content.markdown,
         uiBriefDraft: '',
         uiReviewMarkdown: '',
+        uiReviewResolution: '',
         uiReviewApplied: '',
       })
     }
@@ -541,41 +543,21 @@ export function OwnJourneyPage({
         {(draft.values.prdMarkdown?.trim().length ?? 0) < 300 ? <p className="field-error" role="status">{isThai ? 'สร้างและตรวจ PRD Draft ด้านบนให้พร้อมก่อนเริ่ม Prototype' : 'CREATE AND REVIEW THE PRD DRAFT ABOVE BEFORE PROTOTYPING.'}</p> : null}
         <UiReviewWorkspace
           mode="own"
-          projectId={project.id}
           uiBrief={ownUiBrief}
           storedReview={draft.values.uiReviewMarkdown}
           storedFinalPrd={uiReviewReady ? draft.values.prdMarkdown : ''}
+          storedResolution={draft.values.uiReviewResolution}
           applied={uiReviewReady}
           disabled={readOnly || (draft.values.prdMarkdown?.trim().length ?? 0) < 300}
-          onApply={async ({ review, finalPrd }) => {
+          onApply={async ({ review, finalPrd, resolution }) => {
+            const consolidatedPrd = applyOwnUiReview(finalPrd ?? draft.values.prdMarkdown, review, resolution)
             await draft.saveAll({
-              prdMarkdown: finalPrd ?? draft.values.prdMarkdown,
+              prdMarkdown: consolidatedPrd,
               uiBriefDraft: ownUiBrief,
               uiReviewMarkdown: review,
+              uiReviewResolution: resolution ?? '',
               uiReviewApplied: 'yes',
             })
-          }}
-          onRevision={async ({ review, route }) => {
-            await draft.saveAll({
-              uiBriefDraft: ownUiBrief,
-              uiReviewMarkdown: review,
-              uiReviewApplied: '',
-            })
-            const targetPhase = route === 'revision-e' ? 'E' : 'S'
-            const nextProject = await startPhaseRevision({
-              projectId: project.id,
-              targetPhase,
-              reason: isThai
-                ? `CODESIGN UI Review พบว่าต้องทบทวน Product Decision ที่ Step ${targetPhase} ก่อนสร้าง Final PRD`
-                : `CODESIGN UI Review requires the Step ${targetPhase} Product Decision to be revised before creating the final PRD.`,
-            })
-            queryClient.setQueryData(['project', project.id], nextProject)
-            await Promise.all([
-              queryClient.invalidateQueries({ queryKey: ['projects'] }),
-              queryClient.invalidateQueries({ queryKey: ['phase-entries', project.id] }),
-              queryClient.invalidateQueries({ queryKey: ['phase-entry-history', project.id] }),
-            ])
-            navigate(`/own-projects/${project.id}/${targetPhase}`)
           }}
         />
       </section> : null}
