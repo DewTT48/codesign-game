@@ -10696,6 +10696,528 @@ a.mission-node__content:focus-visible {
   line-height: 1.5;
 }
 
+/* Admin Project Record — readable report layout */
+.admin-record-backdrop {
+  place-items: center;
+  justify-items: center;
+  padding: clamp(12px, 2vw, 28px);
+  overflow: hidden;
+}
+
+.admin-record-dialog {
+  width: min(1480px, 96vw);
+  height: min(92vh, 1040px);
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  overflow: hidden;
+  border-width: 3px;
+  box-shadow: 10px 12px 0 rgba(0, 0, 0, 0.38);
+}
+
+.admin-record-hero {
+  position: relative;
+  z-index: 4;
+  flex: 0 0 auto;
+  align-items: center;
+  padding: 18px 22px;
+  background: var(--deep-1);
+  border-bottom: 2px solid var(--line);
+}
+
+.admin-record-hero h2 {
+  margin-top: 8px;
+  font-size: clamp(20px, 2.4vw, 30px);
+}
+
+.admin-record-hero p {
+  margin-top: 6px;
+  font-size: 15px;
+}
+
+.admin-record-hero__actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  flex: 0 0 auto;
+}
+
+.admin-record-close,
+.admin-record-print {
+  position: static;
+  float: none;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: var(--white);
+  background: var(--deep-3);
+  border: 2px solid var(--line);
+  cursor: pointer;
+}
+
+.admin-record-close {
+  width: 44px;
+  height: 44px;
+}
+
+.admin-record-print {
+  padding: 8px 11px;
+  font-family: var(--font-display);
+  font-size: 8px;
+}
+
+.admin-record-mode {
+  border-width: 2px;
+}
+
+.admin-record-mode span,
+.admin-record-mode strong {
+  padding: 9px 11px;
+  font-size: 8px;
+}
+
+.admin-record-mode strong {
+  min-width: 74px;
+  color: var(--white);
+  background: var(--deep-3);
+}
+
+.admin-record-mode strong.admin-record-status--completed {
+  color: var(--ink);
+  background: var(--positive);
+}
+
+.admin-record-mode strong.admin-record-status--archived {
+  color: var(--muted);
+  background: color-mix(in srgb, var(--deep-3) 72%, #555);
+}
+
+.admin-record-content {
+  min-height: 0;
+  flex: 1 1 auto;
+  overflow: auto;
+  padding: 18px 22px 24px;
+  scroll-behavior: smooth;
+}
+
+.admin-record-summary {
+  margin: 0 0 12px;
+  gap: 9px;
+  scroll-margin-top: 18px;
+}
+
+.admin-record-summary > div {
+  gap: 4px 10px;
+  padding: 11px 13px;
+  background: color-mix(in srgb, var(--deep-2) 82%, var(--deep-1));
+  border: 0;
+  border-left: 3px solid var(--line);
+}
+
+.admin-record-summary span,
+.admin-record-summary small {
+  font-size: 11px;
+}
+
+.admin-record-summary strong {
+  font-size: 14px;
+}
+
+.admin-record-access-note--quiet {
+  margin: 0 0 16px;
+  padding: 9px 11px;
+  color: var(--muted);
+  background: color-mix(in srgb, var(--positive) 9%, var(--deep-2));
+  border: 0;
+  border-left: 3px solid var(--positive);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.admin-record-access-note--quiet svg {
+  color: var(--positive);
+}
+
+.admin-record-report-layout {
+  display: grid;
+  grid-template-columns: 214px minmax(0, 1fr);
+  align-items: start;
+  gap: 18px;
+}
+
+.admin-record-toc {
+  position: sticky;
+  top: 0;
+  display: grid;
+  align-self: start;
+  padding-right: 15px;
+  border-right: 1px solid color-mix(in srgb, var(--line) 46%, transparent);
+}
+
+.admin-record-toc > span {
+  margin-bottom: 7px;
+  color: var(--muted);
+  font-family: var(--font-display);
+  font-size: 7px;
+}
+
+.admin-record-toc button {
+  min-width: 0;
+  min-height: 41px;
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 5px;
+  color: var(--muted);
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid color-mix(in srgb, var(--line) 25%, transparent);
+  text-align: left;
+  cursor: pointer;
+}
+
+.admin-record-toc button:hover,
+.admin-record-toc button:focus-visible,
+.admin-record-toc button.is-current {
+  color: var(--white);
+  background: color-mix(in srgb, var(--deep-3) 76%, transparent);
+}
+
+.admin-record-toc button.is-current {
+  box-shadow: inset 3px 0 0 var(--accent);
+}
+
+.admin-record-toc button > strong {
+  color: var(--accent);
+  font-family: var(--font-display);
+  font-size: 8px;
+}
+
+.admin-record-toc button > span {
+  min-width: 0;
+  overflow: hidden;
+  font-size: 12px;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.admin-record-toc button > small {
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.admin-record-paper {
+  min-width: 0;
+  padding: clamp(22px, 3vw, 42px);
+  color: #10283d;
+  background: #f3f7fa;
+  box-shadow: 7px 8px 0 rgba(0, 0, 0, 0.22);
+}
+
+.admin-record-paper-heading {
+  margin-bottom: 28px;
+  padding-bottom: 22px;
+  border-bottom: 3px solid #184f75;
+}
+
+.admin-record-paper-heading > span {
+  color: #d85f00;
+  font-family: var(--font-display);
+  font-size: 8px;
+}
+
+.admin-record-paper-heading h2 {
+  margin: 9px 0 7px;
+  color: #0b3556;
+  font-size: clamp(22px, 3vw, 34px);
+}
+
+.admin-record-paper-heading p {
+  margin: 0;
+  color: #5b7182;
+  font-size: 15px;
+}
+
+.admin-record-report-section {
+  scroll-margin-top: 18px;
+  padding: 26px 0;
+  border-top: 2px solid #174e74;
+}
+
+.admin-record-paper-heading + .admin-record-report-section {
+  border-top: 0;
+  padding-top: 0;
+}
+
+.admin-record-report-heading {
+  display: grid;
+  grid-template-columns: 54px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 13px;
+  margin-bottom: 15px;
+}
+
+.admin-record-report-code {
+  width: 50px;
+  height: 50px;
+  display: grid;
+  place-items: center;
+  color: #10283d;
+  background: #ff861f;
+  border: 2px solid #0b3556;
+  font-family: var(--font-display);
+  font-size: 9px;
+}
+
+.admin-record-report-heading > div > span {
+  color: #657d8d;
+  font-size: 11px;
+  letter-spacing: 0.06em;
+}
+
+.admin-record-report-heading h3 {
+  margin: 2px 0;
+  color: #0b3556;
+  font-size: 21px;
+}
+
+.admin-record-report-heading small {
+  color: #657d8d;
+  font-size: 12px;
+}
+
+.admin-record-report-heading > strong {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #3d7a14;
+  font-size: 11px;
+}
+
+.admin-record-report-heading--deliverable {
+  grid-template-columns: 54px minmax(0, 1fr);
+}
+
+.admin-record-report-body {
+  margin-left: 67px;
+}
+
+.admin-record-report-fields > article,
+.admin-record-report-subsection > article {
+  display: grid;
+  grid-template-columns: minmax(170px, 0.7fr) minmax(0, 1.8fr);
+  gap: 24px;
+  padding: 14px 0;
+  border-bottom: 1px solid #cfdae2;
+}
+
+.admin-record-field-label {
+  min-width: 0;
+}
+
+.admin-record-field-label > span {
+  color: #6b7f8e;
+  font-size: 11px;
+  text-transform: uppercase;
+}
+
+.admin-record-field-label h4 {
+  margin: 4px 0 7px;
+  color: #143a56;
+  font-size: 14px;
+}
+
+.admin-record-field-label small,
+.admin-record-field-label time {
+  display: block;
+  margin-top: 3px;
+  color: #738795;
+  font-size: 11px;
+}
+
+.admin-record-field-value {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  color: #17334a;
+  line-height: 1.7;
+}
+
+.admin-record-field-value > p {
+  margin: 0;
+  white-space: pre-wrap;
+}
+
+.admin-record-field-value > strong {
+  color: #2f7214;
+}
+
+.admin-record-field-value > small {
+  display: block;
+  margin-top: 9px;
+  color: #6f7e89;
+}
+
+.admin-record-value-list {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding-left: 20px;
+}
+
+.admin-record-value-list p {
+  margin: 0;
+}
+
+.admin-record-value-grid {
+  display: grid;
+  gap: 9px;
+  margin: 0;
+}
+
+.admin-record-value-grid > div {
+  display: grid;
+  grid-template-columns: minmax(130px, 0.5fr) minmax(0, 1.5fr);
+  gap: 14px;
+  padding: 9px 0;
+  border-bottom: 1px solid #dce4e9;
+}
+
+.admin-record-value-grid dt {
+  color: #607584;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.admin-record-value-grid dd {
+  min-width: 0;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.admin-record-value-grid dd p {
+  margin: 0;
+  white-space: pre-wrap;
+}
+
+.admin-record-report-subsection {
+  margin-top: 22px;
+  padding-top: 18px;
+  border-top: 1px solid #9db0bd;
+}
+
+.admin-record-report-subsection > h4 {
+  margin: 0 0 6px;
+  color: #d85f00;
+  font-family: var(--font-display);
+  font-size: 9px;
+}
+
+.admin-record-report-revisions {
+  margin-top: 18px;
+  padding: 12px 14px;
+  background: #e8eef2;
+  border-left: 3px solid #58819d;
+}
+
+.admin-record-report-revisions > summary,
+.admin-record-deliverables details > summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #164a70;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.admin-record-report-revisions > article {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #c5d2da;
+}
+
+.admin-record-no-data,
+.admin-record-empty-value {
+  color: #6f808c;
+}
+
+.admin-record-no-data {
+  margin: 0;
+}
+
+.admin-record-deliverables {
+  display: grid;
+  gap: 12px;
+}
+
+.admin-record-deliverables > article,
+.admin-record-deliverables > details {
+  min-width: 0;
+  padding: 15px 0;
+  border-bottom: 1px solid #cfdbe2;
+}
+
+.admin-record-deliverables article > span,
+.admin-record-deliverables details > h4 {
+  color: #5b7182;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.admin-record-deliverables article > p,
+.admin-record-deliverables details > p {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  line-height: 1.7;
+}
+
+.admin-record-deliverables article > a {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  color: #28700f;
+  overflow-wrap: anywhere;
+}
+
+.admin-record-deliverables pre {
+  max-height: 520px;
+  overflow: auto;
+  margin: 14px 0 0;
+  padding: 16px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  color: #17334a;
+  background: #e6edf2;
+  border-left: 3px solid #174e74;
+  font: 13px/1.7 ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+.admin-record-ai-summary {
+  margin: 0;
+  color: #17334a;
+  background: #e9eef3;
+  border-left-color: #cb2f7b;
+}
+
+.admin-record-ai-summary svg {
+  color: #d85f00;
+}
+
+.admin-record-ai-summary span {
+  color: #607584;
+}
+
+.admin-record-footer {
+  color: #637887;
+  border-top-color: #9fb1bd;
+}
+
 .admin-ai-projects .admin-users-heading > svg {
   color: var(--accent);
 }
@@ -10795,6 +11317,35 @@ a.mission-node__content:focus-visible {
     grid-template-columns: 1fr;
   }
 
+  .admin-record-report-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-record-toc {
+    z-index: 3;
+    display: flex;
+    gap: 3px;
+    overflow-x: auto;
+    padding: 8px;
+    background: var(--deep-1);
+    border: 0;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .admin-record-toc > span {
+    display: none;
+  }
+
+  .admin-record-toc button {
+    min-width: max-content;
+    grid-template-columns: auto auto;
+    border: 1px solid color-mix(in srgb, var(--line) 42%, transparent);
+  }
+
+  .admin-record-toc button > small {
+    display: none;
+  }
+
   .admin-ai-project-card {
     grid-template-columns: 1fr;
   }
@@ -10829,16 +11380,62 @@ a.mission-node__content:focus-visible {
 
   .admin-record-dialog {
     width: 100%;
+    height: 100dvh;
     min-height: 100vh;
     border-width: 0;
   }
 
   .admin-record-hero {
     padding-right: 0;
+    padding: 14px;
+  }
+
+  .admin-record-hero__actions {
+    width: 100%;
+    justify-content: flex-start;
+    flex-wrap: wrap;
   }
 
   .admin-record-mode {
     align-self: flex-start;
+  }
+
+  .admin-record-content {
+    padding: 10px;
+  }
+
+  .admin-record-paper {
+    padding: 20px 15px;
+  }
+
+  .admin-record-paper-heading {
+    margin-bottom: 20px;
+    padding-bottom: 17px;
+  }
+
+  .admin-record-report-heading {
+    grid-template-columns: 46px minmax(0, 1fr);
+  }
+
+  .admin-record-report-heading > strong {
+    grid-column: 2;
+    justify-self: start;
+  }
+
+  .admin-record-report-code {
+    width: 42px;
+    height: 42px;
+  }
+
+  .admin-record-report-body {
+    margin-left: 0;
+  }
+
+  .admin-record-report-fields > article,
+  .admin-record-report-subsection > article,
+  .admin-record-value-grid > div {
+    grid-template-columns: 1fr;
+    gap: 8px;
   }
 
   .admin-record-phase > summary {
@@ -10858,6 +11455,81 @@ a.mission-node__content:focus-visible {
   body {
     color: #111;
     background: #fff;
+  }
+
+  .admin-page:has(.admin-record-dialog) > :not(.admin-record-backdrop),
+  .admin-record-hero__actions,
+  .admin-record-toc,
+  .admin-record-access-note--quiet {
+    display: none !important;
+  }
+
+  .admin-record-backdrop {
+    position: static;
+    display: block;
+    padding: 0;
+    overflow: visible;
+    background: #fff;
+    backdrop-filter: none;
+  }
+
+  .admin-record-dialog {
+    width: 100%;
+    height: auto;
+    min-height: 0;
+    overflow: visible;
+    color: #111;
+    background: #fff;
+    border: 0;
+    box-shadow: none;
+  }
+
+  .admin-record-hero {
+    padding: 0 0 18px;
+    color: #111;
+    background: #fff;
+    border-bottom: 2px solid #174e74;
+  }
+
+  .admin-record-hero p {
+    color: #555;
+  }
+
+  .admin-record-content {
+    overflow: visible;
+    padding: 18px 0 0;
+  }
+
+  .admin-record-summary {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .admin-record-summary > div {
+    color: #111;
+    background: #f3f7fa;
+  }
+
+  .admin-record-summary span,
+  .admin-record-summary small,
+  .admin-record-summary strong {
+    color: #22394a;
+  }
+
+  .admin-record-report-layout {
+    display: block;
+  }
+
+  .admin-record-paper {
+    padding: 0;
+    box-shadow: none;
+  }
+
+  .admin-record-report-section,
+  .admin-record-report-fields > article,
+  .admin-record-report-subsection > article,
+  .admin-record-deliverables > article,
+  .admin-record-deliverables > details {
+    break-inside: avoid;
   }
 
   .topbar,

@@ -2,13 +2,13 @@ import { useQuery } from '@tanstack/react-query'
 import {
   Bot,
   CheckCircle2,
-  ChevronRight,
   Clock3,
   ExternalLink,
   Eye,
   FileClock,
   FileText,
   FolderKanban,
+  Printer,
   RefreshCw,
   Search,
   ShieldCheck,
@@ -59,7 +59,28 @@ function ContentValue({ value }: { value: Json }) {
   if (typeof value === 'string') return <p>{value}</p>
   if (typeof value === 'boolean') return <strong>{value ? 'YES' : 'NO'}</strong>
   if (typeof value === 'number') return <strong>{value}</strong>
-  return <pre>{JSON.stringify(value, null, 2)}</pre>
+  if (Array.isArray(value)) {
+    if (value.length === 0) return <span className="admin-record-empty-value">—</span>
+    return (
+      <ul className="admin-record-value-list">
+        {value.map((item, index) => <li key={index}><ContentValue value={item} /></li>)}
+      </ul>
+    )
+  }
+
+  const entries = Object.entries(value).filter((entry): entry is [string, Json] => entry[1] !== undefined)
+  if (entries.length === 0) return <span className="admin-record-empty-value">—</span>
+
+  return (
+    <dl className="admin-record-value-grid">
+      {entries.map(([key, item]) => (
+        <div key={key}>
+          <dt>{humanizeKey(key)}</dt>
+          <dd><ContentValue value={item} /></dd>
+        </div>
+      ))}
+    </dl>
+  )
 }
 
 function phaseProgress(project: AdminProjectRow) {
@@ -89,7 +110,11 @@ function safeExternalUrl(value: string | null) {
   }
 }
 
-function CurrentPhaseRecord({
+function scrollToRecordSection(sectionId: string) {
+  document.getElementById(sectionId)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+}
+
+function PhaseReportSection({
   phase,
   entries,
   record,
@@ -105,68 +130,66 @@ function CurrentPhaseRecord({
   const decisions = record.decisions.filter((decision) => decision.phase === phase)
   const currentDecisions = decisions.filter((decision) => decision.is_current)
 
+  const isLocked = currentEntries.some((entry) => entry.status === 'locked')
+
   return (
-    <details
-      className="admin-record-phase"
-      open={record.project.current_phase === phase}
-    >
-      <summary>
-        <span>{phase}</span>
+    <section className="admin-record-report-section" id={`admin-record-phase-${phase.toLowerCase()}`}>
+      <header className="admin-record-report-heading">
+        <span className="admin-record-report-code">{phase}</span>
         <div>
-          <strong>{phaseNames[phase]}</strong>
+          <span>{isThai ? 'ขั้นตอน' : 'CODESIGN STEP'}</span>
+          <h3>{phaseNames[phase]}</h3>
           <small>
             {currentEntries.length > 0
               ? `${currentEntries.length} ${isThai ? 'รายการ' : 'FIELDS'}`
               : (isThai ? 'ยังไม่มีข้อมูล' : 'NO DATA YET')}
           </small>
         </div>
-        {currentEntries.some((entry) => entry.status === 'locked')
-          ? <i><CheckCircle2 aria-hidden="true" size={15} /> LOCKED</i>
-          : null}
-        <ChevronRight aria-hidden="true" size={20} />
-      </summary>
+        {isLocked ? <strong><CheckCircle2 aria-hidden="true" size={15} /> LOCKED</strong> : null}
+      </header>
 
-      <div className="admin-record-phase__body">
+      <div className="admin-record-report-body">
         {currentEntries.length === 0 ? (
           <p className="admin-record-no-data">
             {isThai ? 'ผู้ใช้ยังไม่ได้บันทึกข้อมูลใน Step นี้' : 'The user has not recorded content in this step.'}
           </p>
         ) : (
-          <div className="admin-record-fields">
+          <div className="admin-record-report-fields">
             {currentEntries.map((entry) => (
               <article key={entry.id}>
-                <header>
-                  <div>
-                    <span>{humanizeKey(entry.section)}</span>
-                    <h4>{humanizeKey(entry.field_key)}</h4>
-                  </div>
+                <div className="admin-record-field-label">
+                  <span>{humanizeKey(entry.section)}</span>
+                  <h4>{humanizeKey(entry.field_key)}</h4>
                   <small>V{entry.version} · {entry.status.toUpperCase()}</small>
-                </header>
-                <ContentValue value={entry.content} />
-                <time>{formatDate(entry.updated_at, isThai)}</time>
+                  <time>{formatDate(entry.updated_at, isThai)}</time>
+                </div>
+                <div className="admin-record-field-value"><ContentValue value={entry.content} /></div>
               </article>
             ))}
           </div>
         )}
 
         {currentDecisions.length > 0 ? (
-          <section className="admin-record-decisions">
+          <section className="admin-record-report-subsection">
             <h4>{isThai ? 'คำตัดสินที่ใช้อยู่' : 'CURRENT DECISIONS'}</h4>
             {currentDecisions.map((decision) => (
               <article key={decision.id}>
-                <header>
-                  <strong>{humanizeKey(decision.decision_type)}</strong>
-                  <span>V{decision.version}</span>
-                </header>
-                <ContentValue value={decision.content} />
-                {decision.reason_for_change ? <small>{isThai ? 'เหตุผลที่แก้ไข' : 'CHANGE REASON'} · {decision.reason_for_change}</small> : null}
+                <div className="admin-record-field-label">
+                  <span>{isThai ? 'คำตัดสิน' : 'DECISION'}</span>
+                  <h4>{humanizeKey(decision.decision_type)}</h4>
+                  <small>V{decision.version}</small>
+                </div>
+                <div className="admin-record-field-value">
+                  <ContentValue value={decision.content} />
+                  {decision.reason_for_change ? <small>{isThai ? 'เหตุผลที่แก้ไข' : 'CHANGE REASON'} · {decision.reason_for_change}</small> : null}
+                </div>
               </article>
             ))}
           </section>
         ) : null}
 
         {previousEntries.length > 0 || decisions.some((decision) => !decision.is_current) ? (
-          <details className="admin-record-revisions">
+          <details className="admin-record-report-revisions">
             <summary><FileClock aria-hidden="true" size={17} /> {isThai ? 'ดู Revision ก่อนหน้า' : 'VIEW PREVIOUS REVISIONS'}</summary>
             {previousEntries.map((entry) => (
               <article key={entry.id}>
@@ -184,7 +207,7 @@ function CurrentPhaseRecord({
           </details>
         ) : null}
       </div>
-    </details>
+    </section>
   )
 }
 
@@ -235,19 +258,23 @@ function AdminProjectRecordDialog({
       if (event.currentTarget === event.target) onClose()
     }}>
       <section className="admin-record-dialog" role="dialog" aria-modal="true" aria-labelledby="admin-project-record-title">
-        <button ref={closeButtonRef} className="admin-record-close" type="button" onClick={onClose} aria-label={isThai ? 'ปิด Project Record' : 'Close Project Record'}>
-          <X aria-hidden="true" size={24} />
-        </button>
-
         <header className="admin-record-hero">
           <div>
             <span className="chapter-code">READ-ONLY PROJECT RECORD</span>
             <h2 id="admin-project-record-title">{project.title}</h2>
             <p>{project.topic}</p>
           </div>
-          <div className="admin-record-mode">
-            <span>{modeLabel(project.mode, isThai)}</span>
-            <strong>{project.current_phase}</strong>
+          <div className="admin-record-hero__actions">
+            <div className="admin-record-mode">
+              <span>{modeLabel(project.mode, isThai)}</span>
+              <strong className={`admin-record-status--${project.project_status}`}>{statusLabel(project.project_status, isThai)}</strong>
+            </div>
+            <button className="admin-record-print" type="button" onClick={() => window.print()}>
+              <Printer aria-hidden="true" size={20} /> {isThai ? 'พิมพ์ / PDF' : 'PRINT / PDF'}
+            </button>
+            <button ref={closeButtonRef} className="admin-record-close" type="button" onClick={onClose} aria-label={isThai ? 'ปิด Project Record' : 'Close Project Record'}>
+              <X aria-hidden="true" size={24} />
+            </button>
           </div>
         </header>
 
@@ -259,23 +286,45 @@ function AdminProjectRecordDialog({
         ) : null}
 
         {record.data ? (
-          <>
-            <section className="admin-record-summary" aria-label={isThai ? 'ข้อมูล Project' : 'Project information'}>
-              <div><UserRound aria-hidden="true" size={20} /><span>{isThai ? 'เจ้าของ' : 'OWNER'}</span><strong>{record.data.owner.display_name || record.data.owner.email || record.data.owner.id}</strong><small>{record.data.owner.email}</small></div>
-              <div><FolderKanban aria-hidden="true" size={20} /><span>{isThai ? 'สถานะ' : 'STATUS'}</span><strong>{statusLabel(record.data.project.status, isThai)}</strong><small>{record.data.project.solidification_stage}</small></div>
-              <div><Clock3 aria-hidden="true" size={20} /><span>{isThai ? 'อัปเดตล่าสุด' : 'LAST UPDATED'}</span><strong>{formatDate(record.data.project.updated_at, isThai)}</strong><small>{isThai ? `สร้าง ${formatDate(record.data.project.created_at, isThai)}` : `CREATED ${formatDate(record.data.project.created_at, isThai)}`}</small></div>
+          <div className="admin-record-content">
+            <section id="admin-record-overview" className="admin-record-summary" aria-label={isThai ? 'ข้อมูล Project' : 'Project information'}>
+              <div><UserRound aria-hidden="true" size={18} /><span>{isThai ? 'เจ้าของ' : 'OWNER'}</span><strong>{record.data.owner.display_name || record.data.owner.email || record.data.owner.id}</strong><small>{record.data.owner.email}</small></div>
+              <div><FolderKanban aria-hidden="true" size={18} /><span>{isThai ? 'ความคืบหน้า' : 'PROGRESS'}</span><strong>{project.locked_phase_count}/9 STEPS LOCKED</strong><small>{record.data.project.solidification_stage}</small></div>
+              <div><Clock3 aria-hidden="true" size={18} /><span>{isThai ? 'อัปเดตล่าสุด' : 'LAST UPDATED'}</span><strong>{formatDate(record.data.project.updated_at, isThai)}</strong><small>{isThai ? `สร้าง ${formatDate(record.data.project.created_at, isThai)}` : `CREATED ${formatDate(record.data.project.created_at, isThai)}`}</small></div>
             </section>
 
-            <div className="admin-record-access-note">
-              <ShieldCheck aria-hidden="true" size={18} />
-              <span>{isThai ? 'มุมมองนี้เป็นแบบอ่านอย่างเดียว และการเปิด Project ถูกบันทึกใน Admin access log' : 'This view is read-only. Opening the project is recorded in the Admin access log.'}</span>
+            <div className="admin-record-access-note admin-record-access-note--quiet">
+              <ShieldCheck aria-hidden="true" size={17} />
+              <span>{isThai ? 'READ-ONLY · การเปิด Project นี้ถูกบันทึกใน Admin access log' : 'READ-ONLY · This Project access is recorded in the Admin access log.'}</span>
             </div>
 
-            <section className="admin-record-section">
-              <header><span className="panel-kicker">CODESIGN FLOW</span><h3>{isThai ? 'ข้อมูลและคำตัดสิน C–N' : 'C–N CONTENT & DECISIONS'}</h3></header>
-              <div className="admin-record-phases">
+            <div className="admin-record-report-layout">
+              <nav className="admin-record-toc" aria-label={isThai ? 'สารบัญ Project Record' : 'Project Record contents'}>
+                <span>{isThai ? 'สารบัญ PROJECT' : 'PROJECT CONTENTS'}</span>
+                <button type="button" onClick={() => scrollToRecordSection('admin-record-overview')}><strong>⌂</strong><span>{isThai ? 'ภาพรวม' : 'OVERVIEW'}</span></button>
+                {phases.map((phase) => {
+                  const currentEntries = (entriesByPhase.get(phase) ?? []).filter((entry) => entry.is_current)
+                  return (
+                    <button key={phase} type="button" className={project.current_phase === phase ? 'is-current' : undefined} onClick={() => scrollToRecordSection(`admin-record-phase-${phase.toLowerCase()}`)}>
+                      <strong>{phase}</strong>
+                      <span>{phaseNames[phase]}</span>
+                      <small>{currentEntries.length}</small>
+                    </button>
+                  )
+                })}
+                <button type="button" onClick={() => scrollToRecordSection('admin-record-deliverables')}><strong>↗</strong><span>PRD / BUILD / FEEDBACK</span></button>
+                {project.mode === 'own' ? <button type="button" onClick={() => scrollToRecordSection('admin-record-ai')}><strong>AI</strong><span>AI SUPPORT</span></button> : null}
+              </nav>
+
+              <main className="admin-record-paper">
+                <header className="admin-record-paper-heading">
+                  <span>CODESIGN FLOW</span>
+                  <h2>{isThai ? 'ข้อมูลและเส้นทางการตัดสินใจ' : 'CONTENT & DECISION TRAIL'}</h2>
+                  <p>{isThai ? 'ข้อมูลที่ผู้ใช้บันทึกและยืนยันในแต่ละ Step เรียงตามลำดับ C–N' : 'User inputs and confirmed decisions, organized from C through N.'}</p>
+                </header>
+
                 {phases.map((phase) => (
-                  <CurrentPhaseRecord
+                  <PhaseReportSection
                     key={phase}
                     phase={phase}
                     entries={entriesByPhase.get(phase) ?? []}
@@ -283,74 +332,80 @@ function AdminProjectRecordDialog({
                     isThai={isThai}
                   />
                 ))}
-              </div>
-            </section>
 
-            <section className="admin-record-section">
-              <header><span className="panel-kicker">DELIVERABLES</span><h3>{isThai ? 'PRD, Build และ Feedback' : 'PRD, BUILD & FEEDBACK'}</h3></header>
-              <div className="admin-record-artifacts">
-                {record.data.prd_snapshots.map((snapshot) => (
-                  <details key={snapshot.id}>
-                    <summary><FileText aria-hidden="true" size={18} /> PRD V{snapshot.version} · {snapshot.status.toUpperCase()}</summary>
-                    <pre>{snapshot.markdown_content}</pre>
-                    {snapshot.content_pack ? <><h4>CONTENT PACK</h4><pre>{snapshot.content_pack}</pre></> : null}
-                    {snapshot.experience_direction ? <><h4>EXPERIENCE DIRECTION</h4><pre>{snapshot.experience_direction}</pre></> : null}
-                  </details>
-                ))}
-                {record.data.app_builds.map((build) => {
-                  const appUrl = safeExternalUrl(build.app_url)
-                  const repositoryUrl = safeExternalUrl(build.repository_url)
-                  return <article key={build.id}>
-                    <span>BUILD · {build.version_label}</span>
-                    {appUrl
-                      ? <a href={appUrl} target="_blank" rel="noreferrer">{build.app_url} <ExternalLink aria-hidden="true" size={15} /></a>
-                      : <p>{build.app_url}</p>}
-                    {build.repository_url
-                      ? repositoryUrl
-                        ? <a href={repositoryUrl} target="_blank" rel="noreferrer">{build.repository_url}</a>
-                        : <p>{build.repository_url}</p>
-                      : null}
-                  </article>
-                })}
-                {record.data.feedback_entries.map((feedback) => (
-                  <article key={feedback.id}>
-                    <span>{humanizeKey(feedback.feedback_type)}</span>
-                    <ContentValue value={feedback.content} />
-                  </article>
-                ))}
-                {record.data.prd_snapshots.length === 0 && record.data.app_builds.length === 0 && record.data.feedback_entries.length === 0 ? (
-                  <p className="admin-record-no-data">{isThai ? 'ยังไม่มี Deliverable ที่บันทึกไว้' : 'No deliverables have been recorded yet.'}</p>
+                <section className="admin-record-report-section" id="admin-record-deliverables">
+                  <header className="admin-record-report-heading admin-record-report-heading--deliverable">
+                    <span className="admin-record-report-code"><FileText aria-hidden="true" size={20} /></span>
+                    <div><span>DELIVERABLES</span><h3>{isThai ? 'PRD, Build และ Feedback' : 'PRD, BUILD & FEEDBACK'}</h3></div>
+                  </header>
+                  <div className="admin-record-report-body admin-record-deliverables">
+                    {record.data.prd_snapshots.map((snapshot) => (
+                      <details key={snapshot.id}>
+                        <summary><FileText aria-hidden="true" size={18} /> PRD V{snapshot.version} · {snapshot.status.toUpperCase()}</summary>
+                        <pre>{snapshot.markdown_content}</pre>
+                        {snapshot.content_pack ? <><h4>CONTENT PACK</h4><pre>{snapshot.content_pack}</pre></> : null}
+                        {snapshot.experience_direction ? <><h4>EXPERIENCE DIRECTION</h4><pre>{snapshot.experience_direction}</pre></> : null}
+                      </details>
+                    ))}
+                    {record.data.app_builds.map((build) => {
+                      const appUrl = safeExternalUrl(build.app_url)
+                      const repositoryUrl = safeExternalUrl(build.repository_url)
+                      return <article key={build.id}>
+                        <span>BUILD · {build.version_label}</span>
+                        {appUrl
+                          ? <a href={appUrl} target="_blank" rel="noreferrer">{build.app_url} <ExternalLink aria-hidden="true" size={15} /></a>
+                          : <p>{build.app_url}</p>}
+                        {build.repository_url
+                          ? repositoryUrl
+                            ? <a href={repositoryUrl} target="_blank" rel="noreferrer">{build.repository_url}</a>
+                            : <p>{build.repository_url}</p>
+                          : null}
+                      </article>
+                    })}
+                    {record.data.feedback_entries.map((feedback) => (
+                      <article key={feedback.id}>
+                        <span>{humanizeKey(feedback.feedback_type)}</span>
+                        <ContentValue value={feedback.content} />
+                      </article>
+                    ))}
+                    {record.data.prd_snapshots.length === 0 && record.data.app_builds.length === 0 && record.data.feedback_entries.length === 0 ? (
+                      <p className="admin-record-no-data">{isThai ? 'ยังไม่มี Deliverable ที่บันทึกไว้' : 'No deliverables have been recorded yet.'}</p>
+                    ) : null}
+                  </div>
+                </section>
+
+                {project.mode === 'own' ? (
+                  <section className="admin-record-report-section" id="admin-record-ai">
+                    <header className="admin-record-report-heading admin-record-report-heading--deliverable">
+                      <span className="admin-record-report-code"><Bot aria-hidden="true" size={20} /></span>
+                      <div><span>AI SUPPORT</span><h3>{isThai ? 'AI Proposal และ Usage' : 'AI PROPOSALS & USAGE'}</h3></div>
+                    </header>
+                    <div className="admin-record-report-body admin-record-deliverables">
+                      <div className="admin-record-ai-summary">
+                        <Bot aria-hidden="true" size={22} />
+                        <strong>{record.data.ai_budget?.status.toUpperCase() ?? 'NOT CONFIGURED'}</strong>
+                        <span>{record.data.ai_budget ? `${record.data.ai_budget.used_requests}/${record.data.ai_budget.max_requests ?? '—'} REQUESTS` : '0 REQUESTS'}</span>
+                      </div>
+                      {record.data.ai_proposals.map((proposal) => (
+                        <details key={proposal.id}>
+                          <summary><Bot aria-hidden="true" size={18} /> {humanizeKey(proposal.action)} · {proposal.review_status.toUpperCase()}</summary>
+                          <h4>PROVIDER PROPOSAL</h4>
+                          <ContentValue value={proposal.envelope} />
+                          {proposal.review_content ? <><h4>REVIEWED CONTENT</h4><ContentValue value={proposal.review_content} /></> : null}
+                        </details>
+                      ))}
+                      {record.data.ai_proposals.length === 0 ? <p className="admin-record-no-data">{isThai ? 'ยังไม่มี AI Proposal' : 'No AI proposals yet.'}</p> : null}
+                    </div>
+                  </section>
                 ) : null}
-              </div>
-            </section>
 
-            {project.mode === 'own' ? (
-              <section className="admin-record-section">
-                <header><span className="panel-kicker">AI SUPPORT</span><h3>{isThai ? 'AI Proposal และ Usage' : 'AI PROPOSALS & USAGE'}</h3></header>
-                <div className="admin-record-ai-summary">
-                  <Bot aria-hidden="true" size={22} />
-                  <strong>{record.data.ai_budget?.status.toUpperCase() ?? 'NOT CONFIGURED'}</strong>
-                  <span>{record.data.ai_budget ? `${record.data.ai_budget.used_requests}/${record.data.ai_budget.max_requests ?? '—'} REQUESTS` : '0 REQUESTS'}</span>
-                </div>
-                <div className="admin-record-artifacts">
-                  {record.data.ai_proposals.map((proposal) => (
-                    <details key={proposal.id}>
-                      <summary><Bot aria-hidden="true" size={18} /> {humanizeKey(proposal.action)} · {proposal.review_status.toUpperCase()}</summary>
-                      <h4>PROVIDER PROPOSAL</h4>
-                      <ContentValue value={proposal.envelope} />
-                      {proposal.review_content ? <><h4>REVIEWED CONTENT</h4><ContentValue value={proposal.review_content} /></> : null}
-                    </details>
-                  ))}
-                  {record.data.ai_proposals.length === 0 ? <p className="admin-record-no-data">{isThai ? 'ยังไม่มี AI Proposal' : 'No AI proposals yet.'}</p> : null}
-                </div>
-              </section>
-            ) : null}
-
-            <footer className="admin-record-footer">
-              <span>PROJECT ID · {project.project_id}</span>
-              <span>{isThai ? 'เปิดข้อมูลเมื่อ' : 'ACCESSED'} · {formatDate(record.data.accessed_at, isThai)}</span>
-            </footer>
-          </>
+                <footer className="admin-record-footer">
+                  <span>PROJECT ID · {project.project_id}</span>
+                  <span>{isThai ? 'เปิดข้อมูลเมื่อ' : 'ACCESSED'} · {formatDate(record.data.accessed_at, isThai)}</span>
+                </footer>
+              </main>
+            </div>
+          </div>
         ) : null}
       </section>
     </div>

@@ -208,7 +208,16 @@ describe('AdminPage', () => {
       decisions: [],
       prd_snapshots: [],
       app_builds: [],
-      feedback_entries: [],
+      feedback_entries: [{
+        id: 'feedback-1',
+        project_id: adminProject.project_id,
+        feedback_type: 'user_test',
+        content: {
+          worked: 'Users completed the flow without help.',
+          stuck: false,
+        },
+        created_at: adminProject.updated_at,
+      }],
       ai_budget: null,
       ai_requests: [],
       ai_proposals: [],
@@ -220,7 +229,12 @@ describe('AdminPage', () => {
     fireEvent.click(await screen.findByRole('button', { name: `เปิด Project Record: ${adminProject.title}` }))
     expect(await screen.findByRole('dialog', { name: adminProject.title })).toBeInTheDocument()
     expect(await screen.findByText('Managers need a clearer way to consolidate evidence.')).toBeInTheDocument()
-    expect(screen.getByText(/การเปิด Project ถูกบันทึกใน Admin access log/)).toBeInTheDocument()
+    expect(screen.getByRole('navigation', { name: 'สารบัญ Project Record' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'พิมพ์ / PDF' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'ข้อมูลและเส้นทางการตัดสินใจ' })).toBeInTheDocument()
+    expect(screen.getByText('Worked')).toBeInTheDocument()
+    expect(screen.getByText('Users completed the flow without help.')).toBeInTheDocument()
+    expect(screen.getByText(/การเปิด Project นี้ถูกบันทึกใน Admin access log/)).toBeInTheDocument()
 
     fireEvent.keyDown(window, { key: 'Escape' })
     expect(screen.queryByRole('dialog', { name: adminProject.title })).not.toBeInTheDocument()
