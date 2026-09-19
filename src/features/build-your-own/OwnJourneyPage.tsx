@@ -22,8 +22,10 @@ import { SolidificationMeter } from '../../components/progress/SolidificationMet
 import { ArcadeButton } from '../../components/ui/ArcadeButton'
 import type { Json, ProjectRow } from '../../lib/supabase/database.types'
 import { useLanguage } from '../i18n/LanguageContext'
-import { savePhaseEntry } from '../journey/journey.service'
+import { savePhaseEntry, startPhaseRevision } from '../journey/journey.service'
 import { PhaseSection, ReviewGate } from '../journey/PhaseFormComponents'
+import { UiReviewWorkspace } from '../journey/prd/UiReviewWorkspace'
+import { assembleOwnUiBrief } from '../journey/prd/uiReview'
 import { usePhaseDraft } from '../journey/usePhaseDraft'
 import {
   CodesignAiError,
@@ -330,7 +332,14 @@ export function OwnJourneyPage({
   const queryClient = useQueryClient()
   const definition = ownJourneyDefinitions[phase]
   const nextPhase = nextOwnJourneyPhase(phase)
-  const initialValues = useMemo(() => getOwnJourneyInitialValues(definition), [definition])
+  const initialValues = useMemo(() => ({
+    ...getOwnJourneyInitialValues(definition),
+    ...(phase === 'PRD' ? {
+      uiBriefDraft: '',
+      uiReviewMarkdown: '',
+      uiReviewApplied: '',
+    } : {}),
+  }), [definition, phase])
   const draft = usePhaseDraft<Record<string, string>>({
     projectId: project.id,
     phase,
@@ -343,11 +352,16 @@ export function OwnJourneyPage({
   const errorByField = new Map(validationErrors.map((error) => [error.fieldKey, localizedText(error.message, isThai)]))
   const requiredFields = definition.sections.flatMap((section) => section.fields).filter((field) => field.required)
   const answeredRequired = requiredFields.filter((field) => (draft.values[field.key]?.trim().length ?? 0) >= field.minLength).length
+  const ownUiBrief = phase === 'PRD'
+    ? draft.values.uiBriefDraft?.trim() || assembleOwnUiBrief(project, draft.values.prdMarkdown ?? '')
+    : ''
+  const uiReviewReady = phase !== 'PRD' || draft.values.uiReviewApplied === 'yes'
 
   const completion = useMutation({
     mutationFn: async () => {
       setAttempted(true)
       if (validationErrors.length) throw new Error('VALIDATION_REQUIRED')
+      if (!uiReviewReady) throw new Error('UI_REVIEW_REQUIRED')
       await draft.saveAll()
       return completeOwnJourneyPhase(project.id, phase)
     },
@@ -375,7 +389,12 @@ export function OwnJourneyPage({
       && !Array.isArray(content)
       && typeof content.markdown === 'string'
     ) {
-      await draft.saveAll({ prdMarkdown: content.markdown })
+      await draft.saveAll({
+        prdMarkdown: content.markdown,
+        uiBriefDraft: '',
+        uiReviewMarkdown: '',
+        uiReviewApplied: '',
+      })
     }
     setAcceptedNotice(true)
   }
@@ -410,6 +429,10 @@ export function OwnJourneyPage({
     setAttempted(true)
     if (validationErrors.length) {
       document.getElementById(`own-field-${validationErrors[0].fieldKey}`)?.focus()
+      return
+    }
+    if (!uiReviewReady) {
+      document.getElementById('own-ui-review')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
       return
     }
     completion.mutate()
@@ -483,7 +506,7 @@ export function OwnJourneyPage({
       ))}
 
       {phase === 'PRD' ? <div className="own-prd-tools">
-        <div><strong>{isThai ? 'ส่งต่อเอกสาร' : 'HANDOFF DOCUMENT'}</strong><p>{isThai ? 'คัดลอกหรือดาวน์โหลด PRD ฉบับปัจจุบันได้ตลอดเวลา การ Lock จะเก็บ Decision version สุดท้าย' : 'Copy or download the current PRD at any time. Locking preserves the final decision version.'}</p></div>
+        <div><strong>{isThai ? 'PRD ฉบับปัจจุบัน' : 'CURRENT PRD'}</strong><p>{isThai ? 'ฉบับนี้ยังเป็น Draft จนกว่าจะผ่าน Prototype, UI Review และการตรวจ Final PRD' : 'This remains a draft until prototyping, UI Review, and final PRD review are complete.'}</p></div>
         <button type="button" disabled={!draft.values.prdMarkdown} onClick={() => void copyPrd()}><Copy size={17} /> {isThai ? 'คัดลอก Markdown' : 'COPY MARKDOWN'}</button>
         <button type="button" disabled={!draft.values.prdMarkdown} onClick={downloadPrd}><Download size={17} /> {isThai ? 'ดาวน์โหลด .md' : 'DOWNLOAD .MD'}</button>
         {prdExportState !== 'idle' ? <span role="status">{prdExportState === 'copied'
@@ -513,6 +536,50 @@ export function OwnJourneyPage({
 
       {acceptedNotice ? <div className="own-accepted-notice" role="status"><CheckCircle2 size={19} /> {isThai ? 'เก็บ AI proposal ที่ Accept แล้วไว้กับ Draft ของหน้านี้ คุณยังแก้คำตอบก่อน Lock ได้' : 'The accepted AI proposal is attached to this page draft. You can still refine your answers before locking.'}</div> : null}
 
+      {phase === 'PRD' ? <section id="own-ui-review" className="own-ui-review-stage" aria-labelledby="own-ui-review-title">
+        <header><span>PRD · CODESIGN UI REVIEW</span><h2 id="own-ui-review-title">{isThai ? 'เห็นหน้าตาก่อน แล้วให้ Chat ช่วยทำ Final PRD' : 'SEE THE UI FIRST, THEN LET CHAT COMPLETE THE FINAL PRD'}</h2><p>{isThai ? 'Build Your Own มีความเป็นไปได้หลากหลาย จึงให้ Chat ใช้ UI Review ที่คุณอนุมัติเป็นหลักฐานในการปรับ PRD ฉบับเต็ม โดย CODESIGN จะตรวจโครงสร้างก่อนให้ Lock' : 'Build Your Own can vary widely, so Chat uses your approved UI Review as evidence when updating the complete PRD. CODESIGN validates both files before locking.'}</p></header>
+        {(draft.values.prdMarkdown?.trim().length ?? 0) < 300 ? <p className="field-error" role="status">{isThai ? 'สร้างและตรวจ PRD Draft ด้านบนให้พร้อมก่อนเริ่ม Prototype' : 'CREATE AND REVIEW THE PRD DRAFT ABOVE BEFORE PROTOTYPING.'}</p> : null}
+        <UiReviewWorkspace
+          mode="own"
+          projectId={project.id}
+          uiBrief={ownUiBrief}
+          storedReview={draft.values.uiReviewMarkdown}
+          storedFinalPrd={uiReviewReady ? draft.values.prdMarkdown : ''}
+          applied={uiReviewReady}
+          disabled={readOnly || (draft.values.prdMarkdown?.trim().length ?? 0) < 300}
+          onApply={async ({ review, finalPrd }) => {
+            await draft.saveAll({
+              prdMarkdown: finalPrd ?? draft.values.prdMarkdown,
+              uiBriefDraft: ownUiBrief,
+              uiReviewMarkdown: review,
+              uiReviewApplied: 'yes',
+            })
+          }}
+          onRevision={async ({ review, route }) => {
+            await draft.saveAll({
+              uiBriefDraft: ownUiBrief,
+              uiReviewMarkdown: review,
+              uiReviewApplied: '',
+            })
+            const targetPhase = route === 'revision-e' ? 'E' : 'S'
+            const nextProject = await startPhaseRevision({
+              projectId: project.id,
+              targetPhase,
+              reason: isThai
+                ? `CODESIGN UI Review พบว่าต้องทบทวน Product Decision ที่ Step ${targetPhase} ก่อนสร้าง Final PRD`
+                : `CODESIGN UI Review requires the Step ${targetPhase} Product Decision to be revised before creating the final PRD.`,
+            })
+            queryClient.setQueryData(['project', project.id], nextProject)
+            await Promise.all([
+              queryClient.invalidateQueries({ queryKey: ['projects'] }),
+              queryClient.invalidateQueries({ queryKey: ['phase-entries', project.id] }),
+              queryClient.invalidateQueries({ queryKey: ['phase-entry-history', project.id] }),
+            ])
+            navigate(`/own-projects/${project.id}/${targetPhase}`)
+          }}
+        />
+      </section> : null}
+
       {!readOnly ? <ReviewGate
         title={phase === 'PRD'
           ? 'LOCK PRD'
@@ -532,7 +599,7 @@ export function OwnJourneyPage({
               : 'Are these answers clear enough to become the decision context for the next step?'}
         actions={<>
           <ArcadeButton variant="secondary" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>{isThai ? 'ยัง — ทบทวนอีกครั้ง' : 'NOT YET — REVIEW'}</ArcadeButton>
-          <ArcadeButton disabled={completion.isPending || draft.saveState === 'saving'} onClick={complete}>
+          <ArcadeButton disabled={completion.isPending || draft.saveState === 'saving' || !uiReviewReady} onClick={complete}>
             <LockKeyhole size={18} /> {completion.isPending
               ? (isThai ? 'กำลัง Lock…' : 'LOCKING…')
               : phase === 'PRD'
@@ -548,6 +615,7 @@ export function OwnJourneyPage({
           <span>{isThai ? 'คำตอบจำเป็นผ่านเกณฑ์ขั้นต่ำ' : 'required answers meet the minimum detail gate'}</span>
         </div>
         {attempted && validationErrors.length ? <p className="field-error" role="alert">{isThai ? `ยัง Lock ไม่ได้ กรุณาเติม ${validationErrors.length} ช่องที่ระบุ` : `LOCKING IS DISABLED UNTIL ${validationErrors.length} REQUIRED FIELD(S) ARE COMPLETE.`}</p> : null}
+        {phase === 'PRD' && !uiReviewReady ? <p className="field-error" role="alert">{isThai ? 'ยัง Lock ไม่ได้ กรุณาทำ Prototype และนำ CODESIGN_UI_REVIEW.md กับ PRODUCT_REQUIREMENTS.md ฉบับ Final กลับมาใช้ก่อน' : 'LOCKING IS DISABLED UNTIL THE APPROVED UI REVIEW AND FINAL PRODUCT_REQUIREMENTS.md ARE APPLIED.'}</p> : null}
         {completion.isError && completion.error.message !== 'VALIDATION_REQUIRED' ? <p className="field-error" role="alert">{isThai ? 'Lock Step ไม่สำเร็จ ข้อมูลยังคงเป็น Draft' : 'Could not lock this step. Your work remains a draft.'}</p> : null}
       </ReviewGate> : <div className="own-readonly-actions"><ArcadeButton to={`/own-projects/${project.id}/${project.current_phase}`}><ArrowRight size={18} /> {isThai ? 'กลับไปหน้าปัจจุบัน' : 'RETURN TO CURRENT STEP'}</ArcadeButton></div>}
     </div>

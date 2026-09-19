@@ -212,16 +212,16 @@ export const ownJourneyDefinitions: Record<OwnJourneyPhase, OwnJourneyDefinition
   PRD: {
     phase: 'PRD',
     name: 'PRODUCT REQUIREMENTS',
-    headline: { th: 'ประกอบคำตัดสินทั้งหมดเป็นเอกสารพร้อมส่งต่อ', en: 'Assemble every decision into a build-ready handoff' },
-    principle: { th: 'PRD ต้องสังเคราะห์จาก decision ที่ Lock แล้ว ไม่เติม scope ใหม่เงียบ ๆ และต้องย้อนกลับไปยังที่มาของข้อกำหนดได้', en: 'The PRD must synthesize locked decisions, avoid silent scope expansion, and keep requirements traceable to their source.' },
-    outcome: { th: 'ได้ PRD Markdown ที่ตรวจความครบ ความสอดคล้อง และพร้อมส่งต่อให้ทีมสร้าง', en: 'A Markdown PRD reviewed for completeness, consistency, and implementation handoff.' },
+    headline: { th: 'เห็นหน้าตาก่อน แล้วทำ PRD ให้พร้อมสร้างจริง', en: 'See the interface before finalizing the build-ready PRD' },
+    principle: { th: 'เริ่มจาก PRD Draft ที่สังเคราะห์จาก Decision ที่ Lock แล้ว ใช้ Prototype ตรวจ UI/UX และนำเฉพาะสิ่งที่ผู้ใช้อนุมัติกลับมาสร้าง Final PRD โดยไม่เพิ่ม Scope เงียบ ๆ', en: 'Start with a PRD draft from locked decisions, use a prototype to review the UI/UX, and bring only owner-approved changes into the final PRD without silent scope expansion.' },
+    outcome: { th: 'ได้ CODESIGN UI Review และ Final PRD Markdown ที่ตรวจความครบ ความสอดคล้อง และพร้อมส่งต่อให้ทีมสร้าง', en: 'A CODESIGN UI Review plus a complete final PRD reviewed for consistency and implementation handoff.' },
     aiAction: 'draft_prd',
-    aiTitle: { th: 'ให้ AI ร่าง PRD จาก Decision ที่ Lock แล้ว', en: 'Let AI draft the PRD from locked decisions' },
-    aiDescription: { th: 'AI จะใช้เฉพาะ decision และ phase entry ที่ยืนยันแล้ว คุณต้องอ่าน แก้ไข และ Accept ก่อน Lock', en: 'AI will use only accepted decisions and locked entries. You must review, edit, and accept before locking.' },
+    aiTitle: { th: 'ให้ AI ร่าง PRD ตั้งต้นจาก Decision ที่ Lock แล้ว', en: 'Let AI create the starting PRD from locked decisions' },
+    aiDescription: { th: 'นี่คือ PRD Draft สำหรับสร้าง UI Brief หลัง Accept คุณจะทำ Prototype และนำ UI Review กลับมาสร้าง Final PRD ก่อน Lock', en: 'This is the starting PRD used to create the UI Brief. After accepting it, prototype and bring back the UI Review to create the final PRD before locking.' },
     sections: [
       {
         title: { th: 'เอกสาร PRD', en: 'PRD document' },
-        description: { th: 'ใช้โครงด้านล่างเพื่อให้ทีม Product, Design และ Engineering เห็นภาพเดียวกัน', en: 'Use the structure below to align Product, Design, and Engineering.' },
+        description: { th: 'สร้าง PRD Draft ให้ครบก่อน แล้วใช้ Prototype ด้านล่างตรวจหน้าตาและ UX/UI ระบบจะนำ Final PRD กลับมาไว้ในช่องนี้ให้คุณตรวจครั้งสุดท้าย', en: 'Complete this PRD draft first, then use the prototype checkpoint below to review the UI/UX. CODESIGN returns the final PRD to this field for one final review.' },
         fields: [
           { key: 'prdMarkdown', required, minLength: 300, rows: 30, label: { th: 'PRD Markdown', en: 'PRD Markdown' }, question: { th: 'เอกสารนี้อธิบายปัญหา คำตัดสิน ขอบเขต Journey Requirements และ Acceptance criteria ครบหรือยัง?', en: 'Does this document fully cover the problem, decisions, scope, journey, requirements, and acceptance criteria?' }, placeholder: { th: '# Product Requirements Document\n\n## 1. Context and problem\n## 2. Users and outcome\n## 3. Goals and non-goals\n## 4. Product direction\n## 5. User journey\n## 6. Functional requirements\n## 7. Business rules and data\n## 8. Acceptance criteria\n## 9. Risks and open questions\n## 10. Release and measurement', en: '# Product Requirements Document\n\n## 1. Context and problem\n## 2. Users and outcome\n## 3. Goals and non-goals\n## 4. Product direction\n## 5. User journey\n## 6. Functional requirements\n## 7. Business rules and data\n## 8. Acceptance criteria\n## 9. Risks and open questions\n## 10. Release and measurement' } },
           { key: 'handoffNotes', minLength: 0, rows: 5, label: { th: 'Handoff notes', en: 'Handoff notes' }, question: { th: 'ทีมสร้างต้องรู้อะไรเพิ่มเติมเกี่ยวกับลำดับ ความเสี่ยง dependency หรือเรื่องที่ยังต้องตัดสินใจ?', en: 'What else should the build team know about sequencing, risks, dependencies, or unresolved decisions?' }, placeholder: { th: 'ระบุ dependency, rollout, owner และ open question ที่ไม่ควรถูกตีความเอง', en: 'List dependencies, rollout notes, owners, and open questions that should not be guessed.' } },

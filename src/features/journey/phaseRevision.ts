@@ -24,6 +24,7 @@ const booleanConfirmations = new Set([
   'G:prdRules',
   'G:alignmentConfirmed',
   'N:routeConfirmed',
+  'PRD:uiReviewApplied',
 ])
 
 const listConfirmations = new Set([
@@ -41,6 +42,10 @@ const emptyTextOnRevision = new Set([
   'S:alignmentStatus',
   'S:alignmentNote',
   'PRD:reviewOutcomeV2',
+  'PRD:uiBriefDraft',
+  'PRD:uiReviewDraft',
+  'PRD:uiReviewMarkdown',
+  'PRD:prdMarkdown',
   'I:alignmentStatus',
   'I:alignmentNote',
   'G:alignmentStatus',

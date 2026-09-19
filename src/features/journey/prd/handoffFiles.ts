@@ -143,6 +143,8 @@ export function assembleStartWithCodex(project: ProjectRow, readiness: GitHubRea
 
 ให้ถือทั้งสามไฟล์เป็น source of truth ห้ามเติมพฤติกรรมที่เปลี่ยน Product โดยไม่แจ้ง หากพบความกำกวมที่มีผลต่อ Product ให้ระบุ **PRODUCT DECISION REQUIRED** และถามผู้ใช้ครั้งละหนึ่งคำถามที่ชัดเจน
 
+ข้อสรุปจาก Prototype และ CODESIGN UI Review ที่เจ้าของอนุมัติแล้วถูกรวมไว้ใน CODESIGN_HANDOFF.md และ EXPERIENCE_DIRECTION.md เรียบร้อย จึงไม่ต้องขอไฟล์ CODESIGN_UI_REVIEW.md เพิ่ม และห้ามย้อนกลับไปใช้ Prototype code เป็น source of truth
+
 ## กติกา Product ที่ยืนยันแล้ว
 
 - **การกลับไปยังรายการก่อนหน้า:** ${returnRule}
@@ -203,6 +205,8 @@ Work entirely inside the current project folder. Do not ask the owner to attach 
 3. \`EXPERIENCE_DIRECTION.md\` — the owner-selected visual and interaction direction
 
 Treat these files as the source of truth. Do not silently invent a behavior that changes the product. Mark any material ambiguity as **PRODUCT DECISION REQUIRED** and ask one clear question.
+
+Owner-approved prototype and CODESIGN UI Review conclusions are already consolidated into CODESIGN_HANDOFF.md and EXPERIENCE_DIRECTION.md. Do not request CODESIGN_UI_REVIEW.md separately, and never treat prototype code as a source of truth.
 
 ## Locked Product Rules
 

@@ -9,6 +9,7 @@ import { useLanguage } from '../i18n/LanguageContext'
 import { getPhaseGuide } from './guidanceContent'
 import { getLatestPhaseRevision, getPrdSource } from './journey.service'
 import { isActivePhaseRevision } from './phaseRevision'
+import { assemblePrototypePrompt } from './prd/uiReview'
 import type { SaveState } from './usePhaseDraft'
 
 type JourneyLayoutProps = PropsWithChildren<{
@@ -40,7 +41,26 @@ export function JourneyLayout({
     queryFn: () => getLatestPhaseRevision(project.id),
     staleTime: 0,
   })
-  const guide = getPhaseGuide(language, phase, source.data ?? {}, chatContext, project.topic)
+  const baseGuide = getPhaseGuide(language, phase, source.data ?? {}, chatContext, project.topic)
+  const uiBrief = typeof chatContext.uiBrief === 'string' ? chatContext.uiBrief : ''
+  const guide = phase === 'PRD' && uiBrief
+    ? {
+        ...baseGuide,
+        hint: isThai
+          ? 'ใช้ UI Brief ที่ CODESIGN เตรียมไว้เพื่อดูหน้าตาและทดลอง UX/UI ก่อน จากนั้นค่อยกลับมาตรวจ Final PRD เพียงรอบเดียว'
+          : 'Use the prepared UI Brief to inspect and refine the UI/UX first, then return for one final PRD review.',
+        chatGoal: isThai
+          ? 'สร้าง Prototype ที่มองเห็นได้ ปรับกับผู้ใช้จนพอใจ แล้วส่ง CODESIGN_UI_REVIEW.md กลับมา'
+          : 'Create a visible prototype, iterate with the owner, and return CODESIGN_UI_REVIEW.md.',
+        prompt: assemblePrototypePrompt(uiBrief, 'guided', language),
+        followUps: isThai
+          ? ['แสดงหน้าหลักและ Primary journey ก่อน', 'ลอง Mobile และ Desktop โดยใช้ Content ตัวอย่าง', 'ถามฉันทีละหนึ่งเรื่องจากสิ่งที่เห็นจริง', 'หลังฉันยืนยันแล้ว ให้รอคำสั่ง FINALIZE UI REVIEW']
+          : ['Show the primary screens and journey first.', 'Check mobile and desktop with representative content.', 'Ask one question at a time about the visible prototype.', 'After approval, wait for FINALIZE UI REVIEW.'],
+        bringBack: isThai
+          ? 'นำ CODESIGN_UI_REVIEW.md กลับมา CODESIGN ไม่ต้องนำ Prototype code หรือ Content Pack ฉบับเต็มกลับมา'
+          : 'Bring CODESIGN_UI_REVIEW.md back to CODESIGN. Do not bring prototype code or the complete Content Pack.',
+      }
+    : baseGuide
   async function copyPrompt() {
     try {
       await navigator.clipboard.writeText(guide.prompt)
@@ -116,7 +136,7 @@ export function JourneyLayout({
               <p className="prompt-kit__goal">{guide.chatGoal}</p>
               {phase === 'PRD' ? <section className="prompt-kit__included">
                 <strong>{isThai ? 'Prompt นี้มีข้อมูลพร้อมแล้ว' : 'THIS PROMPT IS READY'}</strong>
-                <p>{isThai ? 'รวมการตัดสินใจที่ Lock แล้วและไฟล์ร่าง CODESIGN_HANDOFF.md, CONTENT_PACK.md และ EXPERIENCE_DIRECTION.md คุณไม่ต้องแนบไฟล์เพิ่มในรอบตรวจนี้' : 'It includes the locked decisions and drafts of CODESIGN_HANDOFF.md, CONTENT_PACK.md, and EXPERIENCE_DIRECTION.md. No separate attachment is needed for this review.'}</p>
+                <p>{isThai ? 'รวม CODESIGN UI Brief ที่สรุป Decision, Experience Direction และตัวอย่างโครง Content ไว้แล้ว โดยไม่ส่ง Content 21 วันทั้งหมด คุณไม่ต้องแนบไฟล์เพิ่ม' : 'It includes the CODESIGN UI Brief with locked decisions, experience direction, and representative content structure—without sending all 21 days. No attachment is needed.'}</p>
               </section> : null}
               {phase === 'I' ? <section className="prompt-kit__included">
                 <strong>{isThai ? 'ใช้คำสั่งนี้กับ Codex' : 'USE THIS IN CODEX'}</strong>
@@ -135,7 +155,7 @@ export function JourneyLayout({
               </button>
               <section>
                 <strong>{phase === 'PRD'
-                  ? (isThai ? 'สถานะที่ Chat ต้องเลือก' : 'EXPECTED CHAT STATUS')
+                  ? (isThai ? 'สิ่งที่ Chat ต้องส่งกลับ' : 'EXPECTED CHAT OUTPUT')
                   : phase === 'I'
                     ? (isThai ? 'สิ่งที่ให้ Codex ทำต่อ' : 'CONTINUE WITH CODEX')
                     : (isThai ? 'คำถามต่อยอด' : 'GO DEEPER')}</strong>
