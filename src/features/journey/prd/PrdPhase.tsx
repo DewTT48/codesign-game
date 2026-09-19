@@ -10,11 +10,21 @@ import { JourneyLayout } from '../JourneyLayout'
 import { PhaseSection, ReviewGate } from '../PhaseFormComponents'
 import type { SaveState } from '../usePhaseDraft'
 import { assemblePrd } from './assemblePrd'
+import { FinalPrdChangeSummary } from './FinalPrdChangeSummary'
 import { assembleContentPack, assembleExperienceDirection } from './handoffFiles'
 import { MarkdownPreview } from './MarkdownPreview'
 import { prdFiles, type PrdDrafts, type PrdFileKey, validatePrdDocument } from './prdPackage'
 import { UiReviewWorkspace } from './UiReviewWorkspace'
 import { applyGuidedUiReview, assembleGuidedUiBrief } from './uiReview'
+import {
+  checkingUiReviewIntegrity,
+  createUiReviewFinalizationEvidence,
+  parseUiReviewFinalizationEvidence,
+  uiReviewFinalizationEvidenceToJson,
+  validateUiReviewFinalization,
+  type UiReviewFinalizationEvidence,
+  type UiReviewIntegrityCheck,
+} from './uiReviewEvidence'
 
 const fileFieldKeys: Record<PrdFileKey, string> = {
   handoff: 'markdownDraft',
@@ -29,6 +39,7 @@ const uiBriefFieldKey = 'uiBriefDraft'
 const uiReviewFieldKey = 'uiReviewDraft'
 const uiReviewAppliedFieldKey = 'uiReviewApplied'
 const uiReviewResolutionFieldKey = 'uiReviewResolution'
+const uiReviewEvidenceFieldKey = 'uiReviewChangeSummary'
 
 export function PrdPhase({ project }: { project: ProjectRow }) {
   const { isThai } = useLanguage()
@@ -47,6 +58,8 @@ export function PrdPhase({ project }: { project: ProjectRow }) {
   const [uiReview, setUiReview] = useState('')
   const [uiReviewResolution, setUiReviewResolution] = useState('')
   const [uiReviewApplied, setUiReviewApplied] = useState(false)
+  const [uiReviewEvidence, setUiReviewEvidence] = useState<UiReviewFinalizationEvidence | null>(null)
+  const [uiReviewIntegrity, setUiReviewIntegrity] = useState<UiReviewIntegrityCheck>(checkingUiReviewIntegrity)
   const [saveState, setSaveState] = useState<SaveState>('idle')
   const [feedback, setFeedback] = useState('')
 
@@ -80,12 +93,15 @@ export function PrdPhase({ project }: { project: ProjectRow }) {
     const savedUiReviewResolution = draft.data.find((entry) => entry.fieldKey === uiReviewResolutionFieldKey)?.content
     const initialUiReviewResolution = typeof savedUiReviewResolution === 'string' ? savedUiReviewResolution : ''
     const initialUiReviewApplied = draft.data.find((entry) => entry.fieldKey === uiReviewAppliedFieldKey)?.content === true
+    const savedUiReviewEvidence = draft.data.find((entry) => entry.fieldKey === uiReviewEvidenceFieldKey)?.content
+    const initialUiReviewEvidence = parseUiReviewFinalizationEvidence(savedUiReviewEvidence)
     setFiles(initial)
     setReviewedFiles(initialReviewed)
     setUiBrief(initialBrief)
     setUiReview(initialUiReview)
     setUiReviewResolution(initialUiReviewResolution)
     setUiReviewApplied(initialUiReviewApplied)
+    setUiReviewEvidence(initialUiReviewEvidence)
 
     const missing = prdFiles.filter(({ key }) => !draft.data.some((entry) => entry.fieldKey === fileFieldKeys[key]))
     const missingReview = !draft.data.some((entry) => entry.fieldKey === reviewFieldKey)
@@ -93,16 +109,27 @@ export function PrdPhase({ project }: { project: ProjectRow }) {
     const missingUiReview = !draft.data.some((entry) => entry.fieldKey === uiReviewFieldKey)
     const missingUiReviewResolution = !draft.data.some((entry) => entry.fieldKey === uiReviewResolutionFieldKey)
     const missingUiReviewApplied = !draft.data.some((entry) => entry.fieldKey === uiReviewAppliedFieldKey)
-    if (missing.length || missingReview || missingBrief || missingUiReview || missingUiReviewResolution || missingUiReviewApplied) {
+    const initializationTasks = [
+      ...missing.map(({ key }) => savePhaseEntry({ projectId: project.id, phase: 'PRD' as const, section: 'document', fieldKey: fileFieldKeys[key], content: initial[key] })),
+      ...(missingReview ? [savePhaseEntry({ projectId: project.id, phase: 'PRD' as const, section: 'review', fieldKey: reviewFieldKey, content: initialReviewed })] : []),
+      ...(missingBrief ? [savePhaseEntry({ projectId: project.id, phase: 'PRD' as const, section: 'ui_review', fieldKey: uiBriefFieldKey, content: initialBrief })] : []),
+      ...(missingUiReview ? [savePhaseEntry({ projectId: project.id, phase: 'PRD' as const, section: 'ui_review', fieldKey: uiReviewFieldKey, content: initialUiReview })] : []),
+      ...(missingUiReviewResolution ? [savePhaseEntry({ projectId: project.id, phase: 'PRD' as const, section: 'ui_review', fieldKey: uiReviewResolutionFieldKey, content: initialUiReviewResolution })] : []),
+      ...(missingUiReviewApplied ? [savePhaseEntry({ projectId: project.id, phase: 'PRD' as const, section: 'ui_review', fieldKey: uiReviewAppliedFieldKey, content: initialUiReviewApplied })] : []),
+    ]
+    if (initialUiReviewApplied && !initialUiReviewEvidence && initialUiReview.trim()) {
       setSaveState('saving')
-      void Promise.all([
-        ...missing.map(({ key }) => savePhaseEntry({ projectId: project.id, phase: 'PRD' as const, section: 'document', fieldKey: fileFieldKeys[key], content: initial[key] })),
-        ...(missingReview ? [savePhaseEntry({ projectId: project.id, phase: 'PRD' as const, section: 'review', fieldKey: reviewFieldKey, content: initialReviewed })] : []),
-        ...(missingBrief ? [savePhaseEntry({ projectId: project.id, phase: 'PRD' as const, section: 'ui_review', fieldKey: uiBriefFieldKey, content: initialBrief })] : []),
-        ...(missingUiReview ? [savePhaseEntry({ projectId: project.id, phase: 'PRD' as const, section: 'ui_review', fieldKey: uiReviewFieldKey, content: initialUiReview })] : []),
-        ...(missingUiReviewResolution ? [savePhaseEntry({ projectId: project.id, phase: 'PRD' as const, section: 'ui_review', fieldKey: uiReviewResolutionFieldKey, content: initialUiReviewResolution })] : []),
-        ...(missingUiReviewApplied ? [savePhaseEntry({ projectId: project.id, phase: 'PRD' as const, section: 'ui_review', fieldKey: uiReviewAppliedFieldKey, content: initialUiReviewApplied })] : []),
-      ]).then(() => setSaveState('saved')).catch(() => setSaveState('error'))
+      void createUiReviewFinalizationEvidence(generated, initial).then(async (evidence) => {
+        await Promise.all([
+          ...initializationTasks,
+          savePhaseEntry({ projectId: project.id, phase: 'PRD', section: 'ui_review', fieldKey: uiReviewEvidenceFieldKey, content: uiReviewFinalizationEvidenceToJson(evidence) }),
+        ])
+        setUiReviewEvidence(evidence)
+        setSaveState('saved')
+      }).catch(() => setSaveState('error'))
+    } else if (initializationTasks.length) {
+      setSaveState('saving')
+      void Promise.all(initializationTasks).then(() => setSaveState('saved')).catch(() => setSaveState('error'))
     } else setSaveState('saved')
   }, [draft.data, project, source.data])
 
@@ -142,6 +169,11 @@ export function PrdPhase({ project }: { project: ProjectRow }) {
 
   const openFile = (key: PrdFileKey, mode: 'preview' | 'edit' = 'preview') => {
     setSelectedFile(key)
+    if (key === 'contentPack' && mode === 'edit' && uiReviewApplied) {
+      setViewMode('preview')
+      setFeedback(isThai ? 'CONTENT_PACK.md ถูกคงไว้ตามฉบับที่อนุมัติก่อน Prototype จึงเปิดให้อ่านและยืนยันโดยไม่แก้ไขในรอบนี้' : 'CONTENT_PACK.md is preserved from the pre-prototype approval and is read-only in this finalization pass.')
+      return
+    }
     setViewMode(mode)
     setFeedback('')
   }
@@ -189,6 +221,7 @@ export function PrdPhase({ project }: { project: ProjectRow }) {
 
   const applyUiReview = async (review: string, resolution = '') => {
     const nextFiles = applyGuidedUiReview(files, review, resolution)
+    const evidence = await createUiReviewFinalizationEvidence(files, nextFiles, (uiReviewEvidence?.version ?? 0) + 1)
     const reviewed: PrdFileKey[] = []
     setFiles(nextFiles)
     setReviewedFiles(reviewed)
@@ -196,6 +229,7 @@ export function PrdPhase({ project }: { project: ProjectRow }) {
     setDirtyFiles([])
     setSelectedFile('handoff')
     setViewMode('preview')
+    setUiReviewIntegrity(checkingUiReviewIntegrity())
     setSaveState('saving')
     try {
       await Promise.all([
@@ -205,10 +239,12 @@ export function PrdPhase({ project }: { project: ProjectRow }) {
         savePhaseEntry({ projectId: project.id, phase: 'PRD', section: 'ui_review', fieldKey: uiReviewFieldKey, content: review }),
         savePhaseEntry({ projectId: project.id, phase: 'PRD', section: 'ui_review', fieldKey: uiReviewResolutionFieldKey, content: resolution }),
         savePhaseEntry({ projectId: project.id, phase: 'PRD', section: 'ui_review', fieldKey: uiReviewAppliedFieldKey, content: true }),
+        savePhaseEntry({ projectId: project.id, phase: 'PRD', section: 'ui_review', fieldKey: uiReviewEvidenceFieldKey, content: uiReviewFinalizationEvidenceToJson(evidence) }),
       ])
       setUiReview(review)
       setUiReviewResolution(resolution)
       setUiReviewApplied(true)
+      setUiReviewEvidence(evidence)
       setSaveState('saved')
       setFeedback(isThai ? 'สร้าง Final PRD แล้ว กรุณาเปิดอ่านและยืนยันไฟล์ฉบับสุดท้ายเพียงรอบนี้' : 'FINAL PRD CREATED. REVIEW AND CONFIRM THIS FINAL PACKAGE ONCE.')
     } catch (error) {
@@ -217,6 +253,21 @@ export function PrdPhase({ project }: { project: ProjectRow }) {
     }
   }
 
+  useEffect(() => {
+    let cancelled = false
+    if (!uiReviewApplied || !uiReviewEvidence || !uiReview.trim()) {
+      setUiReviewIntegrity(checkingUiReviewIntegrity())
+      return () => { cancelled = true }
+    }
+    setUiReviewIntegrity(checkingUiReviewIntegrity())
+    void validateUiReviewFinalization(files, uiReviewEvidence, uiReview, uiReviewResolution).then((check) => {
+      if (!cancelled) setUiReviewIntegrity(check)
+    }).catch(() => {
+      if (!cancelled) setUiReviewIntegrity({ status: 'invalid', errors: ['ตรวจความครบถ้วนของ Final PRD ไม่สำเร็จ'], warnings: [] })
+    })
+    return () => { cancelled = true }
+  }, [files, uiReview, uiReviewApplied, uiReviewEvidence, uiReviewResolution])
+
   const documentChecks = Object.fromEntries(prdFiles.map(({ key }) => [key, validatePrdDocument(key, files[key])])) as Record<PrdFileKey, ReturnType<typeof validatePrdDocument>>
   const allValid = prdFiles.every(({ key }) => documentChecks[key].valid)
   const allReviewed = prdFiles.every(({ key }) => reviewedFiles.includes(key))
@@ -224,6 +275,9 @@ export function PrdPhase({ project }: { project: ProjectRow }) {
   const completion = useMutation({
     mutationFn: async () => {
       if (!uiReviewApplied) throw new Error('The approved UI Review has not been applied.')
+      if (!uiReviewEvidence) throw new Error('Final PRD consolidation evidence is missing.')
+      const integrity = await validateUiReviewFinalization(files, uiReviewEvidence, uiReview, uiReviewResolution)
+      if (integrity.status !== 'valid') throw new Error('Final PRD integrity check failed.')
       await Promise.all(prdFiles.map(({ key }) => persist(key, files[key])))
       await persistReviewed(reviewedFiles)
       return lockPrd(project.id, files)
@@ -287,10 +341,21 @@ export function PrdPhase({ project }: { project: ProjectRow }) {
 
       <div id="prd-file-review">
       <PhaseSection step="03" title={isThai ? 'ตรวจ Final PRD เพียงรอบเดียว' : 'REVIEW THE FINAL PRD ONCE'} description={isThai ? 'หลังนำ UI Review ไปใช้แล้ว เปิดอ่านไฟล์ฉบับสุดท้ายแต่ละฉบับจนจบและยืนยัน CONTENT_PACK.md จะยังเป็นเนื้อหาที่คุณเคยตรวจไว้โดยไม่มีการแก้ไขจาก Prototype' : 'After applying UI Review, read each final file to the end and confirm it. CONTENT_PACK.md remains the content you already approved and is not rewritten by prototyping.'}>
+        {uiReviewApplied && uiReviewEvidence ? <FinalPrdChangeSummary
+          evidence={uiReviewEvidence}
+          integrity={uiReviewIntegrity}
+          review={uiReview}
+          resolution={uiReviewResolution}
+          isThai={isThai}
+          onOpenFile={(key) => {
+            openFile(key)
+            window.requestAnimationFrame(() => document.querySelector('.prd-file-workspace')?.scrollIntoView({ behavior: 'smooth', block: 'start' }))
+          }}
+        /> : uiReviewApplied ? <div className="final-prd-evidence__loading" role="status">{isThai ? 'กำลังสร้างหลักฐานการเปลี่ยนแปลงของ Final PRD…' : 'PREPARING FINAL PRD CHANGE EVIDENCE…'}</div> : null}
         <div className="handoff-file-grid" aria-label={isThai ? 'เลือกไฟล์เพื่อตรวจสอบ' : 'Choose a file to review'}>
           {prdFiles.map((file) => <button type="button" className={selectedFile === file.key ? 'is-active' : ''} aria-pressed={selectedFile === file.key} key={file.key} onClick={() => openFile(file.key)}>
             <FileCode2 size={21} />
-            <span><strong>{file.fileName}</strong><small>{descriptions[file.key]}</small><small className={documentChecks[file.key].valid ? (reviewedFiles.includes(file.key) ? 'file-status is-valid' : 'file-status') : 'file-status is-error'}>{documentChecks[file.key].valid ? (reviewedFiles.includes(file.key) ? (isThai ? 'ยืนยันแล้ว' : 'CONFIRMED') : dirtyFiles.includes(file.key) ? (isThai ? 'มีการแก้ไขที่ยังไม่บันทึก' : 'UNSAVED CHANGES') : (isThai ? 'รอตรวจและยืนยัน' : 'REVIEW REQUIRED')) : (isThai ? 'โครงสร้างไม่ครบ' : 'STRUCTURE ERROR')}</small></span>
+            <span><strong>{file.fileName}</strong><small>{descriptions[file.key]}</small>{uiReviewEvidence ? <small className={uiReviewEvidence.files[file.key].changed ? 'final-prd-file-state is-changed' : 'final-prd-file-state is-preserved'}>{uiReviewEvidence.files[file.key].changed ? (isThai ? 'อัปเดตจาก UI Review' : 'UPDATED FROM UI REVIEW') : (isThai ? 'คงเดิมตามที่อนุมัติ' : 'PRESERVED AS APPROVED')}</small> : null}<small className={documentChecks[file.key].valid ? (reviewedFiles.includes(file.key) ? 'file-status is-valid' : 'file-status') : 'file-status is-error'}>{documentChecks[file.key].valid ? (reviewedFiles.includes(file.key) ? (isThai ? 'ยืนยันแล้ว' : 'CONFIRMED') : dirtyFiles.includes(file.key) ? (isThai ? 'มีการแก้ไขที่ยังไม่บันทึก' : 'UNSAVED CHANGES') : (isThai ? 'รอตรวจและยืนยัน' : 'REVIEW REQUIRED')) : (isThai ? 'โครงสร้างไม่ครบ' : 'STRUCTURE ERROR')}</small></span>
             <Eye size={18} />
           </button>)}
         </div>
@@ -299,7 +364,7 @@ export function PrdPhase({ project }: { project: ProjectRow }) {
             <div><span>{isThai ? 'ไฟล์ที่กำลังตรวจ' : 'REVIEWING FILE'}</span><h3 id="active-handoff-file">{activeFile.fileName}</h3><p>{isThai ? 'อ่าน Preview ให้ถึงด้านล่างก่อนยืนยัน หากเลือกแก้ไข กรุณากด “บันทึกไฟล์” เพื่อเก็บการเปลี่ยนแปลง' : 'Read the preview to the end before confirming. In edit mode, choose Save file to keep your changes.'}</p></div>
             <div className="prd-view-switch" role="group" aria-label={isThai ? 'เลือกโหมดดูไฟล์' : 'File view mode'}>
               <button type="button" className={viewMode === 'preview' ? 'is-active' : ''} aria-pressed={viewMode === 'preview'} onClick={() => openFile(selectedFile, 'preview')}><Eye size={17} /> {isThai ? 'ดูตัวอย่าง' : 'PREVIEW'}</button>
-              <button type="button" className={viewMode === 'edit' ? 'is-active' : ''} aria-pressed={viewMode === 'edit'} onClick={() => openFile(selectedFile, 'edit')}><PencilLine size={17} /> {isThai ? 'แก้ไข' : 'EDIT'}</button>
+              <button type="button" disabled={uiReviewApplied && selectedFile === 'contentPack'} className={viewMode === 'edit' ? 'is-active' : ''} aria-pressed={viewMode === 'edit'} onClick={() => openFile(selectedFile, 'edit')}><PencilLine size={17} /> {uiReviewApplied && selectedFile === 'contentPack' ? (isThai ? 'คงเดิม' : 'PRESERVED') : (isThai ? 'แก้ไข' : 'EDIT')}</button>
               {viewMode === 'edit' ? <button type="button" className="is-save" disabled={!dirtyFiles.includes(selectedFile) || saveState === 'saving'} onClick={() => void saveFile(selectedFile)}><Save size={18} /> {saveState === 'saving' ? (isThai ? 'กำลังบันทึก…' : 'SAVING…') : (isThai ? 'บันทึกไฟล์' : 'SAVE FILE')}</button> : null}
             </div>
           </header>
@@ -322,10 +387,12 @@ export function PrdPhase({ project }: { project: ProjectRow }) {
 
       <ReviewGate title={isThai ? 'ยืนยันชุดส่งต่องานฉบับหลัก' : 'LOCK THE SOURCE PACKAGE'} question={isThai ? 'ไฟล์หลักทั้ง 3 ฉบับสะท้อนสิ่งที่คุณตัดสินใจ ตรงกัน และพร้อมนำไปประกอบชุดสำหรับ Codex แล้วหรือยัง?' : 'Do all three source files reflect your decisions, agree with each other, and feel ready for the Codex package?'} actions={<>
         <ArcadeButton variant="secondary" onClick={() => { setFeedback(isThai ? 'เปิดไฟล์ที่ยังไม่ยืนยัน อ่านถึงด้านล่าง หรือแก้ข้อความที่ไม่ตรงกับการตัดสินใจของคุณ' : 'OPEN AN UNCONFIRMED FILE, READ TO THE END, OR CORRECT IT.'); const first = prdFiles.find(({ key }) => !reviewedFiles.includes(key) || !documentChecks[key].valid); openFile(first?.key ?? 'handoff') }}>{isThai ? 'ยัง — ตรวจอีกครั้ง' : 'NOT YET — REVIEW'}</ArcadeButton>
-        <ArcadeButton disabled={!uiReviewApplied || !allValid || !allReviewed || dirtyFiles.length > 0 || completion.isPending || saveState === 'saving'} onClick={() => completion.mutate()}><LockKeyhole size={18} /> {completion.isPending ? (isThai ? 'กำลังยืนยัน…' : 'LOCKING…') : (isThai ? 'พร้อม — Lock ทั้ง 3 ไฟล์' : 'READY — LOCK ALL THREE')}</ArcadeButton>
+        <ArcadeButton disabled={!uiReviewApplied || !uiReviewEvidence || uiReviewIntegrity.status !== 'valid' || !allValid || !allReviewed || dirtyFiles.length > 0 || completion.isPending || saveState === 'saving'} onClick={() => completion.mutate()}><LockKeyhole size={18} /> {completion.isPending ? (isThai ? 'กำลังยืนยัน…' : 'LOCKING…') : (isThai ? 'พร้อม — Lock ทั้ง 3 ไฟล์' : 'READY — LOCK ALL THREE')}</ArcadeButton>
       </>}>
         <p>{isThai ? `ยืนยันแล้ว ${reviewedFiles.length}/3 ไฟล์ เมื่อ Lock ระบบจะเก็บทั้ง 3 ไฟล์เป็นชุด Version เดียวกัน จากนั้น Stage Implement จะสร้าง START_WITH_CODEX.md ตามความพร้อม GitHub ของคุณ` : `${reviewedFiles.length}/3 files confirmed. Locking stores all three as one version. Implement then creates START_WITH_CODEX.md from your GitHub readiness.`}</p>
         {!uiReviewApplied ? <p className="field-error" role="alert">{isThai ? 'ยัง Lock ไม่ได้ กรุณาทำ Prototype ให้จบและนำ CODESIGN_UI_REVIEW.md กลับมาใช้สร้าง Final PRD ก่อน' : 'LOCKING IS DISABLED UNTIL CODESIGN_UI_REVIEW.md HAS BEEN APPLIED TO THE FINAL PRD.'}</p> : null}
+        {uiReviewApplied && uiReviewIntegrity.status === 'checking' ? <p className="field-error" role="status">{isThai ? 'กำลังตรวจหลักฐานการ Consolidate ก่อนเปิดให้ Lock' : 'CHECKING CONSOLIDATION EVIDENCE BEFORE LOCKING.'}</p> : null}
+        {uiReviewApplied && uiReviewIntegrity.status === 'invalid' ? <p className="field-error" role="alert">{isThai ? 'ยัง Lock ไม่ได้ เพราะ Integrity Check ของ Final PRD ยังไม่ผ่าน กรุณาดูรายละเอียดในกล่องสรุปด้านบน' : 'LOCKING IS DISABLED BECAUSE THE FINAL PRD INTEGRITY CHECK HAS NOT PASSED.'}</p> : null}
         {!allValid ? <p className="field-error" role="alert">{isThai ? 'ยัง Lock ไม่ได้ เพราะมีไฟล์ที่โครงสร้างไม่ครบ' : 'LOCKING IS DISABLED UNTIL EVERY FILE PASSES STRUCTURE CHECKS.'}</p> : null}
         {dirtyFiles.length > 0 ? <p className="field-error" role="alert">{isThai ? 'ยัง Lock ไม่ได้ เพราะมีไฟล์ที่แก้ไขแล้วแต่ยังไม่ได้กดบันทึก' : 'LOCKING IS DISABLED WHILE A FILE HAS UNSAVED CHANGES.'}</p> : null}
         {completion.isError ? <p className="field-error" role="alert">{isThai ? 'Lock PRD ไม่สำเร็จ ข้อมูลยังคงเป็น Draft' : 'PRD LOCK FAILED. YOUR FILES REMAIN DRAFTS.'}</p> : null}

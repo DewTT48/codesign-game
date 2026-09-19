@@ -31,6 +31,7 @@ describe('phaseRevision', () => {
     expect(contentForRevision('PRD', 'uiBriefDraft', '# Previous brief')).toBe('')
     expect(contentForRevision('PRD', 'uiReviewMarkdown', '# Previous review')).toBe('')
     expect(contentForRevision('PRD', 'uiReviewResolution', '# Previous resolution')).toBe('')
+    expect(contentForRevision('PRD', 'uiReviewChangeSummary', { schemaVersion: 1 })).toBe('')
     expect(contentForRevision('PRD', 'prdMarkdown', '# Previous final PRD')).toBe('')
     expect(contentForRevision('I', 'workingApp', true)).toBe(false)
     expect(contentForRevision('I', 'alignmentNote', 'Matches PRD')).toBe('')

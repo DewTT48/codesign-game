@@ -11,8 +11,10 @@ UI Review is a checkpoint inside `PRD`, not a new CODESIGN phase. The mission ma
 5. The owner brings `CODESIGN_UI_REVIEW.md` back to CODESIGN.
 6. When the prototype changed an earlier decision, CODESIGN shows the accepted delta and asks only genuine unresolved owner questions inside PRD. The owner is never routed back through earlier phases.
 7. Guided mode records the owner resolution and applies the approved review deterministically to `CODESIGN_HANDOFF.md` and `EXPERIENCE_DIRECTION.md`. `CONTENT_PACK.md` remains unchanged.
-8. Build Your Own imports both `CODESIGN_UI_REVIEW.md` and a complete `PRODUCT_REQUIREMENTS.md`, then appends the same traceable prototype-change resolution.
-9. The owner reviews the final handoff once and locks PRD.
+8. Guided mode creates a `Final PRD Change Summary` with the consolidation version and time, before/after fingerprints, changed-line counts, accepted changes, impact map, and recorded owner answers.
+9. The integrity gate verifies that both updated files contain the approved UI Review, every owner answer is present, and `CONTENT_PACK.md` still matches its pre-prototype fingerprint before Lock is enabled.
+10. Build Your Own imports both `CODESIGN_UI_REVIEW.md` and a complete `PRODUCT_REQUIREMENTS.md`, then appends the same traceable prototype-change resolution.
+11. The owner reviews the final handoff once and locks PRD.
 
 ## Guardrails
 
@@ -22,8 +24,9 @@ UI Review is a checkpoint inside `PRD`, not a new CODESIGN phase. The mission ma
 - Legacy `REVISION REQUIRED — STEP E/S` review files are accepted as forward-confirmation checkpoints, so existing work is not stranded.
 - Prototype code is never a source of truth.
 - The review is stored with PRD phase entries for auditability, while its approved conclusions are consolidated into the final handoff.
+- Existing projects that completed UI Review before change evidence was introduced receive a deterministic evidence record on their next PRD-page load.
 - The Codex build package remains four files: `CODESIGN_HANDOFF.md`, `CONTENT_PACK.md`, `EXPERIENCE_DIRECTION.md`, and `START_WITH_CODEX.md`. Codex does not need a fifth UI Review file.
 
 ## Persistence
 
-The feature uses existing flexible `phase_entries` fields (`uiBriefDraft`, `uiReviewDraft`, `uiReviewResolution`, and `uiReviewApplied`). No new Supabase table or migration is required.
+The feature uses existing flexible `phase_entries` fields (`uiBriefDraft`, `uiReviewDraft`, `uiReviewResolution`, `uiReviewApplied`, and `uiReviewChangeSummary`). No new Supabase table or migration is required.

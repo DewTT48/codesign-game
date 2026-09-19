@@ -46,6 +46,7 @@ const emptyTextOnRevision = new Set([
   'PRD:uiReviewDraft',
   'PRD:uiReviewMarkdown',
   'PRD:uiReviewResolution',
+  'PRD:uiReviewChangeSummary',
   'PRD:prdMarkdown',
   'I:alignmentStatus',
   'I:alignmentNote',
