@@ -4030,6 +4030,39 @@ a.mission-node__content:focus-visible {
   line-height: 1.55;
 }
 
+.final-prd-evidence__plain-result {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 9px;
+  align-items: start;
+  padding: 12px;
+  color: var(--ink);
+  background: #d9effc;
+  border: 2px solid var(--line);
+}
+
+.final-prd-evidence__files article.is-preserved .final-prd-evidence__plain-result { background: var(--positive); border-color: var(--white); }
+.final-prd-evidence__plain-result > svg { margin-top: 2px; }
+.final-prd-evidence__plain-result strong,
+.final-prd-evidence__plain-result small { display: block; }
+.final-prd-evidence__plain-result strong { font-size: 14px; line-height: 1.45; }
+.final-prd-evidence__plain-result small { margin-top: 4px; color: #29495f; font-size: 12px; line-height: 1.45; }
+
+.final-prd-evidence__technical {
+  padding: 10px;
+  background: rgba(4, 28, 47, 0.54);
+  border: 1px solid rgba(90, 180, 235, 0.45);
+}
+
+.final-prd-evidence__technical > summary {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.final-prd-evidence__technical[open] > summary { margin-bottom: 9px; color: var(--white); }
+
 .final-prd-evidence__files dl {
   display: grid;
   gap: 6px;

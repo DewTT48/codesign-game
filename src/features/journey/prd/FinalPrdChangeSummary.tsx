@@ -63,11 +63,18 @@ export function FinalPrdChangeSummary({ evidence, integrity, review, resolution,
             <h4>{fileName}</h4>
             <p>{isThai ? afterDescriptions[key].th : afterDescriptions[key].en}</p>
           </div>
-          <dl>
-            <div><dt>{isThai ? 'ก่อน' : 'BEFORE'}</dt><dd>{fingerprintLabel(file.beforeFingerprint)}</dd></div>
-            <div><dt>{isThai ? 'หลัง' : 'AFTER'}</dt><dd>{fingerprintLabel(file.afterFingerprint)}</dd></div>
-            <div><dt>{isThai ? 'บรรทัดที่ต่าง' : 'CHANGED LINES'}</dt><dd>{file.changedLines}</dd></div>
-          </dl>
+          <div className="final-prd-evidence__plain-result">
+            <Check size={17} />
+            <div><strong>{file.changed ? (isThai ? 'ตรวจแล้วว่าไฟล์เปลี่ยน' : 'VERIFIED: FILE UPDATED') : (isThai ? 'ตรวจแล้วว่าเหมือนเดิมทุกตัวอักษร' : 'VERIFIED: BYTE-FOR-BYTE IDENTICAL')}</strong><small>{file.changed ? (isThai ? 'ข้อมูลจาก UI Review ถูกเพิ่มเข้า Final PRD แล้ว' : 'The UI Review information is now included in the final PRD.') : (isThai ? 'Prototype ไม่ได้แก้เนื้อหาในไฟล์นี้' : 'The prototype did not alter this file.')}</small></div>
+          </div>
+          <details className="final-prd-evidence__technical">
+            <summary>{isThai ? 'รายละเอียดทางเทคนิค' : 'TECHNICAL DETAILS'}</summary>
+            <dl>
+              <div><dt>{isThai ? 'ลายนิ้วมือก่อน' : 'BEFORE FINGERPRINT'}</dt><dd>{fingerprintLabel(file.beforeFingerprint)}</dd></div>
+              <div><dt>{isThai ? 'ลายนิ้วมือหลัง' : 'AFTER FINGERPRINT'}</dt><dd>{fingerprintLabel(file.afterFingerprint)}</dd></div>
+              <div><dt>{isThai ? 'บรรทัดที่ต่าง' : 'CHANGED LINES'}</dt><dd>{file.changedLines}</dd></div>
+            </dl>
+          </details>
           <button type="button" onClick={() => onOpenFile(key)}><Eye size={16} /> {isThai ? 'เปิดตรวจไฟล์' : 'REVIEW FILE'}</button>
         </article>
       })}
