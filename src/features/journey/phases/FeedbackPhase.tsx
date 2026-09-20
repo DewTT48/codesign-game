@@ -67,7 +67,11 @@ export function FeedbackPhase({ project }: { project: ProjectRow }) {
   })
 
   return (
-    <JourneyLayout project={project} phase="G" phaseName="GATHER FEEDBACK" chatContext={draft.values} saveState={draft.saveState}>
+    <JourneyLayout project={project} phase="G" phaseName="GATHER FEEDBACK" chatContext={draft.values} saveState={draft.saveState} completionItems={[
+      { label: isThai ? 'ทำรายการทดสอบสำหรับผู้สร้างให้ครบ' : 'Complete the creator test checklist', complete: checksComplete },
+      { label: isThai ? 'ทดสอบกับผู้ใช้และบันทึกสิ่งที่เกิดขึ้นจริง' : 'Test with a user and record what actually happened', complete: feedbackComplete },
+      { label: isThai ? 'ตรวจและยืนยันความสัมพันธ์ระหว่าง App กับ PRD' : 'Review and confirm how the app relates to the PRD', complete: buildEntries.isSuccess && alignmentReady },
+    ]}>
       <PhaseSection step="01" title={isThai ? 'รายการทดสอบสำหรับผู้สร้าง' : 'CREATOR TEST CHECKLIST'}>
         <div className="test-checklist">{checks.map(([key, label]) => <label className={draft.values[key] ? 'is-active' : ''} key={key}><input type="checkbox" checked={Boolean(draft.values[key])} onChange={(event) => { draft.setField(key, event.target.checked); resetAlignment() }} /><Check size={17} /> {isThai ? thaiCheckLabels[key] : label}</label>)}</div>
       </PhaseSection>

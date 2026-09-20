@@ -343,7 +343,12 @@ export function PrdPhase({ project }: { project: ProjectRow }) {
     : ['CONTEXT', 'OPTIONS EXPLORED', 'ASSUMPTIONS CHALLENGED', 'SCOPE LOCKED', 'FLOW DEFINED', 'CONTENT READY', 'EXPERIENCE DEFINED', 'ACCEPTANCE CRITERIA']
 
   return (
-    <JourneyLayout project={project} phase="PRD" phaseName="PRODUCT REQUIREMENTS" chatContext={{ ...files, uiBrief }} saveState={saveState}>
+    <JourneyLayout project={project} phase="PRD" phaseName="PRODUCT REQUIREMENTS" chatContext={{ ...files, uiBrief }} saveState={saveState} completionItems={[
+      { label: isThai ? 'ทำ Prototype และนำผล UI Review กลับมาใช้กับ Final PRD' : 'Prototype the UI and apply the UI Review to the Final PRD', complete: uiReviewApplied },
+      { label: isThai ? 'ผ่านการตรวจความครบถ้วนของ Final PRD และ Approved Prototype' : 'Pass the Final PRD and Approved Prototype integrity check', complete: Boolean(uiReviewEvidence) && uiReviewIntegrity.status === 'valid' },
+      { label: isThai ? 'อ่านและยืนยันไฟล์หลักทั้ง 3 ฉบับ' : 'Read and confirm all three source files', complete: allValid && allReviewed },
+      { label: isThai ? 'บันทึกการแก้ไขทุกไฟล์ให้เรียบร้อย' : 'Save every file change', complete: dirtyFiles.length === 0 && saveState !== 'saving' },
+    ]}>
       <PhaseSection step="01" title={isThai ? 'CODESIGN เตรียมข้อมูลสำหรับ Prototype แล้ว' : 'CODESIGN PREPARED THE PROTOTYPE INPUT'} description={isThai ? 'ระบบประกอบไฟล์ร่างจาก Decision ที่ยืนยันไว้ C–S ให้ภายใน และสร้าง UI Brief ที่สั้นกว่าสำหรับ Prototype คุณยังไม่ต้องอ่านไฟล์ร่างทั้ง 3 ฉบับในตอนนี้' : 'CODESIGN assembled internal drafts from the locked C–S decisions and created a shorter UI Brief for prototyping. You do not need to review the three draft files yet.'}>
         <div className="prd-checklist" aria-label={isThai ? 'รายการตรวจความพร้อมของ Product' : 'Product definition checklist'}>{checklist.map((item) => <span key={item}><Check size={16} aria-hidden="true" /> {item}</span>)}</div>
         <p className="prd-checklist-note">{isThai ? 'รอบแรกนี้ใช้ข้อมูลเพื่อให้เห็นหน้าตาและ UX/UI ก่อน หลังจบ UI Review ระบบจึงจะสร้าง Final PRD ให้คุณอ่านและยืนยันเพียงรอบเดียว' : 'This first pass is for seeing the likely UI/UX. After UI Review, CODESIGN creates the final PRD for one owner review.'}</p>

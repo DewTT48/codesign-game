@@ -9,6 +9,7 @@ import { useLanguage } from '../i18n/LanguageContext'
 import { getPhaseGuide } from './guidanceContent'
 import { getLatestPhaseRevision, getPrdSource } from './journey.service'
 import { isActivePhaseRevision } from './phaseRevision'
+import { PhaseCompletionGuide, type PhaseCompletionItem } from './PhaseCompletionGuide'
 import { assemblePrototypePrompt } from './prd/uiReview'
 import type { SaveState } from './usePhaseDraft'
 
@@ -18,6 +19,7 @@ type JourneyLayoutProps = PropsWithChildren<{
   phaseName: string
   chatContext?: Record<string, unknown>
   saveState: SaveState
+  completionItems: PhaseCompletionItem[]
 }>
 
 export function JourneyLayout({
@@ -26,6 +28,7 @@ export function JourneyLayout({
   phaseName,
   chatContext = {},
   saveState,
+  completionItems,
   children,
 }: JourneyLayoutProps) {
   const [openHelp, setOpenHelp] = useState<'hint' | 'chat' | null>(null)
@@ -93,6 +96,8 @@ export function JourneyLayout({
         <SolidificationMeter current={project.solidification_stage.replace('_', ' ') as 'IDEA'} />
       </div>
 
+      <PhaseCompletionGuide items={completionItems} isThai={isThai} />
+
       {isActivePhaseRevision(latestRevision.data, project.current_phase) ? (
         <aside className="active-revision-banner">
           <RotateCcw aria-hidden="true" size={21} />
@@ -140,7 +145,7 @@ export function JourneyLayout({
               </section> : null}
               {phase === 'I' ? <section className="prompt-kit__included">
                 <strong>{isThai ? 'ใช้คำสั่งนี้กับ Codex' : 'USE THIS IN CODEX'}</strong>
-                <p>{isThai ? 'ดาวน์โหลดไฟล์ทั้ง 4 ฉบับ แล้วนำจาก Downloads ไปไว้ใน Folder เดียวกันโดยไม่เปลี่ยนชื่อ เปิด Folder นั้นเป็น Local Project ใน Codex แล้วเปิด Task ใหม่ จากนั้นคัดลอก Prompt ด้านล่างไปวางและส่ง' : 'Download all four files, then move them from Downloads into one folder without renaming them. Open that folder as a local project in Codex, start a new task, then copy, paste, and send the prompt below.'}</p>
+                <p>{isThai ? 'ดาวน์โหลดไฟล์ทั้ง 5 ฉบับ แล้วนำจาก Downloads ไปไว้ใน Folder เดียวกันโดยไม่เปลี่ยนชื่อ เปิด Folder นั้นเป็น Local Project ใน Codex แล้วเปิด Task ใหม่ จากนั้นคัดลอก Prompt ด้านล่างไปวางและส่ง' : 'Download all five files, then move them from Downloads into one folder without renaming them. Open that folder as a local project in Codex, start a new task, then copy, paste, and send the prompt below.'}</p>
               </section> : null}
               <pre>{guide.prompt}</pre>
               <button className="prompt-copy" type="button" onClick={copyPrompt}>
@@ -170,7 +175,7 @@ export function JourneyLayout({
                 <p>{guide.bringBack}</p>
               </section>
               <small>{phase === 'I'
-                ? (isThai ? 'ไฟล์ทั้ง 4 ต้องอยู่ใน Local Project Folder เดียวกัน ไม่ต้องแนบซ้ำใน Task' : 'KEEP ALL FOUR FILES IN THE SAME LOCAL PROJECT FOLDER; DO NOT ATTACH THEM AGAIN')
+                ? (isThai ? 'ไฟล์ทั้ง 5 ต้องอยู่ใน Local Project Folder เดียวกัน ไม่ต้องแนบซ้ำใน Task' : 'KEEP ALL FIVE FILES IN THE SAME LOCAL PROJECT FOLDER; DO NOT ATTACH THEM AGAIN')
                 : (isThai ? 'ใช้เป็นจุดเริ่มต้นและปรับตามการสนทนาจริง ไม่ใช่คำสั่งบังคับ' : 'A CONVERSATION STARTER — ADAPT IT TO THE REAL DISCUSSION')}</small>
             </div>
           )}
