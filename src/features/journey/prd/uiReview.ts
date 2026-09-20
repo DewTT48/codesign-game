@@ -136,11 +136,11 @@ export function assemblePrototypePrompt(
   const thai = language === 'th'
   const finalFiles = mode === 'guided'
     ? thai
-      ? `สร้างไฟล์ Markdown ฉบับเต็มชื่อ ${UI_REVIEW_FILE_NAME} เพียงไฟล์เดียวตาม Output Contract ด้านล่าง CODESIGN จะนำ Review นี้ไปผสานกับไฟล์ Final โดยมีกฎควบคุม และจะไม่แก้ CONTENT_PACK.md`
-      : `Create one complete Markdown file named ${UI_REVIEW_FILE_NAME} using the output contract below. CODESIGN applies it to the final files under fixed rules and will not rewrite CONTENT_PACK.md.`
+      ? `ส่งไฟล์ HTML Prototype ฉบับที่อนุมัติจริง พร้อมไฟล์ Markdown ฉบับเต็มชื่อ ${UI_REVIEW_FILE_NAME} ตาม Output Contract ด้านล่าง โดยชื่อไฟล์และ SHA-256 ใน Review ต้องตรงกับ HTML ทุก byte CODESIGN จะนำ Review ไปผสานกับไฟล์ Final โดยมีกฎควบคุม และจะไม่แก้ CONTENT_PACK.md`
+      : `Return the exact approved HTML prototype together with one complete Markdown file named ${UI_REVIEW_FILE_NAME}. The filename and SHA-256 in the Review must match the HTML byte-for-byte. CODESIGN applies the Review to the final files under fixed rules and will not rewrite CONTENT_PACK.md.`
     : thai
-      ? `สร้างไฟล์ Markdown ฉบับเต็ม 2 ไฟล์ตาม Output Contract ด้านล่าง: ${UI_REVIEW_FILE_NAME} และ ${OWN_FINAL_PRD_FILE_NAME} โดยไฟล์ PRD ต้องเป็นฉบับเต็มที่นำข้อสรุป UI/UX ที่อนุมัติแล้วไปใช้ครบถ้วน`
-      : `Create two complete Markdown files using the output contract below: ${UI_REVIEW_FILE_NAME} and ${OWN_FINAL_PRD_FILE_NAME}. The PRD must be a complete final version incorporating every approved UI/UX conclusion.`
+      ? `ส่งไฟล์ HTML Prototype ฉบับที่อนุมัติจริง พร้อมไฟล์ Markdown ฉบับเต็ม 2 ไฟล์ตาม Output Contract ด้านล่าง: ${UI_REVIEW_FILE_NAME} และ ${OWN_FINAL_PRD_FILE_NAME} โดยชื่อไฟล์และ SHA-256 ใน Review ต้องตรงกับ HTML ทุก byte และไฟล์ PRD ต้องนำข้อสรุป UI/UX ที่อนุมัติแล้วไปใช้ครบถ้วน`
+      : `Return the exact approved HTML prototype together with two complete Markdown files: ${UI_REVIEW_FILE_NAME} and ${OWN_FINAL_PRD_FILE_NAME}. The filename and SHA-256 in the Review must match the HTML byte-for-byte, and the PRD must incorporate every approved UI/UX conclusion.`
 
   if (thai) return `คุณคือ Product Designer และ UX Facilitator ที่ช่วยเจ้าของ Product ซึ่งอาจไม่เคยสร้างแอปมาก่อน
 
@@ -157,6 +157,7 @@ ${uiBrief}
 5. ปรับ Prototype ต่อเนื่องจนผู้ใช้พิมพ์ว่า “FINALIZE UI REVIEW” ห้ามสร้าง Final files ก่อนคำสั่งนี้
 6. หาก Prototype ทำให้เกิดการเปลี่ยน User, Goal, Scope, Must Have, Non-goal, Journey, Completion rule, Content, Storage หรือ Business rule ให้ทำ Prototype ต่อได้ แต่ต้องบันทึกความต่างและผลกระทบอย่างชัดเจน ห้ามแก้เงียบ ๆ และห้ามส่งผู้ใช้ย้อนกลับไปทำ Step เดิม
 7. หลังผู้ใช้สั่ง FINALIZE UI REVIEW: ${finalFiles}
+8. ห้ามแก้ HTML หลังคำนวณ SHA-256 หากต้องแก้ให้คำนวณใหม่และใช้ไฟล์ล่าสุดทั้งใน Review และไฟล์ที่ส่งกลับ
 
 ===== OUTPUT CONTRACT: ${UI_REVIEW_FILE_NAME} =====
 # CODESIGN UI REVIEW
@@ -170,6 +171,10 @@ ${uiBrief}
 
 ## Prototype Reviewed
 ระบุ Version หรือคำอธิบาย Prototype ล่าสุดที่ผู้ใช้เห็นและอนุมัติ
+
+## Prototype Integrity
+- **Approved prototype file:** ชื่อไฟล์ HTML ฉบับที่อนุมัติจริง
+- **SHA-256:** ค่า SHA-256 แบบตัวอักษร hexadecimal 64 ตัวของไฟล์ HTML นั้น
 
 ## Confirmed Screen Map
 รายการหน้าจอ จุดประสงค์ ข้อมูลสำคัญ และ Primary action
@@ -229,6 +234,7 @@ ${uiBrief}
 5. Iterate until the owner types “FINALIZE UI REVIEW”. Do not create final files before that command.
 6. If the prototype changes the user, goal, scope, must-haves, non-goals, journey, completion rule, content, storage, or business rules, continue the prototype work but record the difference and PRD impact explicitly. Never rewrite it silently or send the owner back through earlier steps.
 7. After FINALIZE UI REVIEW: ${finalFiles}
+8. Do not modify the HTML after calculating SHA-256. If it changes, calculate a new digest and use the latest file consistently in both the Review and the returned artifact.
 
 ===== OUTPUT CONTRACT: ${UI_REVIEW_FILE_NAME} =====
 # CODESIGN UI REVIEW
@@ -242,6 +248,10 @@ Use exactly one:
 
 ## Prototype Reviewed
 Identify the latest prototype version the owner actually reviewed.
+
+## Prototype Integrity
+- **Approved prototype file:** the exact filename of the approved HTML artifact
+- **SHA-256:** the 64-character lowercase hexadecimal SHA-256 digest of that exact HTML file
 
 ## Confirmed Screen Map
 List each screen, its purpose, essential information, and primary action.
@@ -460,7 +470,12 @@ function section(markdown: string, heading: string) {
 function compactReview(content: string, headings: string[]) {
   return headings.map((heading) => {
     const body = section(content, heading)
-    return body ? `### ${heading}\n\n${body}` : ''
+    const cleanBody = body
+      .replace(/\s*filecite[^]*/g, '')
+      .replace(/<!--[\s\S]*?-->/g, '')
+      .replace(/[ \t]+\n/g, '\n')
+      .trim()
+    return cleanBody ? `### ${heading}\n\n${cleanBody}` : ''
   }).filter(Boolean).join('\n\n')
 }
 
@@ -488,6 +503,7 @@ export function applyGuidedUiReview(files: PrdDrafts, uiReview: string, resoluti
 
   const handoffReview = compactReview(uiReview, [
     'Prototype Reviewed',
+    'Prototype Integrity',
     'Confirmed Screen Map',
     'Navigation and Flow',
     'Responsive and Accessibility',
@@ -497,6 +513,7 @@ export function applyGuidedUiReview(files: PrdDrafts, uiReview: string, resoluti
   ])
   const experienceReview = compactReview(uiReview, [
     'Prototype Reviewed',
+    'Prototype Integrity',
     'Visual and Interaction Direction',
     'Responsive and Accessibility',
     'Accepted UX Changes',

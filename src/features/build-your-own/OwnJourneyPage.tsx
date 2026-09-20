@@ -16,7 +16,7 @@ import {
   Sparkles,
   X,
 } from 'lucide-react'
-import { type ReactNode, useMemo, useState } from 'react'
+import { type ReactNode, useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { SolidificationMeter } from '../../components/progress/SolidificationMeter'
 import { ArcadeButton } from '../../components/ui/ArcadeButton'
@@ -26,6 +26,7 @@ import { savePhaseEntry } from '../journey/journey.service'
 import { PhaseSection, ReviewGate } from '../journey/PhaseFormComponents'
 import { UiReviewWorkspace } from '../journey/prd/UiReviewWorkspace'
 import { applyOwnUiReview, assembleOwnUiBrief } from '../journey/prd/uiReview'
+import { parseApprovedPrototypeArtifact, validateApprovedPrototype, verifyApprovedPrototypeArtifact } from '../journey/prd/approvedPrototype'
 import { usePhaseDraft } from '../journey/usePhaseDraft'
 import {
   CodesignAiError,
@@ -339,6 +340,7 @@ export function OwnJourneyPage({
       uiReviewMarkdown: '',
       uiReviewResolution: '',
       uiReviewApplied: '',
+      approvedPrototypeArtifact: '',
     } : {}),
   }), [definition, phase])
   const draft = usePhaseDraft<Record<string, string>>({
@@ -349,6 +351,7 @@ export function OwnJourneyPage({
   const [attempted, setAttempted] = useState(false)
   const [acceptedNotice, setAcceptedNotice] = useState(false)
   const [prdExportState, setPrdExportState] = useState<'idle' | 'copied' | 'downloaded' | 'failed'>('idle')
+  const [ownPrototypeIntegrity, setOwnPrototypeIntegrity] = useState<'checking' | 'valid' | 'invalid'>('checking')
   const validationErrors = validateOwnJourneyValues(definition, draft.values)
   const errorByField = new Map(validationErrors.map((error) => [error.fieldKey, localizedText(error.message, isThai)]))
   const requiredFields = definition.sections.flatMap((section) => section.fields).filter((field) => field.required)
@@ -356,7 +359,32 @@ export function OwnJourneyPage({
   const ownUiBrief = phase === 'PRD'
     ? draft.values.uiBriefDraft?.trim() || assembleOwnUiBrief(project, draft.values.prdMarkdown ?? '')
     : ''
-  const uiReviewReady = phase !== 'PRD' || draft.values.uiReviewApplied === 'yes'
+  const ownApprovedPrototype = useMemo(() => phase === 'PRD' && draft.values.approvedPrototypeArtifact
+    ? (() => {
+        try {
+          return parseApprovedPrototypeArtifact(JSON.parse(draft.values.approvedPrototypeArtifact) as Json)
+        } catch {
+          return null
+        }
+      })()
+    : null, [draft.values.approvedPrototypeArtifact, phase])
+  const ownPrototypeCheck = phase === 'PRD'
+    ? validateApprovedPrototype(draft.values.uiReviewMarkdown ?? '', ownApprovedPrototype)
+    : null
+  useEffect(() => {
+    let cancelled = false
+    if (phase !== 'PRD' || !ownApprovedPrototype) {
+      setOwnPrototypeIntegrity('invalid')
+      return () => { cancelled = true }
+    }
+    setOwnPrototypeIntegrity('checking')
+    void verifyApprovedPrototypeArtifact(ownApprovedPrototype).then((valid) => {
+      if (!cancelled) setOwnPrototypeIntegrity(valid ? 'valid' : 'invalid')
+    })
+    return () => { cancelled = true }
+  }, [ownApprovedPrototype, phase])
+  const uiReviewReady = phase !== 'PRD'
+    || (draft.values.uiReviewApplied === 'yes' && ownPrototypeCheck?.valid === true && ownPrototypeIntegrity === 'valid')
 
   const completion = useMutation({
     mutationFn: async () => {
@@ -396,6 +424,7 @@ export function OwnJourneyPage({
         uiReviewMarkdown: '',
         uiReviewResolution: '',
         uiReviewApplied: '',
+        approvedPrototypeArtifact: '',
       })
     }
     setAcceptedNotice(true)
@@ -547,9 +576,10 @@ export function OwnJourneyPage({
           storedReview={draft.values.uiReviewMarkdown}
           storedFinalPrd={uiReviewReady ? draft.values.prdMarkdown : ''}
           storedResolution={draft.values.uiReviewResolution}
+          storedPrototype={ownApprovedPrototype}
           applied={uiReviewReady}
           disabled={readOnly || (draft.values.prdMarkdown?.trim().length ?? 0) < 300}
-          onApply={async ({ review, finalPrd, resolution }) => {
+          onApply={async ({ review, finalPrd, resolution, prototype }) => {
             const consolidatedPrd = applyOwnUiReview(finalPrd ?? draft.values.prdMarkdown, review, resolution)
             await draft.saveAll({
               prdMarkdown: consolidatedPrd,
@@ -557,6 +587,7 @@ export function OwnJourneyPage({
               uiReviewMarkdown: review,
               uiReviewResolution: resolution ?? '',
               uiReviewApplied: 'yes',
+              approvedPrototypeArtifact: JSON.stringify(prototype),
             })
           }}
         />
@@ -597,7 +628,7 @@ export function OwnJourneyPage({
           <span>{isThai ? 'คำตอบจำเป็นผ่านเกณฑ์ขั้นต่ำ' : 'required answers meet the minimum detail gate'}</span>
         </div>
         {attempted && validationErrors.length ? <p className="field-error" role="alert">{isThai ? `ยัง Lock ไม่ได้ กรุณาเติม ${validationErrors.length} ช่องที่ระบุ` : `LOCKING IS DISABLED UNTIL ${validationErrors.length} REQUIRED FIELD(S) ARE COMPLETE.`}</p> : null}
-        {phase === 'PRD' && !uiReviewReady ? <p className="field-error" role="alert">{isThai ? 'ยัง Lock ไม่ได้ กรุณาทำ Prototype และนำ CODESIGN_UI_REVIEW.md กับ PRODUCT_REQUIREMENTS.md ฉบับ Final กลับมาใช้ก่อน' : 'LOCKING IS DISABLED UNTIL THE APPROVED UI REVIEW AND FINAL PRODUCT_REQUIREMENTS.md ARE APPLIED.'}</p> : null}
+        {phase === 'PRD' && !uiReviewReady ? <p className="field-error" role="alert">{isThai ? 'ยัง Lock ไม่ได้ กรุณานำ CODESIGN_UI_REVIEW.md, HTML Prototype ที่อนุมัติ และ PRODUCT_REQUIREMENTS.md ฉบับ Final กลับมาให้ครบและผ่าน SHA-256 ก่อน' : 'LOCKING IS DISABLED UNTIL THE UI REVIEW, SHA-256-VERIFIED APPROVED HTML PROTOTYPE, AND FINAL PRODUCT_REQUIREMENTS.md ARE APPLIED.'}</p> : null}
         {completion.isError && completion.error.message !== 'VALIDATION_REQUIRED' ? <p className="field-error" role="alert">{isThai ? 'Lock Step ไม่สำเร็จ ข้อมูลยังคงเป็น Draft' : 'Could not lock this step. Your work remains a draft.'}</p> : null}
       </ReviewGate> : <div className="own-readonly-actions"><ArcadeButton to={`/own-projects/${project.id}/${project.current_phase}`}><ArrowRight size={18} /> {isThai ? 'กลับไปหน้าปัจจุบัน' : 'RETURN TO CURRENT STEP'}</ArcadeButton></div>}
     </div>

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { applyGuidedUiReview, assembleUiReviewResolution } from './uiReview'
+import { APPROVED_PROTOTYPE_FILE_NAME, type ApprovedPrototypeArtifact } from './approvedPrototype'
 import {
   createUiReviewFinalizationEvidence,
   parseUiReviewFinalizationEvidence,
@@ -15,6 +16,10 @@ OWNER CONFIRMATION NEEDED
 
 ## Prototype Reviewed
 Prototype v4
+
+## Prototype Integrity
+- **Approved prototype file:** \`prototype-v4.html\`
+- **SHA-256:** \`14d5fd07c417bd6bb68e21590cb26f47bbcbc248a32052f9be1585f599c27c46\`
 
 ## Confirmed Screen Map
 - Home
@@ -45,6 +50,16 @@ Visible focus and mobile layout
 ## Owner Approval
 I APPROVE THIS UI DIRECTION`
 
+const prototype: ApprovedPrototypeArtifact = {
+  schemaVersion: 1,
+  originalFileName: 'prototype-v4.html',
+  canonicalFileName: APPROVED_PROTOTYPE_FILE_NAME,
+  mediaType: 'text/html',
+  sizeBytes: 17,
+  sha256: '14d5fd07c417bd6bb68e21590cb26f47bbcbc248a32052f9be1585f599c27c46',
+  base64: 'PGgxPkFwcHJvdmVkPC9oMT4=',
+}
+
 const before = {
   handoff: '# HANDOFF\n\n## Must Have\nA\n',
   contentPack: '# CONTENT PACK\n\nAPPROVED CONTENT',
@@ -55,7 +70,10 @@ describe('Final PRD change evidence', () => {
   it('records exactly which files changed and preserves the content pack fingerprint', async () => {
     const resolution = assembleUiReviewResolution(review, { 'Q-01': 'In-product time only.' }, 'en')
     const after = applyGuidedUiReview(before, review, resolution)
-    const evidence = await createUiReviewFinalizationEvidence(before, after, 2, '2026-09-19T15:00:00.000Z')
+    const evidence = await createUiReviewFinalizationEvidence(before, after, 2, '2026-09-19T15:00:00.000Z', {
+      artifact: prototype,
+      expectedSha256: prototype.sha256,
+    })
 
     expect(evidence.version).toBe(2)
     expect(evidence.files.handoff.changed).toBe(true)
@@ -64,15 +82,18 @@ describe('Final PRD change evidence', () => {
     expect(evidence.files.contentPack.beforeFingerprint).toBe(evidence.files.contentPack.afterFingerprint)
     expect(parseUiReviewFinalizationEvidence(uiReviewFinalizationEvidenceToJson(evidence))).toEqual(evidence)
 
-    const check = await validateUiReviewFinalization(after, evidence, review, resolution)
+    const check = await validateUiReviewFinalization(after, evidence, review, resolution, prototype)
     expect(check).toEqual({ status: 'valid', errors: [], warnings: [] })
   })
 
   it('blocks locking when approved content changes after consolidation', async () => {
     const resolution = assembleUiReviewResolution(review, { 'Q-01': 'In-product time only.' }, 'en')
     const after = applyGuidedUiReview(before, review, resolution)
-    const evidence = await createUiReviewFinalizationEvidence(before, after)
-    const check = await validateUiReviewFinalization({ ...after, contentPack: `${after.contentPack}\nChanged` }, evidence, review, resolution)
+    const evidence = await createUiReviewFinalizationEvidence(before, after, 1, new Date().toISOString(), {
+      artifact: prototype,
+      expectedSha256: prototype.sha256,
+    })
+    const check = await validateUiReviewFinalization({ ...after, contentPack: `${after.contentPack}\nChanged` }, evidence, review, resolution, prototype)
 
     expect(check.status).toBe('invalid')
     expect(check.errors).toContain('CONTENT_PACK.md เปลี่ยนจากฉบับที่อนุมัติก่อน Prototype')

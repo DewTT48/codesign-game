@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { ArrowRight, Check, Copy, Download, ExternalLink, FileCode2, Github, ShieldCheck } from 'lucide-react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { ArcadeButton } from '../../../components/ui/ArcadeButton'
 import type { ProjectRow } from '../../../lib/supabase/database.types'
@@ -13,6 +13,12 @@ import { JourneyLayout } from '../JourneyLayout'
 import { FormField, PhaseSection, ReviewGate } from '../PhaseFormComponents'
 import { assembleStartWithCodex, suggestProjectFolderName, type GitHubReadiness } from '../prd/handoffFiles'
 import { MarkdownPreview } from '../prd/MarkdownPreview'
+import {
+  approvedPrototypeBlob,
+  parseApprovedPrototypeArtifact,
+  verifyApprovedPrototypeArtifact,
+  type ApprovedPrototypeArtifact,
+} from '../prd/approvedPrototype'
 import { usePhaseDraft } from '../usePhaseDraft'
 
 const initialImplement = {
@@ -24,6 +30,18 @@ const initialImplement = {
   alignmentConfirmed: false,
 }
 
+type ImplementPackageFile = {
+  fileName: string
+  description: string
+  kind: 'markdown'
+  content: string
+} | {
+  fileName: string
+  description: string
+  kind: 'prototype'
+  artifact: ApprovedPrototypeArtifact | null
+}
+
 export function ImplementPhase({ project }: { project: ProjectRow }) {
   const { isThai } = useLanguage()
   const draft = usePhaseDraft({ projectId: project.id, phase: 'I', initialValues: initialImplement })
@@ -32,6 +50,7 @@ export function ImplementPhase({ project }: { project: ProjectRow }) {
   const [feedback, setFeedback] = useState('')
   const [folderCopyState, setFolderCopyState] = useState<'idle' | 'copied' | 'failed'>('idle')
   const [selectedPackageFile, setSelectedPackageFile] = useState('START_WITH_CODEX.md')
+  const [prototypeIntegrity, setPrototypeIntegrity] = useState<'checking' | 'valid' | 'invalid'>('checking')
   const snapshot = useQuery({ queryKey: ['prd-snapshot', project.id], queryFn: () => getLatestPrdSnapshot(project.id) })
   const prdEntries = useQuery({ queryKey: ['phase-entries', project.id, 'PRD'], queryFn: () => getPhaseEntries(project.id, 'PRD') })
   const specifyEntries = useQuery({ queryKey: ['phase-entries', project.id, 'S'], queryFn: () => getPhaseEntries(project.id, 'S') })
@@ -65,15 +84,29 @@ export function ImplementPhase({ project }: { project: ProjectRow }) {
     const content = prdEntries.data?.find((entry) => entry.fieldKey === fieldKey)?.content
     return typeof content === 'string' ? content : ''
   }
-  const packageFiles = [
-    { fileName: 'CODESIGN_HANDOFF.md', description: isThai ? 'Product decisions และขอบเขตงานที่ Lock แล้ว' : 'Locked product decisions and scope', content: snapshot.data?.markdown_content || fallbackEntry('markdownDraft') },
-    { fileName: 'CONTENT_PACK.md', description: isThai ? 'เนื้อหา แบบฝึก และการบันทึกครบ 21 วัน' : 'All 21 days of content, exercises, and records', content: snapshot.data?.content_pack || fallbackEntry('contentPackDraft') },
-    { fileName: 'EXPERIENCE_DIRECTION.md', description: isThai ? 'Theme และแนวทางกำกับประสบการณ์' : 'Theme and experience guardrails', content: snapshot.data?.experience_direction || fallbackEntry('experienceDirectionDraft') },
-    { fileName: 'START_WITH_CODEX.md', description: isThai ? 'คำสั่งเริ่มงานในภาษาของ Product พร้อมกติกาและความพร้อม GitHub' : 'Starting instructions in the product language, adapted to its rules and your GitHub readiness', content: startWithCodex },
+  const approvedPrototype = parseApprovedPrototypeArtifact(prdEntries.data?.find((entry) => entry.fieldKey === 'approvedPrototypeArtifact')?.content)
+  useEffect(() => {
+    let cancelled = false
+    if (!approvedPrototype) {
+      setPrototypeIntegrity('invalid')
+      return () => { cancelled = true }
+    }
+    setPrototypeIntegrity('checking')
+    void verifyApprovedPrototypeArtifact(approvedPrototype).then((valid) => {
+      if (!cancelled) setPrototypeIntegrity(valid ? 'valid' : 'invalid')
+    })
+    return () => { cancelled = true }
+  }, [approvedPrototype])
+  const packageFiles: ImplementPackageFile[] = [
+    { fileName: 'CODESIGN_HANDOFF.md', description: isThai ? 'Product decisions และขอบเขตงานที่ Lock แล้ว' : 'Locked product decisions and scope', kind: 'markdown', content: snapshot.data?.markdown_content || fallbackEntry('markdownDraft') },
+    { fileName: 'CONTENT_PACK.md', description: isThai ? 'เนื้อหา แบบฝึก และการบันทึกครบ 21 วัน' : 'All 21 days of content, exercises, and records', kind: 'markdown', content: snapshot.data?.content_pack || fallbackEntry('contentPackDraft') },
+    { fileName: 'EXPERIENCE_DIRECTION.md', description: isThai ? 'Theme และแนวทางกำกับประสบการณ์' : 'Theme and experience guardrails', kind: 'markdown', content: snapshot.data?.experience_direction || fallbackEntry('experienceDirectionDraft') },
+    { fileName: 'APPROVED_PROTOTYPE.html', description: isThai ? 'ต้นแบบที่อนุมัติและตรวจ SHA-256 แล้ว ใช้อ้างอิงหน้าตาและ Interaction' : 'SHA-256-verified visual and interaction reference', kind: 'prototype', artifact: approvedPrototype },
+    { fileName: 'START_WITH_CODEX.md', description: isThai ? 'คำสั่งเริ่มงาน กติกา Authority และขั้นตรวจ Conformance' : 'Starting instructions, authority rules, and conformance checks', kind: 'markdown', content: startWithCodex },
   ]
-  const activePackageFile = packageFiles.find((file) => file.fileName === selectedPackageFile) ?? packageFiles[3]
-  const packageReady = packageFiles.every((file) => file.content.trim())
-  const packageLoadError = snapshot.isError || prdEntries.isError || specifyEntries.isError || (!snapshot.isLoading && !prdEntries.isLoading && !specifyEntries.isLoading && !packageReady)
+  const activePackageFile = packageFiles.find((file) => file.fileName === selectedPackageFile) ?? packageFiles[4]
+  const packageReady = packageFiles.every((file) => file.kind === 'prototype' ? Boolean(file.artifact) && prototypeIntegrity === 'valid' : Boolean(file.content.trim()))
+  const packageLoadError = snapshot.isError || prdEntries.isError || specifyEntries.isError || (!snapshot.isLoading && !prdEntries.isLoading && !specifyEntries.isLoading && prototypeIntegrity !== 'checking' && !packageReady)
   const prdReviewOutcome = prdEntries.data?.find((entry) => entry.fieldKey === 'reviewOutcomeV2')?.content
   const implementationReadiness = getImplementationReadiness({
     workingApp: Boolean(draft.values.workingApp),
@@ -84,13 +117,13 @@ export function ImplementPhase({ project }: { project: ProjectRow }) {
   })
   const ready = !draft.loading && implementationReadiness.ready
   const completionRequirementLabels: Record<ImplementationRequirementKey, string> = isThai ? {
-    workingApp: 'ยืนยันใน I4 ว่าทดสอบเส้นทางหลักแล้วและ App ใช้งานได้จริง',
+    workingApp: 'ยืนยันใน I4 ว่าทดสอบเส้นทางหลัก ตรวจ PROTOTYPE_CONFORMANCE.md แล้ว และไม่มี Material mismatch ค้างอยู่',
     appUrl: 'ใส่ Public URL ของ App ใน I4',
     alignmentStatus: alignmentStatus === 'revision' ? 'กลับไปแก้ Product decision ที่เปลี่ยนก่อน' : 'เลือกผลการส่งต่อ PRD → I ใน I5',
     alignmentNote: 'อธิบายรายละเอียดที่ทำให้ PRD ชัดขึ้นใน I5',
     alignmentConfirmed: 'ยืนยันว่าตรวจ Step PRD และ I พร้อมกันแล้วใน I5',
   } : {
-    workingApp: 'Confirm in I4 that the primary journey was tested and the app works',
+    workingApp: 'Confirm in I4 that the primary journey works and PROTOTYPE_CONFORMANCE.md has no unresolved material mismatch',
     appUrl: 'Enter the public app URL in I4',
     alignmentStatus: alignmentStatus === 'revision' ? 'Revise the changed product decision first' : 'Select the PRD → I handoff result in I5',
     alignmentNote: 'Explain the clarification in I5',
@@ -104,14 +137,21 @@ export function ImplementPhase({ project }: { project: ProjectRow }) {
     'alignmentConfirmed',
   ]
 
-  const downloadPackageFile = (fileName: string, content: string) => {
-    const url = URL.createObjectURL(new Blob([content], { type: 'text/markdown;charset=utf-8' }))
+  const downloadPackageFile = (file: ImplementPackageFile) => {
+    let blob: Blob
+    if (file.kind === 'prototype') {
+      if (!file.artifact || prototypeIntegrity !== 'valid') return
+      blob = approvedPrototypeBlob(file.artifact)
+    } else {
+      blob = new Blob([file.content], { type: 'text/markdown;charset=utf-8' })
+    }
+    const url = URL.createObjectURL(blob)
     const anchor = document.createElement('a')
     anchor.href = url
-    anchor.download = fileName
+    anchor.download = file.fileName
     anchor.click()
     URL.revokeObjectURL(url)
-    setFeedback(isThai ? `ดาวน์โหลด ${fileName} แล้ว` : `${fileName} DOWNLOADED`)
+    setFeedback(isThai ? `ดาวน์โหลด ${file.fileName} แล้ว` : `${file.fileName} DOWNLOADED`)
   }
 
   const copySuggestedFolderName = async () => {
@@ -132,11 +172,11 @@ export function ImplementPhase({ project }: { project: ProjectRow }) {
 
   const folderSteps = isThai ? [
     `สร้าง Folder ใหม่สำหรับ App นี้ ใช้ชื่อแนะนำ “${suggestedFolderName}” หรือชื่ออื่นที่คุณจำได้ง่าย`,
-    'ดาวน์โหลดไฟล์ทั้ง 4 ฉบับ แล้วนำจาก Downloads ไปไว้ใน Folder นี้โดยคงชื่อไฟล์ตามเดิม',
+    'ดาวน์โหลดไฟล์ทั้ง 5 ฉบับ แล้วนำจาก Downloads ไปไว้ใน Folder นี้โดยคงชื่อไฟล์ตามเดิม',
     'เปิด Codex แล้วเพิ่ม Folder นี้เป็น Local Project',
   ] : [
     `Create a new app folder. Use “${suggestedFolderName}” or any memorable name`,
-    'Download all four files, then move them from Downloads into that folder without renaming them',
+    'Download all five files, then move them from Downloads into that folder without renaming them',
     'Open Codex and add that folder as a local project',
   ]
   const codexSteps = isThai ? [
@@ -144,15 +184,15 @@ export function ImplementPhase({ project }: { project: ProjectRow }) {
     'กลับมาที่ CODESIGN กด “เริ่มสร้าง App กับ Codex” แล้วกด “คัดลอก Prompt เปิดงาน”',
     'กลับไปที่ Codex วาง Prompt ใน Task แล้วส่ง โดยไม่ต้องแนบไฟล์ซ้ำ',
     'ตรวจสรุปความเข้าใจ และตอบเฉพาะ Product decision ที่ยังขาดจริง',
-    'ให้ Codex สร้าง App แสดง Preview และทดสอบ Desktop, Tablet และ Mobile',
-    'เมื่อ Preview ผ่านแล้ว ให้ Codex สร้าง Repository และ Publish ผ่าน GitHub Pages',
+    'ให้ Codex ตรวจ SHA-256 สร้าง App และเปรียบเทียบกับ Approved Prototype ทีละหน้าจอทั้ง Mobile และ Desktop',
+    'ตรวจ PROTOTYPE_CONFORMANCE.md แล้วจึงให้ Codex สร้าง Repository และ Publish ผ่าน GitHub Pages',
   ] : [
     'Start a new task inside the local project',
     'Return to CODESIGN, select “Start building with Codex,” then copy the starting prompt',
     'Return to Codex, paste and send the prompt without attaching the files again',
     'Ask Codex to summarize and flag only genuine product-decision gaps',
-    'Let Codex build the app, show a preview, and test desktop, tablet, and mobile',
-    'After the preview passes, let Codex create the repository and publish through GitHub Pages',
+    'Let Codex verify SHA-256, build the app, and compare every screen with the Approved Prototype on mobile and desktop',
+    'Review PROTOTYPE_CONFORMANCE.md, then let Codex create the repository and publish through GitHub Pages',
   ]
 
   return (
@@ -178,8 +218,8 @@ export function ImplementPhase({ project }: { project: ProjectRow }) {
         </div>
       </PhaseSection>
 
-      <PhaseSection step="I3" title={isThai ? 'ประกอบชุด 4 ไฟล์สำหรับ Codex' : 'ASSEMBLE THE FOUR-FILE CODEX PACKAGE'} description={isThai ? 'สามไฟล์แรกคือ Snapshot ที่ Lock จาก PRD ส่วน START_WITH_CODEX.md ถูกสร้างในขั้นนี้ตามภาษาของ Product จาก Step S และความพร้อม GitHub ที่คุณเลือก' : 'The first three files are the locked PRD snapshot. START_WITH_CODEX.md is generated from the product language selected in Step S and your GitHub readiness.'}>
-        {(snapshot.isLoading || prdEntries.isLoading || specifyEntries.isLoading) ? <p>{isThai ? 'กำลังโหลดไฟล์ที่ Lock ไว้…' : 'LOADING LOCKED FILES…'}</p> : null}
+      <PhaseSection step="I3" title={isThai ? 'ประกอบชุด 5 ไฟล์สำหรับ Codex' : 'ASSEMBLE THE FIVE-FILE CODEX PACKAGE'} description={isThai ? 'สามไฟล์แรกคือ Final PRD ตามด้วย Approved Prototype ที่ตรวจ SHA-256 แล้ว และ START_WITH_CODEX.md ซึ่งกำหนด Authority กับขั้นตรวจ Conformance' : 'The package combines the three Final PRD files, the SHA-256-verified Approved Prototype, and START_WITH_CODEX.md with authority and conformance rules.'}>
+        {(snapshot.isLoading || prdEntries.isLoading || specifyEntries.isLoading || prototypeIntegrity === 'checking') ? <p>{isThai ? 'กำลังโหลดไฟล์ที่ Lock ไว้และตรวจ SHA-256…' : 'LOADING LOCKED FILES AND VERIFYING SHA-256…'}</p> : null}
         {packageLoadError ? <p className="field-error" role="alert">{isThai ? 'โหลดชุดไฟล์หลักไม่ครบ กรุณากลับไปตรวจ PRD ก่อนส่งต่อ' : 'THE LOCKED SOURCE PACKAGE COULD NOT BE LOADED COMPLETELY.'}</p> : null}
         <div className="codex-folder-plan">
           <dl className="codex-project-terms">
@@ -201,17 +241,21 @@ export function ImplementPhase({ project }: { project: ProjectRow }) {
                   : (isThai ? 'คัดลอกชื่อแนะนำ' : 'COPY SUGGESTION')}
             </button>
           </div>
-          <p><strong>{isThai ? 'ชื่อ Folder เปลี่ยนได้' : 'THE FOLDER NAME IS FLEXIBLE'}</strong>{isThai ? ' ใช้ชื่ออะไรก็ได้ที่จำง่ายและเหมาะกับ App ของคุณ แต่กรุณาคงชื่อไฟล์ทั้ง 4 ฉบับด้านล่างไว้ตามเดิม' : ' Use any memorable name that fits your app, but keep the four filenames below unchanged.'}</p>
+          <p><strong>{isThai ? 'ชื่อ Folder เปลี่ยนได้' : 'THE FOLDER NAME IS FLEXIBLE'}</strong>{isThai ? ' ใช้ชื่ออะไรก็ได้ที่จำง่ายและเหมาะกับ App ของคุณ แต่กรุณาคงชื่อไฟล์ทั้ง 5 ฉบับด้านล่างไว้ตามเดิม' : ' Use any memorable name that fits your app, but keep the five filenames below unchanged.'}</p>
         </div>
         <div className="implement-package-grid" aria-label={isThai ? 'ชุดไฟล์สำหรับ Codex' : 'Codex package files'}>
           {packageFiles.map((file) => <div key={file.fileName} className={selectedPackageFile === file.fileName ? 'is-active' : ''}>
             <button type="button" className="implement-package-grid__preview" onClick={() => setSelectedPackageFile(file.fileName)}><FileCode2 size={20} /><span><strong>{file.fileName}</strong><small>{file.description}</small></span></button>
-            <button type="button" className="implement-package-grid__download" disabled={!file.content.trim()} aria-label={`${isThai ? 'ดาวน์โหลด' : 'Download'} ${file.fileName}`} onClick={() => downloadPackageFile(file.fileName, file.content)}><Download size={19} /></button>
+            <button type="button" className="implement-package-grid__download" disabled={file.kind === 'prototype' ? !file.artifact || prototypeIntegrity !== 'valid' : !file.content.trim()} aria-label={`${isThai ? 'ดาวน์โหลด' : 'Download'} ${file.fileName}`} onClick={() => downloadPackageFile(file)}><Download size={19} /></button>
           </div>)}
         </div>
         <div className="implement-package-preview">
           <h3>{activePackageFile.fileName}</h3>
-          <MarkdownPreview markdown={activePackageFile.content} />
+          {activePackageFile.kind === 'prototype'
+            ? activePackageFile.artifact
+              ? <div className="security-boundary"><ShieldCheck size={22} /><p><strong>{prototypeIntegrity === 'valid' ? (isThai ? 'ยืนยันตัวตนแล้ว' : 'IDENTITY VERIFIED') : prototypeIntegrity === 'invalid' ? (isThai ? 'ข้อมูลไฟล์ไม่ตรงกับ SHA-256' : 'STORED BYTES FAILED SHA-256') : (isThai ? 'กำลังตรวจ SHA-256…' : 'VERIFYING SHA-256…')}</strong><br />{activePackageFile.artifact.originalFileName} · {activePackageFile.artifact.sizeBytes.toLocaleString()} bytes<br /><code>SHA-256 {activePackageFile.artifact.sha256}</code><br />{isThai ? 'CODESIGN ไม่รัน HTML นี้ในหน้า App ไฟล์จะถูกส่งให้ Codex เป็น Visual/Interaction Reference เท่านั้น' : 'CODESIGN does not execute this HTML in the app. It is handed to Codex only as the visual and interaction reference.'}</p></div>
+              : <p className="field-error">{isThai ? 'ไม่พบ Approved Prototype ที่ Lock ไว้' : 'THE LOCKED APPROVED PROTOTYPE IS MISSING.'}</p>
+            : <MarkdownPreview markdown={activePackageFile.content} />}
         </div>
         {feedback ? <div className="codex-handoff-actions"><span role="status">{feedback}</span></div> : null}
         <div className="implementation-guide">
@@ -231,10 +275,10 @@ export function ImplementPhase({ project }: { project: ProjectRow }) {
         <p className="codex-repository-note">{isThai ? 'ยังไม่ต้องสร้าง Repository เองในตอนนี้ Codex จะพาทำหลังจากคุณตรวจ Preview แล้ว' : 'You do not need to create a repository yet. Codex will guide you after you review the preview.'}</p>
       </PhaseSection>
 
-      <PhaseSection step="I4" title={isThai ? 'บันทึกแอปที่ใช้งานได้จริง' : 'RECORD THE WORKING BUILD'} description={isThai ? 'กลับมาบันทึกเฉพาะ URL สาธารณะหลังจาก Codex สร้าง ทดสอบ และ Publish สำเร็จ' : 'Return after Codex has built, tested, and published the app. Save only the public URL.'}>
+      <PhaseSection step="I4" title={isThai ? 'บันทึกแอปที่ใช้งานได้จริง' : 'RECORD THE WORKING BUILD'} description={isThai ? 'กลับมาหลังจากตรวจ App และ PROTOTYPE_CONFORMANCE.md แล้ว บันทึก Public URL เมื่อไม่มี Material mismatch ค้างอยู่' : 'Return after reviewing the app and PROTOTYPE_CONFORMANCE.md. Record the public URL only when no material mismatch remains.'}>
         <label className={draft.values.workingApp ? 'build-confirm is-active' : 'build-confirm'}>
           <input type="checkbox" checked={Boolean(draft.values.workingApp)} onChange={(event) => { draft.setField('workingApp', event.target.checked); resetAlignment() }} />
-          <Check size={20} /> {isThai ? 'ฉันทดสอบเส้นทางหลักแล้ว และ App ใช้งานได้จริง' : 'I TESTED THE PRIMARY JOURNEY AND THE APP WORKS'}
+          <Check size={20} /> {isThai ? 'ฉันทดสอบเส้นทางหลัก ตรวจ PROTOTYPE_CONFORMANCE.md แล้ว App ใช้งานได้และไม่มี Material mismatch ค้างอยู่' : 'I TESTED THE PRIMARY JOURNEY, REVIEWED PROTOTYPE_CONFORMANCE.md, AND NO MATERIAL MISMATCH REMAINS'}
         </label>
         <FormField label={isThai ? 'URL สาธารณะของ App' : 'PUBLIC APP URL'} required><input type="url" value={String(draft.values.appUrl)} onChange={(event) => { draft.setField('appUrl', event.target.value); resetAlignment() }} placeholder="https://username.github.io/project/" /></FormField>
         <p className="repository-privacy-note">{isThai ? 'เพื่อความเป็นส่วนตัว CODESIGN จะไม่ขอและไม่บันทึก URL ของ GitHub Repository' : 'For privacy, CODESIGN does not request or store the GitHub repository URL.'}</p>
@@ -247,9 +291,9 @@ export function ImplementPhase({ project }: { project: ProjectRow }) {
         loading={snapshot.isLoading || prdEntries.isLoading || specifyEntries.isLoading}
         loadError={packageLoadError}
         items={[
-          { label: isThai ? 'ชุดส่งต่องานที่ใช้สร้าง' : 'SOURCE PACKAGE', value: [`PRD v${snapshot.data?.version ?? '—'}`, 'CODESIGN_HANDOFF.md', 'CONTENT_PACK.md', 'EXPERIENCE_DIRECTION.md', 'START_WITH_CODEX.md'] },
+          { label: isThai ? 'ชุดส่งต่องานที่ใช้สร้าง' : 'SOURCE PACKAGE', value: [`PRD v${snapshot.data?.version ?? '—'}`, 'CODESIGN_HANDOFF.md', 'CONTENT_PACK.md', 'EXPERIENCE_DIRECTION.md', 'APPROVED_PROTOTYPE.html', 'START_WITH_CODEX.md'] },
           { label: isThai ? 'ผลการตรวจ PRD' : 'PRD REVIEW RESULT', value: String(prdReviewOutcome ?? '') },
-          { label: isThai ? 'หลักฐานการสร้าง' : 'BUILD EVIDENCE', value: String(draft.values.appUrl) },
+          { label: isThai ? 'หลักฐานการสร้าง' : 'BUILD EVIDENCE', value: [String(draft.values.appUrl), draft.values.workingApp ? 'PROTOTYPE_CONFORMANCE.md · NO MATERIAL MISMATCH CONFIRMED' : 'BUILD AND CONFORMANCE NOT CONFIRMED'] },
         ]}
         status={alignmentStatus}
         note={alignmentNote}

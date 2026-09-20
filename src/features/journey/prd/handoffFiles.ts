@@ -126,7 +126,7 @@ export function assembleStartWithCodex(project: ProjectRow, readiness: GitHubRea
 
 เอกสารนี้คือคำสั่งเริ่มต้นสำหรับให้ Codex เปลี่ยนชุดส่งต่องานจาก CODESIGN ที่อยู่ใน Project Folder ปัจจุบันให้เป็น Web App ที่ใช้งานได้จริง โดยพาเจ้าของ Product ที่ไม่ใช่นักพัฒนาทำงานทีละขั้น
 
-ทำงานและสร้างไฟล์ทั้งหมดภายใน Project Folder ปัจจุบัน ไม่ต้องขอให้ผู้ใช้แนบไฟล์ทั้ง 4 ฉบับซ้ำ
+ทำงานและสร้างไฟล์ทั้งหมดภายใน Project Folder ปัจจุบัน ไม่ต้องขอให้ผู้ใช้แนบไฟล์ทั้ง 5 ฉบับซ้ำ
 
 ## ภาษาในการทำงาน
 
@@ -140,10 +140,17 @@ export function assembleStartWithCodex(project: ProjectRow, readiness: GitHubRea
 1. \`CODESIGN_HANDOFF.md\` — การตัดสินใจเกี่ยวกับ Product และข้อจำกัดในการสร้าง
 2. \`CONTENT_PACK.md\` — เนื้อหา แบบฝึก คำถามสะท้อนคิด และกติกาการบันทึกครบทั้ง 21 วัน
 3. \`EXPERIENCE_DIRECTION.md\` — ทิศทางภาพและปฏิสัมพันธ์ที่เจ้าของ Product เลือก
+4. \`APPROVED_PROTOTYPE.html\` — Visual/Interaction Reference ที่เจ้าของ Product อนุมัติและ CODESIGN ตรวจ SHA-256 แล้ว
 
-ให้ถือทั้งสามไฟล์เป็น source of truth ห้ามเติมพฤติกรรมที่เปลี่ยน Product โดยไม่แจ้ง หากพบความกำกวมที่มีผลต่อ Product ให้ระบุ **PRODUCT DECISION REQUIRED** และถามผู้ใช้ครั้งละหนึ่งคำถามที่ชัดเจน
+## ลำดับอำนาจของข้อมูล
 
-ข้อสรุปจาก Prototype และ CODESIGN UI Review ที่เจ้าของอนุมัติแล้วถูกรวมไว้ใน CODESIGN_HANDOFF.md และ EXPERIENCE_DIRECTION.md เรียบร้อย จึงไม่ต้องขอไฟล์ CODESIGN_UI_REVIEW.md เพิ่ม และห้ามย้อนกลับไปใช้ Prototype code เป็น source of truth หากหัวข้อ CODESIGN UI Review ระบุ Prototype-driven change ที่ต่างจากข้อความร่างก่อนหน้า ให้ใช้ Change Resolution ที่เจ้าของยืนยันแล้วเป็นข้อกำหนดล่าสุด โดยยังต้องรักษา Protected Decisions และ CONTENT_PACK.md
+- Product rules, Scope, Content, Data behavior และ Acceptance criteria ให้ยึด Final PRD ทั้งสามไฟล์
+- Layout, visual hierarchy, control placement, interaction และ transition ที่ Prototype แสดงไว้และไม่ขัดกับ Final PRD ให้ยึด \`APPROVED_PROTOTYPE.html\`
+- หาก Prototype ไม่ครอบคลุมหน้าจอหรือ state ใด ให้ใช้ \`EXPERIENCE_DIRECTION.md\` และ Acceptance criteria เติมช่องว่างโดยไม่เพิ่ม Feature
+- ใช้ Prototype เป็นแบบอ้างอิง ห้ามคัดลอก prototype code ไปเป็น production codeโดยตรงโดยไม่ประเมิน accessibility, responsive behavior, maintainability และความปลอดภัย
+- หากเกิดความขัดแย้งที่ลำดับข้างต้นยังตัดสินไม่ได้ ให้ระบุ **PRODUCT DECISION REQUIRED** และถามผู้ใช้ครั้งละหนึ่งคำถาม
+
+ก่อนเริ่มสร้าง ให้คำนวณ SHA-256 ของ \`APPROVED_PROTOTYPE.html\` และตรวจว่าตรงกับค่าในหัวข้อ CODESIGN UI Review ของ Final PRD หากไม่ตรงให้หยุดและแจ้ง **PROTOTYPE INTEGRITY FAILED** ห้ามสร้างต่อจากไฟล์นั้น ไม่ต้องขอ \`CODESIGN_UI_REVIEW.md\` แยก เพราะข้อสรุปและค่า integrity อยู่ใน Final PRD แล้ว
 
 ## กติกา Product ที่ยืนยันแล้ว
 
@@ -172,10 +179,12 @@ GitHub คือบ้านออนไลน์ของไฟล์โคร�
 4. สร้าง Standalone Web App ให้ครบทั้ง 21 วัน
 5. ทำกติกาการกลับมา การเข้าถึง และการบันทึกข้อมูลตามหัวข้อ “กติกา Product ที่ยืนยันแล้ว” อย่างเคร่งครัด ห้ามอนุมานว่าต้องมี Auth, Backend, Cloud storage, AI ในตัว App, Analytics หรือบริการเสียเงิน เว้นแต่มีการตัดสินใจที่ยืนยันแล้วระบุไว้
 6. ทดสอบเส้นทางทั้งหมดบน Desktop, Tablet และ Mobile รวมถึง Keyboard, Empty state, การกลับมาใช้ App และการตัดคำภาษาไทย
-7. แสดง Preview ให้เจ้าของ Product ตรวจ แก้ปัญหาด้าน implementation แล้วจึง Publish ผ่าน GitHub Pages
-8. ส่งกลับ Public App URL สรุปผลการทดสอบ และข้อจำกัดที่ยังเหลืออยู่ ไม่ต้องส่ง Repository URL กลับไปบันทึกใน CODESIGN
+7. ก่อน Publish เปรียบเทียบ App กับ Approved Prototype ทีละหน้าจอและ state ตาม Confirmed Screen Map อย่างน้อยที่ viewport Mobile และ Desktop โดยตรวจ Layout, hierarchy, controls, navigation, feedback และ interaction
+8. สร้าง \`PROTOTYPE_CONFORMANCE.md\` บันทึกแต่ละหน้าจอ/viewport เป็น MATCH, APPROVED DEVIATION หรือ MISMATCH พร้อมเหตุผล แก้ MISMATCH ที่มีผลต่อ UX และขอเจ้าของยืนยัน deviation ที่จำเป็น ห้าม Publish ขณะที่ยังมี material MISMATCH
+9. แสดง Preview และ Conformance report ให้เจ้าของ Product ตรวจ แล้วจึง Publish ผ่าน GitHub Pages
+10. ส่งกลับ Public App URL สรุปผลการทดสอบ ผล Conformance และข้อจำกัดที่ยังเหลืออยู่ ไม่ต้องส่ง Repository URL กลับไปบันทึกใน CODESIGN
 
-เริ่มจากอ่านไฟล์ส่งต่อทั้งสามฉบับใน Project Folder ปัจจุบัน แล้วสรุปความพร้อมให้เจ้าของ Product เป็นภาษาไทยแบบสั้นและเข้าใจง่าย จากนั้นดำเนินการขั้นถัดไปที่ปลอดภัยและเป็นประโยชน์ที่สุด
+เริ่มจากอ่านไฟล์ส่งต่อทั้งสี่ฉบับ ตรวจ SHA-256 ของ Approved Prototype แล้วสรุปความพร้อมให้เจ้าของ Product เป็นภาษาไทยแบบสั้นและเข้าใจง่าย จากนั้นดำเนินการขั้นถัดไปที่ปลอดภัยและเป็นประโยชน์ที่สุด
 `
   }
 
@@ -189,7 +198,7 @@ GitHub คือบ้านออนไลน์ของไฟล์โคร�
 
 Help a non-technical product owner turn the CODESIGN handoff in the current project folder into a working web app.
 
-Work entirely inside the current project folder. Do not ask the owner to attach the four files again.
+Work entirely inside the current project folder. Do not ask the owner to attach the five files again.
 
 ## Working Language
 
@@ -203,10 +212,17 @@ Work entirely inside the current project folder. Do not ask the owner to attach 
 1. \`CODESIGN_HANDOFF.md\` — product decisions and build constraints
 2. \`CONTENT_PACK.md\` — all 21 days of content, exercises, reflection, and recording rules
 3. \`EXPERIENCE_DIRECTION.md\` — the owner-selected visual and interaction direction
+4. \`APPROVED_PROTOTYPE.html\` — the owner-approved visual and interaction reference whose SHA-256 was verified by CODESIGN
 
-Treat these files as the source of truth. Do not silently invent a behavior that changes the product. Mark any material ambiguity as **PRODUCT DECISION REQUIRED** and ask one clear question.
+## Authority Order
 
-Owner-approved prototype and CODESIGN UI Review conclusions are already consolidated into CODESIGN_HANDOFF.md and EXPERIENCE_DIRECTION.md. Do not request CODESIGN_UI_REVIEW.md separately, and never treat prototype code as a source of truth. When the CODESIGN UI Review section records an owner-confirmed prototype-driven change that differs from earlier draft wording, the Change Resolution is the latest requirement while Protected Decisions and CONTENT_PACK.md remain fixed.
+- Final PRD files govern product rules, scope, content, data behavior, and acceptance criteria.
+- \`APPROVED_PROTOTYPE.html\` governs covered layout, visual hierarchy, control placement, interaction, and transitions when they do not conflict with the Final PRD.
+- For screens or states the Prototype does not cover, follow \`EXPERIENCE_DIRECTION.md\` and the acceptance criteria without inventing features.
+- Use the Prototype as a reference. Do not copy prototype code directly into production without reassessing accessibility, responsive behavior, maintainability, and security.
+- If this authority order cannot resolve a material conflict, mark it **PRODUCT DECISION REQUIRED** and ask one clear question.
+
+Before building, calculate the SHA-256 of \`APPROVED_PROTOTYPE.html\` and compare it with the digest in the CODESIGN UI Review section of the Final PRD. Stop with **PROTOTYPE INTEGRITY FAILED** if it does not match. Do not request a separate \`CODESIGN_UI_REVIEW.md\`; its conclusions and integrity reference are already consolidated into the Final PRD.
 
 ## Locked Product Rules
 
@@ -235,10 +251,12 @@ GitHub is the online home for the project files and their change history. GitHub
 4. Build the complete 21-day standalone web app.
 5. Implement return, access, and data retention behavior exactly as stated in the Locked Product Rules. Do not infer Auth, a backend, cloud storage, embedded AI, analytics, or paid services unless an owner-approved locked decision explicitly requires it.
 6. Test the full journey on desktop, tablet, and mobile, including keyboard use, empty states, returning to the app, and Thai text wrapping where relevant.
-7. Show the owner a preview, fix implementation issues, then publish through GitHub Pages.
-8. Return the public app URL, test summary, and any remaining limitations. Do not return the repository URL for storage in CODESIGN.
+7. Before publishing, compare the app against the Approved Prototype screen by screen and state by state from the Confirmed Screen Map, at minimum at mobile and desktop viewports. Check layout, hierarchy, controls, navigation, feedback, and interaction.
+8. Create \`PROTOTYPE_CONFORMANCE.md\` and classify every screen/viewport as MATCH, APPROVED DEVIATION, or MISMATCH with the reason. Fix UX-impacting mismatches and obtain owner confirmation for necessary deviations. Do not publish while any material MISMATCH remains.
+9. Show the owner the preview and conformance report, then publish through GitHub Pages.
+10. Return the public app URL, test summary, conformance result, and remaining limitations. Do not return the repository URL for storage in CODESIGN.
 
-Start by reading the three handoff files in the current project folder and giving the owner a short readiness summary. Then proceed with the safest useful next step.
+Start by reading the four source files, verifying the Approved Prototype SHA-256, and giving the owner a short readiness summary. Then proceed with the safest useful next step.
 `
 }
 

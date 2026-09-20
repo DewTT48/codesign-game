@@ -17,6 +17,12 @@ import { prdFiles, type PrdDrafts, type PrdFileKey, validatePrdDocument } from '
 import { UiReviewWorkspace } from './UiReviewWorkspace'
 import { applyGuidedUiReview, assembleGuidedUiBrief } from './uiReview'
 import {
+  approvedPrototypeArtifactToJson,
+  extractPrototypeIntegrityReference,
+  parseApprovedPrototypeArtifact,
+  type ApprovedPrototypeArtifact,
+} from './approvedPrototype'
+import {
   checkingUiReviewIntegrity,
   createUiReviewFinalizationEvidence,
   parseUiReviewFinalizationEvidence,
@@ -40,6 +46,7 @@ const uiReviewFieldKey = 'uiReviewDraft'
 const uiReviewAppliedFieldKey = 'uiReviewApplied'
 const uiReviewResolutionFieldKey = 'uiReviewResolution'
 const uiReviewEvidenceFieldKey = 'uiReviewChangeSummary'
+const approvedPrototypeFieldKey = 'approvedPrototypeArtifact'
 
 export function PrdPhase({ project }: { project: ProjectRow }) {
   const { isThai } = useLanguage()
@@ -59,6 +66,7 @@ export function PrdPhase({ project }: { project: ProjectRow }) {
   const [uiReviewResolution, setUiReviewResolution] = useState('')
   const [uiReviewApplied, setUiReviewApplied] = useState(false)
   const [uiReviewEvidence, setUiReviewEvidence] = useState<UiReviewFinalizationEvidence | null>(null)
+  const [approvedPrototype, setApprovedPrototype] = useState<ApprovedPrototypeArtifact | null>(null)
   const [uiReviewIntegrity, setUiReviewIntegrity] = useState<UiReviewIntegrityCheck>(checkingUiReviewIntegrity)
   const [saveState, setSaveState] = useState<SaveState>('idle')
   const [feedback, setFeedback] = useState('')
@@ -95,6 +103,8 @@ export function PrdPhase({ project }: { project: ProjectRow }) {
     const initialUiReviewApplied = draft.data.find((entry) => entry.fieldKey === uiReviewAppliedFieldKey)?.content === true
     const savedUiReviewEvidence = draft.data.find((entry) => entry.fieldKey === uiReviewEvidenceFieldKey)?.content
     const initialUiReviewEvidence = parseUiReviewFinalizationEvidence(savedUiReviewEvidence)
+    const savedApprovedPrototype = draft.data.find((entry) => entry.fieldKey === approvedPrototypeFieldKey)?.content
+    const initialApprovedPrototype = parseApprovedPrototypeArtifact(savedApprovedPrototype)
     setFiles(initial)
     setReviewedFiles(initialReviewed)
     setUiBrief(initialBrief)
@@ -102,6 +112,7 @@ export function PrdPhase({ project }: { project: ProjectRow }) {
     setUiReviewResolution(initialUiReviewResolution)
     setUiReviewApplied(initialUiReviewApplied)
     setUiReviewEvidence(initialUiReviewEvidence)
+    setApprovedPrototype(initialApprovedPrototype)
 
     const missing = prdFiles.filter(({ key }) => !draft.data.some((entry) => entry.fieldKey === fileFieldKeys[key]))
     const missingReview = !draft.data.some((entry) => entry.fieldKey === reviewFieldKey)
@@ -219,9 +230,17 @@ export function PrdPhase({ project }: { project: ProjectRow }) {
     if (element.scrollHeight <= element.clientHeight + 2) markFileRead(selectedFile)
   }, [selectedFile, viewMode, files])
 
-  const applyUiReview = async (review: string, resolution = '') => {
+  const applyUiReview = async (review: string, resolution: string, prototype: ApprovedPrototypeArtifact) => {
     const nextFiles = applyGuidedUiReview(files, review, resolution)
-    const evidence = await createUiReviewFinalizationEvidence(files, nextFiles, (uiReviewEvidence?.version ?? 0) + 1)
+    const prototypeReference = extractPrototypeIntegrityReference(review)
+    if (!prototypeReference || prototypeReference.sha256 !== prototype.sha256) throw new Error('Approved Prototype integrity check failed.')
+    const evidence = await createUiReviewFinalizationEvidence(
+      files,
+      nextFiles,
+      (uiReviewEvidence?.version ?? 0) + 1,
+      new Date().toISOString(),
+      { artifact: prototype, expectedSha256: prototypeReference.sha256 },
+    )
     const reviewed: PrdFileKey[] = []
     setFiles(nextFiles)
     setReviewedFiles(reviewed)
@@ -240,11 +259,13 @@ export function PrdPhase({ project }: { project: ProjectRow }) {
         savePhaseEntry({ projectId: project.id, phase: 'PRD', section: 'ui_review', fieldKey: uiReviewResolutionFieldKey, content: resolution }),
         savePhaseEntry({ projectId: project.id, phase: 'PRD', section: 'ui_review', fieldKey: uiReviewAppliedFieldKey, content: true }),
         savePhaseEntry({ projectId: project.id, phase: 'PRD', section: 'ui_review', fieldKey: uiReviewEvidenceFieldKey, content: uiReviewFinalizationEvidenceToJson(evidence) }),
+        savePhaseEntry({ projectId: project.id, phase: 'PRD', section: 'ui_review', fieldKey: approvedPrototypeFieldKey, content: approvedPrototypeArtifactToJson(prototype) }),
       ])
       setUiReview(review)
       setUiReviewResolution(resolution)
       setUiReviewApplied(true)
       setUiReviewEvidence(evidence)
+      setApprovedPrototype(prototype)
       setSaveState('saved')
       setFeedback(isThai ? 'สร้าง Final PRD แล้ว กรุณาเปิดอ่านและยืนยันไฟล์ฉบับสุดท้ายเพียงรอบนี้' : 'FINAL PRD CREATED. REVIEW AND CONFIRM THIS FINAL PACKAGE ONCE.')
     } catch (error) {
@@ -260,13 +281,13 @@ export function PrdPhase({ project }: { project: ProjectRow }) {
       return () => { cancelled = true }
     }
     setUiReviewIntegrity(checkingUiReviewIntegrity())
-    void validateUiReviewFinalization(files, uiReviewEvidence, uiReview, uiReviewResolution).then((check) => {
+    void validateUiReviewFinalization(files, uiReviewEvidence, uiReview, uiReviewResolution, approvedPrototype).then((check) => {
       if (!cancelled) setUiReviewIntegrity(check)
     }).catch(() => {
       if (!cancelled) setUiReviewIntegrity({ status: 'invalid', errors: ['ตรวจความครบถ้วนของ Final PRD ไม่สำเร็จ'], warnings: [] })
     })
     return () => { cancelled = true }
-  }, [files, uiReview, uiReviewApplied, uiReviewEvidence, uiReviewResolution])
+  }, [approvedPrototype, files, uiReview, uiReviewApplied, uiReviewEvidence, uiReviewResolution])
 
   const documentChecks = Object.fromEntries(prdFiles.map(({ key }) => [key, validatePrdDocument(key, files[key])])) as Record<PrdFileKey, ReturnType<typeof validatePrdDocument>>
   const allValid = prdFiles.every(({ key }) => documentChecks[key].valid)
@@ -276,7 +297,7 @@ export function PrdPhase({ project }: { project: ProjectRow }) {
     mutationFn: async () => {
       if (!uiReviewApplied) throw new Error('The approved UI Review has not been applied.')
       if (!uiReviewEvidence) throw new Error('Final PRD consolidation evidence is missing.')
-      const integrity = await validateUiReviewFinalization(files, uiReviewEvidence, uiReview, uiReviewResolution)
+      const integrity = await validateUiReviewFinalization(files, uiReviewEvidence, uiReview, uiReviewResolution, approvedPrototype)
       if (integrity.status !== 'valid') throw new Error('Final PRD integrity check failed.')
       await Promise.all(prdFiles.map(({ key }) => persist(key, files[key])))
       await persistReviewed(reviewedFiles)
@@ -334,8 +355,9 @@ export function PrdPhase({ project }: { project: ProjectRow }) {
           uiBrief={uiBrief}
           storedReview={uiReview}
           storedResolution={uiReviewResolution}
+          storedPrototype={approvedPrototype}
           applied={uiReviewApplied}
-          onApply={async ({ review, resolution }) => applyUiReview(review, resolution)}
+          onApply={async ({ review, resolution, prototype }) => applyUiReview(review, resolution ?? '', prototype)}
         />
       </PhaseSection>
 
@@ -389,7 +411,7 @@ export function PrdPhase({ project }: { project: ProjectRow }) {
         <ArcadeButton variant="secondary" onClick={() => { setFeedback(isThai ? 'เปิดไฟล์ที่ยังไม่ยืนยัน อ่านถึงด้านล่าง หรือแก้ข้อความที่ไม่ตรงกับการตัดสินใจของคุณ' : 'OPEN AN UNCONFIRMED FILE, READ TO THE END, OR CORRECT IT.'); const first = prdFiles.find(({ key }) => !reviewedFiles.includes(key) || !documentChecks[key].valid); openFile(first?.key ?? 'handoff') }}>{isThai ? 'ยัง — ตรวจอีกครั้ง' : 'NOT YET — REVIEW'}</ArcadeButton>
         <ArcadeButton disabled={!uiReviewApplied || !uiReviewEvidence || uiReviewIntegrity.status !== 'valid' || !allValid || !allReviewed || dirtyFiles.length > 0 || completion.isPending || saveState === 'saving'} onClick={() => completion.mutate()}><LockKeyhole size={18} /> {completion.isPending ? (isThai ? 'กำลังยืนยัน…' : 'LOCKING…') : (isThai ? 'พร้อม — Lock ทั้ง 3 ไฟล์' : 'READY — LOCK ALL THREE')}</ArcadeButton>
       </>}>
-        <p>{isThai ? `ยืนยันแล้ว ${reviewedFiles.length}/3 ไฟล์ เมื่อ Lock ระบบจะเก็บทั้ง 3 ไฟล์เป็นชุด Version เดียวกัน จากนั้น Stage Implement จะสร้าง START_WITH_CODEX.md ตามความพร้อม GitHub ของคุณ` : `${reviewedFiles.length}/3 files confirmed. Locking stores all three as one version. Implement then creates START_WITH_CODEX.md from your GitHub readiness.`}</p>
+        <p>{isThai ? `ยืนยันแล้ว ${reviewedFiles.length}/3 ไฟล์ เมื่อ Lock ระบบจะเก็บทั้ง 3 ไฟล์พร้อม APPROVED_PROTOTYPE.html ที่ผ่าน SHA-256 เป็นชุดส่งต่อเดียวกัน จากนั้น Stage Implement จะสร้าง START_WITH_CODEX.md` : `${reviewedFiles.length}/3 files confirmed. Locking preserves all three together with the SHA-256-verified APPROVED_PROTOTYPE.html as one handoff package. Implement then creates START_WITH_CODEX.md.`}</p>
         {!uiReviewApplied ? <p className="field-error" role="alert">{isThai ? 'ยัง Lock ไม่ได้ กรุณาทำ Prototype ให้จบและนำ CODESIGN_UI_REVIEW.md กลับมาใช้สร้าง Final PRD ก่อน' : 'LOCKING IS DISABLED UNTIL CODESIGN_UI_REVIEW.md HAS BEEN APPLIED TO THE FINAL PRD.'}</p> : null}
         {uiReviewApplied && uiReviewIntegrity.status === 'checking' ? <p className="field-error" role="status">{isThai ? 'กำลังตรวจหลักฐานการ Consolidate ก่อนเปิดให้ Lock' : 'CHECKING CONSOLIDATION EVIDENCE BEFORE LOCKING.'}</p> : null}
         {uiReviewApplied && uiReviewIntegrity.status === 'invalid' ? <p className="field-error" role="alert">{isThai ? 'ยัง Lock ไม่ได้ เพราะ Integrity Check ของ Final PRD ยังไม่ผ่าน กรุณาดูรายละเอียดในกล่องสรุปด้านบน' : 'LOCKING IS DISABLED BECAUSE THE FINAL PRD INTEGRITY CHECK HAS NOT PASSED.'}</p> : null}

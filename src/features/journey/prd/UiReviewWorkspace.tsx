@@ -3,6 +3,13 @@ import { useEffect, useRef, useState } from 'react'
 import { useLanguage } from '../../i18n/LanguageContext'
 import { MarkdownPreview } from './MarkdownPreview'
 import {
+  APPROVED_PROTOTYPE_FILE_NAME,
+  approvedPrototypeBlob,
+  createApprovedPrototypeArtifact,
+  validateApprovedPrototype,
+  type ApprovedPrototypeArtifact,
+} from './approvedPrototype'
+import {
   OWN_FINAL_PRD_FILE_NAME,
   UI_REVIEW_FILE_NAME,
   assemblePrototypePrompt,
@@ -20,9 +27,10 @@ type UiReviewWorkspaceProps = {
   storedReview?: string
   storedFinalPrd?: string
   storedResolution?: string
+  storedPrototype?: ApprovedPrototypeArtifact | null
   applied: boolean
   disabled?: boolean
-  onApply: (input: { review: string; finalPrd?: string; resolution?: string }) => Promise<void>
+  onApply: (input: { review: string; finalPrd?: string; resolution?: string; prototype: ApprovedPrototypeArtifact }) => Promise<void>
 }
 
 function downloadMarkdown(fileName: string, content: string) {
@@ -40,6 +48,7 @@ export function UiReviewWorkspace({
   storedReview = '',
   storedFinalPrd = '',
   storedResolution = '',
+  storedPrototype = null,
   applied,
   disabled = false,
   onApply,
@@ -47,8 +56,11 @@ export function UiReviewWorkspace({
   const { language, isThai } = useLanguage()
   const reviewInputRef = useRef<HTMLInputElement>(null)
   const finalPrdInputRef = useRef<HTMLInputElement>(null)
+  const prototypeInputRef = useRef<HTMLInputElement>(null)
   const [review, setReview] = useState(storedReview)
   const [finalPrd, setFinalPrd] = useState(storedFinalPrd)
+  const [prototype, setPrototype] = useState<ApprovedPrototypeArtifact | null>(storedPrototype)
+  const [prototypeError, setPrototypeError] = useState('')
   const [copyState, setCopyState] = useState<'idle' | 'copied' | 'failed'>('idle')
   const [applyState, setApplyState] = useState<'idle' | 'saving' | 'saved' | 'failed'>('idle')
   const [answers, setAnswers] = useState<Record<string, string>>({})
@@ -56,6 +68,7 @@ export function UiReviewWorkspace({
   const prompt = assemblePrototypePrompt(uiBrief, mode, language)
   const reviewCheck = validateUiReviewDocument(review)
   const finalPrdCheck = validateOwnFinalPrd(finalPrd)
+  const prototypeCheck = validateApprovedPrototype(review, prototype)
   const forwardPlan = getUiReviewForwardPlan(review)
   const ownerAnswersReady = forwardPlan.ownerQuestions.every((item) => Boolean(answers[item.id]?.trim()))
   const resolution = reviewCheck.route === 'confirmation-needed'
@@ -64,10 +77,12 @@ export function UiReviewWorkspace({
   const hasChanges = review !== storedReview
     || (mode === 'own' && finalPrd !== storedFinalPrd)
     || (resolution && resolution !== storedResolution)
+    || prototype?.sha256 !== storedPrototype?.sha256
   const reviewReady = reviewCheck.route === 'approved'
     || (reviewCheck.route === 'confirmation-needed' && forwardConfirmed && ownerAnswersReady)
   const canApply = reviewCheck.valid
     && reviewReady
+    && prototypeCheck.valid
     && (mode === 'guided' || finalPrdCheck.valid)
     && (!applied || hasChanges)
     && !disabled
@@ -79,6 +94,7 @@ export function UiReviewWorkspace({
     setForwardConfirmed(validateUiReviewResolution(storedReview, storedResolution))
   }, [storedResolution, storedReview])
   useEffect(() => setFinalPrd(storedFinalPrd), [storedFinalPrd])
+  useEffect(() => setPrototype(storedPrototype), [storedPrototype])
 
   function replaceReview(content: string) {
     setReview(content)
@@ -106,14 +122,40 @@ export function UiReviewWorkspace({
     setApplyState('idle')
   }
 
+  async function readPrototype(file: File | undefined) {
+    if (!file) return
+    setPrototypeError('')
+    try {
+      setPrototype(await createApprovedPrototypeArtifact(file))
+      setApplyState('idle')
+    } catch (error) {
+      setPrototype(null)
+      const tooLarge = error instanceof Error && error.message === 'APPROVED_PROTOTYPE_TOO_LARGE'
+      setPrototypeError(tooLarge
+        ? (isThai ? 'ไฟล์ Prototype ต้องมีขนาดไม่เกิน 5 MB' : 'THE APPROVED PROTOTYPE MUST NOT EXCEED 5 MB.')
+        : (isThai ? 'อ่านไฟล์ Prototype ไม่สำเร็จ กรุณาเลือกไฟล์ .html ฉบับที่อนุมัติ' : 'THE APPROVED PROTOTYPE MUST BE A READABLE .HTML FILE.'))
+    }
+  }
+
+  function downloadPrototype() {
+    if (!prototype || !prototypeCheck.valid) return
+    const url = URL.createObjectURL(approvedPrototypeBlob(prototype))
+    const anchor = document.createElement('a')
+    anchor.href = url
+    anchor.download = APPROVED_PROTOTYPE_FILE_NAME
+    anchor.click()
+    URL.revokeObjectURL(url)
+  }
+
   async function apply() {
-    if (!canApply) return
+    if (!canApply || !prototype) return
     setApplyState('saving')
     try {
       await onApply({
         review,
         finalPrd: mode === 'own' ? finalPrd : undefined,
         resolution: reviewCheck.route === 'confirmation-needed' ? resolution : undefined,
+        prototype,
       })
       setApplyState('saved')
     } catch {
@@ -125,7 +167,7 @@ export function UiReviewWorkspace({
     <ol className="ui-review-steps" aria-label={isThai ? 'ขั้นตอน Prototype และ UI Review' : 'Prototype and UI Review steps'}>
       <li className="is-complete"><span>1</span><div><strong>{isThai ? 'CODESIGN เตรียม UI Brief' : 'CODESIGN PREPARES THE UI BRIEF'}</strong><small>{isThai ? 'ใช้ Decision ที่ยืนยันแล้วและตัวอย่าง Content เพียงส่วนที่จำเป็น' : 'Uses locked decisions and only the representative content needed for UI review.'}</small></div></li>
       <li className={reviewCheck.valid ? 'is-complete' : 'is-active'}><span>2</span><div><strong>{isThai ? 'ทำ Prototype และปรับใน Chat' : 'PROTOTYPE AND ITERATE IN CHAT'}</strong><small>{isThai ? 'ดูหน้าตาจริง ลอง Flow และปรับจนพอใจก่อนสั่ง Finalize' : 'Inspect visible screens and flow, then iterate before finalizing.'}</small></div></li>
-      <li className={applied ? 'is-complete' : review ? 'is-active' : ''}><span>3</span><div><strong>{isThai ? 'นำ UI Review กลับมาสร้าง Final PRD' : 'BRING THE UI REVIEW BACK'}</strong><small>{mode === 'guided' ? (isThai ? 'CODESIGN ผสาน Review โดยไม่แก้ Content Pack' : 'CODESIGN applies the review without changing the Content Pack.') : (isThai ? 'นำ UI Review และ Final PRD ที่ Chat ช่วยปรับกลับมาตรวจ' : 'Bring back both the UI Review and the Chat-assisted final PRD.')}</small></div></li>
+      <li className={applied ? 'is-complete' : review ? 'is-active' : ''}><span>3</span><div><strong>{isThai ? 'นำ UI Review และ HTML กลับมาสร้าง Final PRD' : 'BRING THE REVIEW AND HTML BACK'}</strong><small>{mode === 'guided' ? (isThai ? 'CODESIGN ตรวจ SHA-256 และผสาน Review โดยไม่แก้ Content Pack' : 'CODESIGN verifies SHA-256 and applies the review without changing the Content Pack.') : (isThai ? 'นำ UI Review, Approved Prototype และ Final PRD ที่ Chat ช่วยปรับกลับมาตรวจ' : 'Bring back the UI Review, Approved Prototype, and Chat-assisted final PRD.')}</small></div></li>
     </ol>
 
     <section className="ui-review-brief">
@@ -147,7 +189,7 @@ export function UiReviewWorkspace({
 
     <section className="ui-review-import">
       <header>
-        <div><span>{isThai ? 'ผลลัพธ์หลัง FINALIZE UI REVIEW' : 'RESULT AFTER FINALIZE UI REVIEW'}</span><h3>{isThai ? 'นำไฟล์ Markdown กลับเข้า CODESIGN' : 'BRING THE MARKDOWN FILES BACK'}</h3><p>{isThai ? 'ระบบตรวจโครงสร้าง สถานะ คำถามที่ยังเปิด และคำยืนยันของเจ้าของก่อนสร้าง Final PRD' : 'CODESIGN validates structure, review status, open questions, and explicit owner approval before creating the final PRD.'}</p></div>
+        <div><span>{isThai ? 'ผลลัพธ์หลัง FINALIZE UI REVIEW' : 'RESULT AFTER FINALIZE UI REVIEW'}</span><h3>{isThai ? 'นำ Review และ HTML ที่อนุมัติกลับเข้า CODESIGN' : 'BRING BACK THE REVIEW AND APPROVED HTML'}</h3><p>{isThai ? 'ระบบตรวจโครงสร้าง คำยืนยันของเจ้าของ และ SHA-256 ของ HTML ก่อนสร้าง Final PRD' : 'CODESIGN validates structure, owner approval, and the HTML SHA-256 before creating the final PRD.'}</p></div>
         {applied ? <span className="ui-review-applied"><Check size={18} /> {isThai ? 'นำ Review ไปใช้แล้ว' : 'REVIEW APPLIED'}</span> : null}
       </header>
 
@@ -156,6 +198,16 @@ export function UiReviewWorkspace({
           <div><strong>{UI_REVIEW_FILE_NAME}</strong><small>{reviewCheck.valid ? (isThai ? 'โครงสร้างถูกต้อง' : 'VALID STRUCTURE') : (isThai ? 'จำเป็น' : 'REQUIRED')}</small></div>
           <button type="button" disabled={disabled} onClick={() => reviewInputRef.current?.click()}><FileUp size={17} /> {isThai ? 'เลือกไฟล์' : 'CHOOSE FILE'}</button>
           <input ref={reviewInputRef} hidden type="file" accept=".md,text/markdown,text/plain" onChange={(event) => void readFile(event.target.files?.[0], UI_REVIEW_FILE_NAME, replaceReview)} />
+        </article>
+        <article className={prototypeCheck.valid ? 'is-valid' : prototype ? 'is-error' : ''}>
+          <div>
+            <strong>{APPROVED_PROTOTYPE_FILE_NAME}</strong>
+            <small>{prototypeCheck.valid ? (isThai ? 'SHA-256 ตรงกับ UI Review' : 'SHA-256 MATCHED') : (isThai ? 'จำเป็น' : 'REQUIRED')}</small>
+            {prototype ? <small>{prototype.originalFileName} · {prototype.sizeBytes.toLocaleString()} bytes · {prototype.sha256.slice(0, 12)}…</small> : null}
+          </div>
+          <button type="button" disabled={disabled} onClick={() => prototypeInputRef.current?.click()}><FileUp size={17} /> {isThai ? 'เลือก HTML' : 'CHOOSE HTML'}</button>
+          <button type="button" disabled={!prototypeCheck.valid} onClick={downloadPrototype}><Download size={17} /> {isThai ? 'ดาวน์โหลดฉบับตรวจแล้ว' : 'DOWNLOAD VERIFIED COPY'}</button>
+          <input ref={prototypeInputRef} hidden type="file" accept=".html,.htm,text/html" onChange={(event) => void readPrototype(event.target.files?.[0])} />
         </article>
         {mode === 'own' ? <article className={finalPrdCheck.valid ? 'is-valid' : finalPrd ? 'is-error' : ''}>
           <div><strong>{OWN_FINAL_PRD_FILE_NAME}</strong><small>{finalPrdCheck.valid ? (isThai ? 'โครงสร้างหลักครบ' : 'CORE STRUCTURE READY') : (isThai ? 'จำเป็นสำหรับ Build Your Own' : 'REQUIRED FOR BUILD YOUR OWN')}</small></div>
@@ -171,6 +223,8 @@ export function UiReviewWorkspace({
       </details>
 
       {review && !reviewCheck.valid ? <div className="ui-review-errors" role="alert"><AlertTriangle size={20} /><div><strong>{isThai ? 'UI Review ยังใช้ไม่ได้' : 'UI REVIEW IS NOT READY'}</strong>{reviewCheck.errors.map((error) => <p key={error}>{error}</p>)}</div></div> : null}
+      {(prototypeError || (review && !prototypeCheck.valid)) ? <div className="ui-review-errors" role="alert"><AlertTriangle size={20} /><div><strong>{isThai ? 'Prototype ยังยืนยันตัวตนไม่ได้' : 'PROTOTYPE IDENTITY IS NOT VERIFIED'}</strong>{prototypeError ? <p>{prototypeError}</p> : null}{prototypeCheck.errors.map((error) => <p key={error}>{error}</p>)}{prototypeCheck.warnings.map((warning) => <p key={warning}>{warning}</p>)}</div></div> : null}
+      {prototypeCheck.valid && prototypeCheck.warnings.length ? <div className="ui-review-errors" role="status"><AlertTriangle size={20} /><div><strong>{isThai ? 'ตรวจด้วย SHA-256 ผ่านแล้ว' : 'SHA-256 VERIFIED'}</strong>{prototypeCheck.warnings.map((warning) => <p key={warning}>{warning}</p>)}</div></div> : null}
       {mode === 'own' && finalPrd && !finalPrdCheck.valid ? <div className="ui-review-errors" role="alert"><AlertTriangle size={20} /><div><strong>{isThai ? 'Final PRD ยังมีโครงสร้างไม่ครบ' : 'FINAL PRD IS INCOMPLETE'}</strong>{finalPrdCheck.errors.map((error) => <p key={error}>{error}</p>)}</div></div> : null}
 
       {reviewCheck.valid && reviewCheck.route === 'confirmation-needed' ? <div className="ui-review-forward">
@@ -194,7 +248,7 @@ export function UiReviewWorkspace({
       {reviewCheck.valid && reviewCheck.route === 'approved' ? <div className="ui-review-preview"><div><Check size={19} /><strong>APPROVED FOR FINAL PRD</strong></div><MarkdownPreview markdown={review} /></div> : null}
 
       <footer>
-        <p>{mode === 'guided' ? (isThai ? 'ระบบจะเพิ่ม Screen map, Navigation และ UI direction ที่อนุมัติแล้วในไฟล์ที่เกี่ยวข้อง ส่วน CONTENT_PACK.md จะคงเดิมทุกตัวอักษร' : 'Approved screen, navigation, and UI direction details are added to the relevant files. CONTENT_PACK.md remains byte-for-byte unchanged.') : (isThai ? 'ระบบจะเก็บ UI Review คู่กับ Final PRD เพื่อให้ตรวจย้อนกลับได้ แล้วให้คุณอ่าน Final PRD รอบเดียวก่อน Lock' : 'CODESIGN stores the UI Review with the final PRD for traceability, then asks you to review that final PRD once before locking.')}</p>
+        <p>{mode === 'guided' ? (isThai ? `ระบบจะเก็บ ${APPROVED_PROTOTYPE_FILE_NAME} ที่ตรวจ SHA-256 แล้ว เพิ่ม Screen map, Navigation และ UI direction ในไฟล์ที่เกี่ยวข้อง ส่วน CONTENT_PACK.md จะคงเดิมทุกตัวอักษร` : `CODESIGN preserves the SHA-256-verified ${APPROVED_PROTOTYPE_FILE_NAME}, adds the approved screen, navigation, and UI direction details, and keeps CONTENT_PACK.md byte-for-byte unchanged.`) : (isThai ? `ระบบจะเก็บ ${APPROVED_PROTOTYPE_FILE_NAME} ที่ตรวจ SHA-256 แล้วคู่กับ UI Review และ Final PRD เพื่อให้ตรวจย้อนกลับได้` : `CODESIGN stores the SHA-256-verified ${APPROVED_PROTOTYPE_FILE_NAME} with the UI Review and final PRD for traceability.`)}</p>
         <button type="button" disabled={!canApply} onClick={() => void apply()}><Check size={18} /> {applyState === 'saving' ? (isThai ? 'กำลังสร้าง Final PRD…' : 'CREATING FINAL PRD…') : applied ? (isThai ? 'สร้าง Final PRD แล้ว' : 'FINAL PRD CREATED') : reviewCheck.route === 'confirmation-needed' ? (isThai ? 'ยืนยันการเปลี่ยนแปลงและสร้าง Final PRD' : 'CONFIRM CHANGES AND CREATE FINAL PRD') : (isThai ? 'ใช้ UI Review สร้าง Final PRD' : 'CREATE FINAL PRD FROM UI REVIEW')}</button>
         {applyState === 'failed' ? <span role="alert">{isThai ? 'ทำรายการไม่สำเร็จ ตรวจชื่อไฟล์และลองอีกครั้ง' : 'ACTION FAILED. CHECK THE FILENAMES AND TRY AGAIN.'}</span> : null}
       </footer>

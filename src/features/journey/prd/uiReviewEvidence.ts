@@ -1,6 +1,12 @@
 import type { Json } from '../../../lib/supabase/database.types'
 import { countChangedLines, prdFiles, type PrdDrafts, type PrdFileKey } from './prdPackage'
 import { getUiReviewForwardPlan, getUiReviewResolutionAnswers } from './uiReview'
+import {
+  APPROVED_PROTOTYPE_FILE_NAME,
+  validateApprovedPrototype,
+  verifyApprovedPrototypeArtifact,
+  type ApprovedPrototypeArtifact,
+} from './approvedPrototype'
 
 export type UiReviewFileEvidence = {
   changed: boolean
@@ -12,10 +18,17 @@ export type UiReviewFileEvidence = {
 }
 
 export type UiReviewFinalizationEvidence = {
-  schemaVersion: 1
+  schemaVersion: 1 | 2
   version: number
   finalizedAt: string
   files: Record<PrdFileKey, UiReviewFileEvidence>
+  prototype?: {
+    originalFileName: string
+    canonicalFileName: typeof APPROVED_PROTOTYPE_FILE_NAME
+    sizeBytes: number
+    expectedSha256: string
+    actualSha256: string
+  }
 }
 
 export type UiReviewIntegrityCheck = {
@@ -51,7 +64,11 @@ export async function createUiReviewFinalizationEvidence(
   after: PrdDrafts,
   version = 1,
   finalizedAt = new Date().toISOString(),
+  prototype?: { artifact: ApprovedPrototypeArtifact; expectedSha256: string },
 ): Promise<UiReviewFinalizationEvidence> {
+  if (prototype && (prototype.expectedSha256 !== prototype.artifact.sha256 || !await verifyApprovedPrototypeArtifact(prototype.artifact))) {
+    throw new Error('Approved Prototype evidence cannot be created from mismatched bytes.')
+  }
   const entries = await Promise.all(prdFiles.map(async ({ key }) => {
     const [beforeFingerprint, afterFingerprint] = await Promise.all([
       fingerprintText(before[key]),
@@ -68,10 +85,19 @@ export async function createUiReviewFinalizationEvidence(
   }))
 
   return {
-    schemaVersion: 1,
+    schemaVersion: prototype ? 2 : 1,
     version,
     finalizedAt,
     files: Object.fromEntries(entries) as Record<PrdFileKey, UiReviewFileEvidence>,
+    ...(prototype ? {
+      prototype: {
+        originalFileName: prototype.artifact.originalFileName,
+        canonicalFileName: APPROVED_PROTOTYPE_FILE_NAME,
+        sizeBytes: prototype.artifact.sizeBytes,
+        expectedSha256: prototype.expectedSha256,
+        actualSha256: prototype.artifact.sha256,
+      },
+    } : {}),
   }
 }
 
@@ -90,10 +116,20 @@ export function parseUiReviewFinalizationEvidence(value: Json | undefined): UiRe
   if (!value || typeof value !== 'object' || Array.isArray(value)) return null
   const record = value as Record<string, Json | undefined>
   const files = record.files
-  if (record.schemaVersion !== 1 || typeof record.version !== 'number' || typeof record.finalizedAt !== 'string') return null
+  if (![1, 2].includes(Number(record.schemaVersion)) || typeof record.version !== 'number' || typeof record.finalizedAt !== 'string') return null
   if (!files || typeof files !== 'object' || Array.isArray(files)) return null
   const fileRecord = files as Record<string, Json | undefined>
   if (!prdFiles.every(({ key }) => isFileEvidence(fileRecord[key]))) return null
+  if (record.schemaVersion === 2) {
+    const prototype = record.prototype
+    if (!prototype || typeof prototype !== 'object' || Array.isArray(prototype)) return null
+    const prototypeRecord = prototype as Record<string, Json | undefined>
+    if (typeof prototypeRecord.originalFileName !== 'string'
+      || prototypeRecord.canonicalFileName !== APPROVED_PROTOTYPE_FILE_NAME
+      || typeof prototypeRecord.sizeBytes !== 'number'
+      || typeof prototypeRecord.expectedSha256 !== 'string'
+      || typeof prototypeRecord.actualSha256 !== 'string') return null
+  }
   return value as unknown as UiReviewFinalizationEvidence
 }
 
@@ -110,15 +146,34 @@ export async function validateUiReviewFinalization(
   evidence: UiReviewFinalizationEvidence,
   review: string,
   resolution: string,
+  prototype: ApprovedPrototypeArtifact | null = null,
 ): Promise<UiReviewIntegrityCheck> {
   const errors: string[] = []
   const warnings: string[] = []
   const marker = /##\s+CODESIGN UI Review\s+—\s+Owner Approved/i
   const resolutionAnswers = getUiReviewResolutionAnswers(review, resolution)
   const plan = getUiReviewForwardPlan(review)
+  const prototypeCheck = validateApprovedPrototype(review, prototype)
 
   if (!marker.test(files.handoff)) errors.push('CODESIGN_HANDOFF.md ยังไม่มีส่วน UI Review ที่อนุมัติแล้ว')
   if (!marker.test(files.experienceDirection)) errors.push('EXPERIENCE_DIRECTION.md ยังไม่มีส่วน UI Review ที่อนุมัติแล้ว')
+  errors.push(...prototypeCheck.errors)
+  warnings.push(...prototypeCheck.warnings)
+
+  if (prototypeCheck.valid && prototype) {
+    if (!await verifyApprovedPrototypeArtifact(prototype)) {
+      errors.push('ข้อมูล APPROVED_PROTOTYPE.html ที่เก็บไว้ไม่ตรงกับ SHA-256 ของตัวเอง')
+    }
+    if (evidence.schemaVersion !== 2 || !evidence.prototype) {
+      errors.push('หลักฐาน Final PRD ยังไม่ได้ผูกกับ Approved Prototype')
+    } else {
+      if (evidence.prototype.expectedSha256 !== prototypeCheck.reference?.sha256
+        || evidence.prototype.actualSha256 !== prototype.sha256
+        || evidence.prototype.sizeBytes !== prototype.sizeBytes) {
+        errors.push('หลักฐาน Approved Prototype ไม่ตรงกับไฟล์ที่เก็บไว้')
+      }
+    }
+  }
 
   const currentFingerprints = Object.fromEntries(await Promise.all(prdFiles.map(async ({ key }) => [key, await fingerprintText(files[key])] as const))) as Record<PrdFileKey, string>
   if (currentFingerprints.handoff === evidence.files.handoff.beforeFingerprint) errors.push('CODESIGN_HANDOFF.md ยังไม่เปลี่ยนจากฉบับก่อน Prototype')
