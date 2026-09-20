@@ -86,7 +86,11 @@ export function EstablishPhase({ project }: { project: ProjectRow }) {
   ] : basicRules
 
   return (
-    <JourneyLayout project={project} phase="E" phaseName="ESTABLISH" chatContext={draft.values} saveState={draft.saveState}>
+    <JourneyLayout project={project} phase="E" phaseName="ESTABLISH" chatContext={draft.values} saveState={draft.saveState} completionItems={[
+      { label: isThai ? 'สรุป Product Direction และ Must Have อย่างน้อย 1 ข้อ' : 'Define the product direction and at least one must-have', complete: Boolean(String(draft.values.direction).trim() && mustHaves.some((item) => item.trim())) },
+      { label: isThai ? 'กำหนด Non-goal อย่างน้อย 2 ข้อโดยไม่ขัดกับ Must Have' : 'Define at least two non-goals without scope conflicts', complete: nonGoals.filter((item) => item.trim()).length >= 2 && exactConflicts.length === 0 },
+      { label: isThai ? 'ตรวจ Scope และยืนยันการส่งต่อจาก Step D' : 'Review the scope and confirm the Step D handoff', complete: Boolean(draft.values.scopeAlignmentConfirmed) && debateEntries.isSuccess && upstreamReady },
+    ]}>
       <PhaseSection step="01" title={isThai ? 'กระดานตัดสินใจ' : 'DECISION BOARD'}>
         <FormField label={isThai ? 'เรากำลังจะสร้าง' : 'WE ARE BUILDING'} guideKey="establish.direction" hint={isThai ? 'สรุป Product direction ให้กระชับในหนึ่งข้อความ' : 'ONE CONCISE PRODUCT DIRECTION'} required><textarea rows={4} value={String(draft.values.direction)} onChange={(event) => updateDirection(event.target.value)} /></FormField>
         <ScopeDecisionBoard

@@ -3,6 +3,10 @@ import type { PhaseEntry } from './journey.service'
 
 export type AlignmentStatus = '' | 'aligned' | 'clarifies' | 'revision'
 
+export function normalizeAlignmentSourceValues(values: string[]) {
+  return values.map((value) => value.trim()).filter(Boolean)
+}
+
 export function normalizeAlignmentStatus(value: Json | undefined): AlignmentStatus {
   return value === 'aligned' || value === 'clarifies' || value === 'revision' ? value : ''
 }

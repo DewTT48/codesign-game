@@ -47,7 +47,11 @@ export function OptionsPhase({ project }: { project: ProjectRow }) {
   const ready = options.length >= 3 && options.every((option) => Object.values(option).every((value) => value.trim())) && Number(draft.values.favorite) >= 0 && contextEntries.isSuccess && alignmentReady
 
   return (
-    <JourneyLayout project={project} phase="O" phaseName="OPTIONS" chatContext={draft.values} saveState={draft.saveState}>
+    <JourneyLayout project={project} phase="O" phaseName="OPTIONS" chatContext={draft.values} saveState={draft.saveState} completionItems={[
+      { label: isThai ? 'เติมรายละเอียดของทางเลือกอย่างน้อย 3 แบบให้ครบ' : 'Complete at least three distinct options', complete: options.length >= 3 && options.every((option) => Object.values(option).every((value) => value.trim())) },
+      { label: isThai ? 'เลือกทางเลือกที่เหมาะกับ Context ที่สุด' : 'Choose the option that best fits the context', complete: Number(draft.values.favorite) >= 0 },
+      { label: isThai ? 'ตรวจและยืนยันการส่งต่อจาก Step C' : 'Review and confirm the Step C handoff', complete: contextEntries.isSuccess && alignmentReady },
+    ]}>
       <PhaseSection step="01" title={isThai ? 'เปิดพื้นที่ให้หลายความเป็นไปได้' : 'EXPAND THE POSSIBILITY SPACE'} description={isThai ? 'ใช้ชุดคำสั่งขอ Product direction อย่างน้อย 3 แบบที่ต่างกันในกลไกหลัก' : 'Use the Prompt Kit to create at least three directions with different core mechanisms.'}>
         <div className="chat-mission-card"><span>{isThai ? 'ภารกิจในการคุยกับ Chat' : 'CHAT MISSION'}</span><p>{isThai ? 'อย่างน้อย 3 ทิศทาง · แนวคิดหลัก · ประโยชน์ · สิ่งที่ต้องแลก' : '3+ DIRECTIONS · CORE IDEA · BENEFIT · TRADE-OFF'}</p><strong>{isThai ? 'สำรวจก่อนตัดสินใจเลือก' : 'EXPLORE BEFORE YOU CHOOSE.'}</strong></div>
       </PhaseSection>

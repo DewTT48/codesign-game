@@ -154,7 +154,11 @@ export function DebatePhase({ project }: { project: ProjectRow }) {
   const ready = assumptions.every((item) => item.text.trim() && item.stance && debateReason(item).trim() && (item.stance !== 'challenge' || item.change.trim())) && Boolean(directionResult) && Boolean(displayedSummary) && optionEntries.isSuccess && alignmentReady
 
   return (
-    <JourneyLayout project={project} phase="D" phaseName="DEBATE" chatContext={draft.values} saveState={draft.saveState}>
+    <JourneyLayout project={project} phase="D" phaseName="DEBATE" chatContext={draft.values} saveState={draft.saveState} completionItems={[
+      { label: isThai ? 'ตัดสินใจทุกสมมติฐานและบันทึกเหตุผล' : 'Decide every assumption and record the reasons', complete: assumptions.every((item) => Boolean(item.text.trim() && item.stance && debateReason(item).trim() && (item.stance !== 'challenge' || item.change.trim()))) },
+      { label: isThai ? 'สรุปผลที่มีต่อ Direction' : 'Summarize the impact on the direction', complete: Boolean(directionResult && displayedSummary) },
+      { label: isThai ? 'ตรวจและยืนยันการส่งต่อจาก Step O' : 'Review and confirm the Step O handoff', complete: optionEntries.isSuccess && alignmentReady },
+    ]}>
       <aside className="debate-guide" aria-labelledby="debate-guide-title">
         <header>
           <span>{isThai ? 'ขั้นตอนนี้ทำงานอย่างไร' : 'HOW THIS STEP WORKS'}</span>

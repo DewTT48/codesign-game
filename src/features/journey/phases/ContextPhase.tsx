@@ -68,6 +68,10 @@ export function ContextPhase({ project }: { project: ProjectRow }) {
       phaseName="CONTEXT"
       chatContext={draft.values}
       saveState={draft.saveState}
+      completionItems={[
+        { label: isThai ? 'ระบุว่าจะสร้างอะไร เพื่อใคร และมีเป้าหมายอะไร' : 'Define what you are building, for whom, and their goal', complete: Boolean(draft.values.who.trim() && draft.values.goal.trim()) },
+        { label: isThai ? 'ระบุภาพความสำเร็จ บริบทสำคัญ และข้อจำกัด' : 'Define success, important context, and constraints', complete: Boolean(draft.values.success.trim() && draft.values.importantContext.trim() && draft.values.constraints.trim()) },
+      ]}
     >
       <PhaseSection step="01" title={isThai ? 'คิดก่อนคุยกับ Chat' : 'THINK FIRST'} description={isThai ? 'บันทึกความคิดตั้งต้นก่อนเปิด Chat ไม่ต้องพยายามตอบให้สมบูรณ์' : 'Capture your starting thought before opening Chat. It does not need to be complete.'}>
         <div className="form-grid form-grid--two">

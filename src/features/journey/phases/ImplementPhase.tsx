@@ -196,7 +196,7 @@ export function ImplementPhase({ project }: { project: ProjectRow }) {
   ]
 
   return (
-    <JourneyLayout project={project} phase="I" phaseName="IMPLEMENT" chatContext={draft.values} saveState={draft.saveState}>
+    <JourneyLayout project={project} phase="I" phaseName="IMPLEMENT" chatContext={draft.values} saveState={draft.saveState} completionItems={visibleRequirementKeys.map((key) => ({ label: completionRequirementLabels[key], complete: implementationReadiness.requirements[key] }))}>
       <PhaseSection step="I1" title={isThai ? 'ทำความเข้าใจ GitHub แบบง่าย ๆ' : 'GITHUB IN PLAIN LANGUAGE'} description={isThai ? 'สิ่งที่ต้องรู้ก่อนเริ่มมีเพียงหน้าที่ของเครื่องมือแต่ละชิ้น' : 'Before starting, you only need to understand what each tool does.'}>
         <div className="github-basics">
           <article><Github size={29} /><strong>GITHUB</strong><p>{isThai ? 'บ้านออนไลน์ของไฟล์ App และประวัติการเปลี่ยนแปลง' : 'The online home for app files and change history.'}</p></article>
@@ -293,7 +293,7 @@ export function ImplementPhase({ project }: { project: ProjectRow }) {
         items={[
           { label: isThai ? 'ชุดส่งต่องานที่ใช้สร้าง' : 'SOURCE PACKAGE', value: [`PRD v${snapshot.data?.version ?? '—'}`, 'CODESIGN_HANDOFF.md', 'CONTENT_PACK.md', 'EXPERIENCE_DIRECTION.md', 'APPROVED_PROTOTYPE.html', 'START_WITH_CODEX.md'] },
           { label: isThai ? 'ผลการตรวจ PRD' : 'PRD REVIEW RESULT', value: String(prdReviewOutcome ?? '') },
-          { label: isThai ? 'หลักฐานการสร้าง' : 'BUILD EVIDENCE', value: [String(draft.values.appUrl), draft.values.workingApp ? 'PROTOTYPE_CONFORMANCE.md · NO MATERIAL MISMATCH CONFIRMED' : 'BUILD AND CONFORMANCE NOT CONFIRMED'] },
+          { label: isThai ? 'หลักฐานการสร้าง' : 'BUILD EVIDENCE', value: [String(draft.values.appUrl).trim(), draft.values.workingApp ? 'PROTOTYPE_CONFORMANCE.md · NO MATERIAL MISMATCH CONFIRMED' : 'BUILD AND CONFORMANCE NOT CONFIRMED'].filter(Boolean) },
         ]}
         status={alignmentStatus}
         note={alignmentNote}

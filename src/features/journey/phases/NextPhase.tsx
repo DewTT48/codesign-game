@@ -126,7 +126,11 @@ export function NextPhase({ project }: { project: ProjectRow }) {
   })
 
   return (
-    <JourneyLayout project={project} phase="N" phaseName="NEXT ITERATION" chatContext={{ ...draft.values, mostImportant }} saveState={draft.saveState}>
+    <JourneyLayout project={project} phase="N" phaseName="NEXT ITERATION" chatContext={{ ...draft.values, mostImportant }} saveState={draft.saveState} completionItems={[
+      { label: isThai ? 'นำไฟล์สรุปสถานะ App จาก Codex กลับมาอ่านและยืนยัน' : 'Bring back, read, and confirm the Codex build update', complete: buildUpdateReady },
+      { label: isThai ? 'ระบุสิ่งสำคัญที่สุดที่จะเปลี่ยน เหตุผล และผลที่คาดหวัง' : 'Define the most important change, why it matters, and the expected result', complete: [draft.values.change, draft.values.because, draft.values.expectedResult].every((value) => Boolean(String(value).trim())) },
+      { label: isThai ? 'ยืนยันว่าเป็นการแก้เฉพาะการสร้าง App' : 'Confirm this is an implementation-only change', complete: changeRoute === 'implementation' && Boolean(draft.values.routeConfirmed) },
+    ]}>
       <PhaseSection step="01" title={isThai ? 'สิ่งที่การทดสอบเปิดเผย' : 'WHAT THE TEST REVEALED'}>
         <blockquote className="feedback-quote">{typeof mostImportant === 'string' ? mostImportant : (isThai ? 'กำลังโหลดข้อเสนอแนะ…' : 'Loading feedback…')}</blockquote>
       </PhaseSection>

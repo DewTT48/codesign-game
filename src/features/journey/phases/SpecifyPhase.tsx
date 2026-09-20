@@ -5,7 +5,7 @@ import { ArcadeButton } from '../../../components/ui/ArcadeButton'
 import type { Json, ProjectRow } from '../../../lib/supabase/database.types'
 import { useLanguage } from '../../i18n/LanguageContext'
 import { CrossStepAlignment } from '../CrossStepAlignment'
-import { normalizeAlignmentStatus } from '../crossStepAlignmentModel'
+import { alignmentIsReady, normalizeAlignmentStatus } from '../crossStepAlignmentModel'
 import { completePhase, getPrdSource } from '../journey.service'
 import { JourneyLayout } from '../JourneyLayout'
 import { FormField, PhaseSection, ReviewGate } from '../PhaseFormComponents'
@@ -223,6 +223,13 @@ export function SpecifyPhase({ project }: { project: ProjectRow }) {
         storageRule: storageRuleText,
       }}
       saveState={draft.saveState}
+      completionItems={[
+        { label: isThai ? 'กำหนด Journey และกติกาการใช้งานหลัก' : 'Define the journey and core product rules', complete: Boolean(journeySummary && String(draft.values.dailyCompletionRule).trim() && returnRuleText && sequenceRuleText && storageRuleText) },
+        { label: isThai ? 'เตรียมโครงและรูปแบบ Content ให้ครบ' : 'Complete the content structure and patterns', complete: !arcs.some((arc) => !arc.title.trim() || !arc.goal.trim()) && Boolean(String(draft.values.contentPattern).trim() && String(draft.values.exercisePattern).trim() && String(draft.values.recordPattern).trim()) },
+        { label: isThai ? 'เติมและตรวจ Content Pack ให้ครบ 21 วัน' : 'Complete and review all 21 days of content', complete: completeDays === 21 && Boolean(draft.values.contentOwnerConfirmed) },
+        { label: isThai ? 'เลือกและยืนยัน Experience Direction' : 'Choose and confirm the Experience Direction', complete: Boolean(selectedExperience && draft.values.experienceOwnerConfirmed) },
+        { label: isThai ? 'ตรวจและยืนยันการส่งต่อจาก Step E' : 'Review and confirm the Step E handoff', complete: inherited.isSuccess && alignmentStatus !== 'revision' && alignmentIsReady({ status: alignmentStatus, note: alignmentNote, confirmed: Boolean(draft.values.alignmentConfirmed) }) },
+      ]}
     >
       <section className="specify-intro">
         <span>{isThai ? 'เริ่มจาก Prompt ด้านบน แล้วนำไฟล์ที่ AI สร้างกลับมา' : 'START WITH THE PROMPT ABOVE, THEN BRING BACK THE AI-GENERATED FILE'}</span>

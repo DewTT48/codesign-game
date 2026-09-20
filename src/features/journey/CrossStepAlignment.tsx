@@ -2,7 +2,7 @@ import { Check, RotateCcw } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { useLanguage } from '../i18n/LanguageContext'
 import { PhaseSection } from './PhaseFormComponents'
-import type { AlignmentStatus } from './crossStepAlignmentModel'
+import { normalizeAlignmentSourceValues, type AlignmentStatus } from './crossStepAlignmentModel'
 
 export type AlignmentSourceItem = {
   label: string
@@ -52,10 +52,12 @@ export function CrossStepAlignment({
       {loading ? <p className="alignment-loading">{isThai ? `กำลังโหลดข้อสรุปจาก Step ${sourceStep}…` : `LOADING STEP ${sourceStep} DECISIONS…`}</p> : null}
       {loadError ? <p className="field-error" role="alert">{isThai ? `โหลดข้อมูลจาก Step ${sourceStep} ไม่สำเร็จ จึงยังยืนยันไม่ได้` : `STEP ${sourceStep} COULD NOT BE LOADED. ALIGNMENT CANNOT BE CONFIRMED.`}</p> : null}
       {!loading && !loadError ? <div className={`alignment-contract alignment-contract--${Math.min(items.length, 3)}`}>
-        {items.map((item) => <article key={item.label}>
+        {items.map((item) => {
+          const values = Array.isArray(item.value) ? normalizeAlignmentSourceValues(item.value) : null
+          return <article key={item.label}>
           <span>{item.label}</span>
-          {Array.isArray(item.value) ? <ul>{item.value.length ? item.value.map((value, index) => <li key={`${value}-${index}`}>{value}</li>) : <li>—</li>}</ul> : <p>{item.value || '—'}</p>}
-        </article>)}
+          {values ? <ul>{values.length ? values.map((value, index) => <li key={`${value}-${index}`}>{value}</li>) : <li>—</li>}</ul> : <p>{item.value || '—'}</p>}
+        </article>})}
       </div> : null}
 
       <div className="alignment-choices" role="radiogroup" aria-label={isThai ? `ความสัมพันธ์ระหว่าง Step ${sourceStep} และ ${targetStep}` : `Relationship between Step ${sourceStep} and ${targetStep}`}>

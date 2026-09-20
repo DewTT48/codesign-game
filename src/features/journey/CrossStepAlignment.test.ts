@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { alignmentIsReady, normalizeAlignmentStatus } from './crossStepAlignmentModel'
+import { alignmentIsReady, normalizeAlignmentSourceValues, normalizeAlignmentStatus } from './crossStepAlignmentModel'
 
 describe('cross-step alignment', () => {
   it('requires an explicit relationship and owner confirmation', () => {
@@ -17,5 +17,9 @@ describe('cross-step alignment', () => {
   it('normalizes persisted values defensively', () => {
     expect(normalizeAlignmentStatus('aligned')).toBe('aligned')
     expect(normalizeAlignmentStatus('unexpected')).toBe('')
+  })
+
+  it('removes blank source values before rendering bullets', () => {
+    expect(normalizeAlignmentSourceValues(['', '  ', 'Public URL', ' Confirmed '])).toEqual(['Public URL', 'Confirmed'])
   })
 })
