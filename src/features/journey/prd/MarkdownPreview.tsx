@@ -22,7 +22,11 @@ type MarkdownPreviewProps = {
 }
 
 export const MarkdownPreview = forwardRef<HTMLElement, MarkdownPreviewProps>(function MarkdownPreview({ markdown, onScroll }, ref) {
-  const lines = markdown.replace(/\r\n/g, '\n').split('\n')
+  const lines = markdown
+    .replace(/\r\n/g, '\n')
+    .replace(/<!--[\s\S]*?-->/g, '')
+    .replace(/\s*filecite[^]*/g, '')
+    .split('\n')
   const blocks: ReactNode[] = []
 
   for (let index = 0; index < lines.length;) {

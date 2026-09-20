@@ -79,9 +79,13 @@ describe('CODESIGN UI Review contract', () => {
     expect(guided).toContain('CODESIGN_UI_REVIEW.md')
     expect(guided).toContain('จะไม่แก้ CONTENT_PACK.md')
     expect(guided).toContain('OWNER CONFIRMATION NEEDED')
+    expect(guided).toContain('## Prototype Integrity')
+    expect(guided).toContain('SHA-256')
+    expect(guided).toContain('HTML Prototype ฉบับที่อนุมัติจริง')
     expect(guided).not.toContain('REVISION REQUIRED — STEP E')
     expect(own).toContain('PRODUCT_REQUIREMENTS.md')
     expect(own).toContain('Return the complete PRD, not a patch or summary.')
+    expect(own).toContain('exact approved HTML prototype')
   })
 
   it('requires an explicit approved review with no open questions', () => {
@@ -122,6 +126,17 @@ describe('CODESIGN UI Review contract', () => {
     expect(applied.experienceDirection).toContain('Calm cards with one primary action')
     expect(applied.contentPack).toBe(files.contentPack)
     expect(applyGuidedUiReview(applied, review).handoff.match(/CODESIGN UI Review — Owner Approved/g)).toHaveLength(1)
+  })
+
+  it('removes transport-only citation tokens from the final PRD addendum', () => {
+    const files = {
+      handoff: '# HANDOFF\n\n## Must Have\nA\n',
+      contentPack: '# CONTENT PACK\n\nAPPROVED CONTENT',
+      experienceDirection: '# EXPERIENCE DIRECTION\n\n## Owner Decision\nA\n',
+    }
+    const cited = review.replace('primary navigation', 'primary navigation fileciteturn3file0L10-L14')
+    const applied = applyGuidedUiReview(files, cited)
+    expect(applied.handoff).not.toContain('filecite')
   })
 
   it('consolidates confirmed prototype changes without rewriting the content pack', () => {

@@ -78,6 +78,17 @@ export function FinalPrdChangeSummary({ evidence, integrity, review, resolution,
           <button type="button" onClick={() => onOpenFile(key)}><Eye size={16} /> {isThai ? 'เปิดตรวจไฟล์' : 'REVIEW FILE'}</button>
         </article>
       })}
+      {evidence.prototype ? <article className="is-preserved">
+        <div>
+          <span className="final-prd-evidence__state"><Check size={15} /> {isThai ? 'ยืนยันตัวตนด้วย SHA-256' : 'SHA-256 IDENTITY VERIFIED'}</span>
+          <h4>{evidence.prototype.canonicalFileName}</h4>
+          <p>{isThai ? `เก็บจาก ${evidence.prototype.originalFileName} แบบ byte-for-byte เพื่อใช้เป็น Visual/Interaction Reference` : `Preserved byte-for-byte from ${evidence.prototype.originalFileName} as the visual and interaction reference.`}</p>
+        </div>
+        <div className="final-prd-evidence__plain-result">
+          <ShieldCheck size={17} />
+          <div><strong>{isThai ? 'SHA-256 ตรงกับ UI Review' : 'SHA-256 MATCHES THE UI REVIEW'}</strong><small>{evidence.prototype.actualSha256.slice(0, 12)}… · {evidence.prototype.sizeBytes.toLocaleString()} bytes</small></div>
+        </div>
+      </article> : null}
     </div>
 
     <details className="final-prd-evidence__details">
@@ -100,7 +111,7 @@ export function FinalPrdChangeSummary({ evidence, integrity, review, resolution,
           : integrity.status === 'invalid'
             ? (isThai ? 'Integrity Check ยังไม่ผ่าน' : 'INTEGRITY CHECK FAILED')
             : (isThai ? 'กำลังตรวจ Final PRD…' : 'CHECKING FINAL PRD…')}</strong>
-        {integrity.status === 'valid' ? <p>{isThai ? 'พบ Addendum ในสองไฟล์ คำตอบของเจ้าของอยู่ครบ และ CONTENT_PACK.md ตรงกับฉบับก่อน Prototype' : 'Both addenda are present, owner answers are recorded, and CONTENT_PACK.md matches the pre-prototype version.'}</p> : null}
+        {integrity.status === 'valid' ? <p>{isThai ? 'พบ Addendum ในสองไฟล์ คำตอบของเจ้าของอยู่ครบ CONTENT_PACK.md คงเดิม และ Approved Prototype ตรงกับ SHA-256 ใน UI Review' : 'Both addenda are present, owner answers are recorded, CONTENT_PACK.md is preserved, and the Approved Prototype matches the SHA-256 in the UI Review.'}</p> : null}
         {integrity.errors.map((error) => <p key={error}>{error}</p>)}
         {integrity.warnings.map((warning) => <p className="is-warning" key={warning}>{warning}</p>)}
       </div>

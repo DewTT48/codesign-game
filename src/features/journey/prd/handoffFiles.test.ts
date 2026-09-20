@@ -33,7 +33,10 @@ describe('handoff companion files', () => {
     expect(markdown).toContain('Never request or handle the owner\'s password')
     expect(markdown).toContain('publish through GitHub Pages')
     expect(markdown).toContain('current project folder')
-    expect(markdown).toContain('Do not ask the owner to attach the four files again')
+    expect(markdown).toContain('Do not ask the owner to attach the five files again')
+    expect(markdown).toContain('APPROVED_PROTOTYPE.html')
+    expect(markdown).toContain('PROTOTYPE_CONFORMANCE.md')
+    expect(markdown).toContain('PROTOTYPE INTEGRITY FAILED')
   })
 
   it('uses the owner rules in the Codex brief instead of hardcoding browser storage', () => {
@@ -64,6 +67,8 @@ describe('handoff companion files', () => {
     expect(markdown).toContain('Product นี้กำหนดให้หน้าจอที่ผู้ใช้เห็นเป็นภาษาไทย')
     expect(markdown).toContain('ผู้ใช้ไม่สามารถย้อนกลับไปยังรายการที่ทำเสร็จแล้ว')
     expect(markdown).toContain('PRODUCT DECISION REQUIRED')
-    expect(markdown).toContain('ไม่ต้องขอให้ผู้ใช้แนบไฟล์ทั้ง 4 ฉบับซ้ำ')
+    expect(markdown).toContain('ไม่ต้องขอให้ผู้ใช้แนบไฟล์ทั้ง 5 ฉบับซ้ำ')
+    expect(markdown).toContain('APPROVED_PROTOTYPE.html')
+    expect(markdown).toContain('PROTOTYPE_CONFORMANCE.md')
   })
 })
