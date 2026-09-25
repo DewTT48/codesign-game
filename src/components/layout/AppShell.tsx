@@ -80,9 +80,14 @@ export function AppShell({ children }: PropsWithChildren) {
       </a>
       <header className="topbar">
         <Link className="brand" to="/" aria-label="CODESIGN home">
-          <span className="brand-mark" aria-hidden="true">
-            C
-          </span>
+          <img
+            className="brand-mark"
+            src={`${import.meta.env.BASE_URL}brand/codesign-mark-192.png`}
+            alt=""
+            width="48"
+            height="48"
+            aria-hidden="true"
+          />
           <span className="brand-word">CODESIGN</span>
         </Link>
         <span className="creator-credit">เกมโดย ธีรภาพ ตระการผล - HR ข้างบ้าน</span>
