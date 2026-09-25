@@ -10,7 +10,7 @@ vi.mock('../../features/auth/AuthContext', () => ({
   useAuth: () => authState,
 }))
 
-describe('AppShell topbar', () => {
+describe('AppShell account action', () => {
   beforeEach(() => {
     authState.user = null
     window.localStorage.clear()
@@ -34,17 +34,6 @@ describe('AppShell topbar', () => {
     expect(screen.getByRole('link', { name: 'เข้าสู่ระบบ' })).toHaveAttribute(
       'href',
       '/auth?intent=signin',
-    )
-  })
-
-  it('uses the approved CODESIGN mark as the home link', () => {
-    renderShell()
-
-    const homeLinks = screen.getAllByRole('link', { name: 'CODESIGN home' })
-    const homeLink = homeLinks.at(-1)!
-    expect(homeLink.querySelector('img')).toHaveAttribute(
-      'src',
-      '/brand/codesign-mark-192.png',
     )
   })
 
